@@ -23,60 +23,60 @@ export const BrandAmbassadorSpotlight = () => {
       <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-12 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
           
-          {/* ── Left Content (6 Cols) ── */}
+          {/* ── Left Content (6 Cols): Royal Heritage Story & Craftsmanship ── */}
           <div className="lg:col-span-6 space-y-6 sm:space-y-7 text-center lg:text-left">
             
-            {/* Signature Block (Modeled on Right Gold: Fluid cursive signature + for BL Jewels) */}
+            {/* Signature Block (Fluid cursive signature + BL Jewels Atelier) */}
             <div className="space-y-1">
               <span 
-                className="ambassador-signature text-6xl sm:text-7xl lg:text-[78px] text-[#7A1D28] block tracking-wide select-none drop-shadow-sm leading-tight"
+                className="ambassador-signature text-5xl sm:text-6xl lg:text-[70px] text-[#7A1D28] block tracking-wide select-none drop-shadow-sm leading-tight"
                 style={{ fontFamily: "'Great Vibes', 'Alex Brush', 'Allura', cursive" }}
               >
-                Tara Sutaria
+                The Royal Bridal Heritage
               </span>
               <span className="font-body text-base sm:text-lg text-stone-600 tracking-wider block font-medium pl-1">
-                for BL Jewels
+                by BL Jewels • Fine Jewellery Atelier
               </span>
             </div>
 
-            {/* Main Headline (Exact dual-tone typography as reference image) */}
+            {/* Main Headline */}
             <div className="space-y-1">
               <h2 className="font-display text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#5B101D] tracking-tight leading-tight sm:leading-[1.15]">
-                Welcomes Tara Sutaria as Our
+                Auspicious Heirlooms Sculpted for
               </h2>
               <span className="font-display text-3xl sm:text-4xl lg:text-[42px] font-bold text-[#B68936] tracking-tight block">
-                Brand Ambassador
+                Generations of Royal Brides
               </span>
             </div>
 
             {/* Editorial Story */}
             <p className="font-body text-sm sm:text-base text-stone-600 max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
-              Embodying timeless royal poise, uncompromised 22K (916) purity, and modern bridal majesty. Discover curated archival heirlooms handpicked by our muse to celebrate auspicious milestones with eternal magnificence.
+              Embodying timeless Rajputana majesty, certified 22K (916) purity, and master nakshi craftsmanship. Handcrafted with syndicate uncut polki diamonds and sacred temple motifs to celebrate life's most auspicious milestones with eternal magnificence.
             </p>
 
             {/* Luxury Trust Indicators */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-xs text-stone-800 text-xs font-semibold">
                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                <span>100% BIS 916 Hallmarked</span>
+                <span>100% BIS 916 & HUID Certified</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-xs text-stone-800 text-xs font-semibold">
                 <Crown className="w-4 h-4 text-amber-600" />
-                <span>Master Karigar Detailing</span>
+                <span>7th-Gen Master Karigar Artistry</span>
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-xs text-stone-800 text-xs font-semibold">
                 <Gem className="w-4 h-4 text-[#8B1A1A]" />
-                <span>Certified Uncut Diamonds</span>
+                <span>Syndicate Uncut Polki Diamonds</span>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-3">
               <Link
-                to="/collections?curated=ambassador"
+                to="/collections?occasion=bridal"
                 className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#7A1D28] to-[#5B101D] hover:from-[#5B101D] hover:to-[#400B14] text-white rounded-full text-xs font-semibold tracking-wider uppercase transition-all shadow-md flex items-center justify-center gap-2.5 group"
               >
-                <span>Explore Ambassador's Vault</span>
+                <span>Explore Bridal Vault</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
               </Link>
 
@@ -173,9 +173,9 @@ export const BrandAmbassadorSpotlight = () => {
                 {/* Caption Tag Inside Arch at Bottom */}
                 <g transform="translate(240, 490)">
                   <rect
-                    x="-120"
+                    x="-125"
                     y="-15"
-                    width="240"
+                    width="250"
                     height="30"
                     rx="15"
                     fill="#1A070B"
@@ -188,12 +188,12 @@ export const BrandAmbassadorSpotlight = () => {
                     y="5"
                     textAnchor="middle"
                     fill="#F3E5AB"
-                    fontSize="11"
+                    fontSize="10.5"
                     fontFamily="'Bodoni Moda', Georgia, serif"
                     fontWeight="600"
-                    letterSpacing="0.12em"
+                    letterSpacing="0.14em"
                   >
-                    ROYAL MUSE COLLECTION 2026
+                    ROYAL BRIDAL HEIRLOOMS 2026
                   </text>
                 </g>
 
