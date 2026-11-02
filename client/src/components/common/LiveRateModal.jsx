@@ -64,16 +64,6 @@ export const LiveRateModal = () => {
     { label: '999 SILVER MCX (1 Kg)', rate: silverKg, isBold: true },
   ];
 
-  const stores = [
-    'Nirman Vihar',
-    'Lajpat Nagar',
-    'Laxmi Nagar',
-    'Krishna Nagar',
-    'Rohini',
-    'Noida',
-    'Gurgaon',
-  ];
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
       
@@ -212,7 +202,7 @@ export const LiveRateModal = () => {
 
             </div>
 
-            {/* Right: Multiple Stores Across Delhi NCR Banner (5 cols) */}
+            {/* Right: Flagship Boutique Showcase (Agra) */}
             <div className="lg:col-span-5 bg-gradient-to-br from-[#FFF9EE] to-[#F5ECE0] text-stone-900 rounded-xl p-5 border border-[#C9A44A] shadow-lg flex flex-col justify-between">
               
               <div>
@@ -228,43 +218,38 @@ export const LiveRateModal = () => {
                       BL JEWELS
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-[#8B1A1A] text-white text-[10px] font-bold">
-                    NCR EXPANSION
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#8B1A1A] text-white text-[10px] font-bold">
+                    FLAGSHIP BOUTIQUE
                   </span>
                 </div>
 
                 <div className="text-center my-3">
                   <span className="text-[10px] uppercase tracking-widest text-[#8B1A1A] font-bold block">
-                    NOW AT
+                    VISIT OUR ATELIER
                   </span>
                   <h3 className="text-lg sm:text-xl font-extrabold text-[#4D0D18] tracking-tight">
-                    MULTIPLE STORES
+                    AGRA SHOWROOM
                   </h3>
                   <p className="text-[11px] text-stone-600 font-medium">
-                    ACROSS DELHI NCR
+                    CIVIL LINES, AGRA
                   </p>
                 </div>
 
-                {/* Visit Us Label */}
-                <div className="text-center mb-3">
-                  <span className="text-xs font-bold text-[#8B1A1A] border-b border-[#8B1A1A]/40 pb-0.5">
-                    Visit Us
-                  </span>
-                </div>
+                {/* Boutique Address Box */}
+                <div className="p-3.5 rounded-xl bg-white/90 border border-[#C9A44A]/40 shadow-xs space-y-2 text-xs">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-[#8B1A1A] shrink-0 mt-0.5" />
+                    <span className="text-stone-800 text-[11px] leading-relaxed font-medium">
+                      Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002
+                    </span>
+                  </div>
 
-                {/* Store Locations Grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {stores.map((store, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-1.5 p-1.5 rounded-lg bg-white/80 border border-[#C9A44A]/40 shadow-xs"
-                    >
-                      <MapPin className="w-3.5 h-3.5 text-[#8B1A1A] shrink-0" />
-                      <span className="font-semibold text-stone-800 text-[11px] truncate">
-                        {store}
-                      </span>
-                    </div>
-                  ))}
+                  <div className="flex items-center gap-2 pt-2 border-t border-stone-200">
+                    <Phone className="w-3.5 h-3.5 text-[#8B1A1A] shrink-0" />
+                    <a href="tel:07454986610" className="text-stone-900 font-bold text-xs hover:text-[#8B1A1A] transition-colors">
+                      074549 86610
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -273,16 +258,16 @@ export const LiveRateModal = () => {
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-700" />
                   <span className="text-[11px] text-stone-700 font-medium">
-                    100% BIS Hallmarked Showrooms
+                    100% BIS Hallmarked Showroom
                   </span>
                 </div>
 
                 <a
-                  href="tel:+919876543210"
-                  className="px-3 py-1 bg-[#8B1A1A] hover:bg-[#721515] text-white rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                  href="tel:07454986610"
+                  className="px-3.5 py-1.5 bg-[#8B1A1A] hover:bg-[#721515] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
                 >
                   <PhoneCall className="w-3 h-3" />
-                  <span>Call Us</span>
+                  <span>Call Store</span>
                 </a>
               </div>
 

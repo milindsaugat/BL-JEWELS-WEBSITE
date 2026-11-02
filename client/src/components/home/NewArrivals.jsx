@@ -50,6 +50,8 @@ export const NewArrivals = ({ products = [] }) => {
 
   // Robust Pointer Events
   const handlePointerDown = (e) => {
+    // If clicked on button or interactive element, let the button handle it directly
+    if (e.target.closest('button, a')) return;
     if (e.button !== 0) return;
     const el = sliderRef.current;
     if (!el) return;

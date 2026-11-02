@@ -2,9 +2,9 @@ export const BRAND = {
   name: 'BL Jewels',
   tagline: 'Purity with Auspiciousness',
   established: '1984',
-  phone: '+91 98765 43210',
+  phone: '074549 86610',
   email: 'concierge@bljewels.com',
-  address: 'BL Jewels House, Zaveri Bazaar, Mumbai, Maharashtra 400002',
+  address: 'Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002',
 };
 
 export const METALS = [

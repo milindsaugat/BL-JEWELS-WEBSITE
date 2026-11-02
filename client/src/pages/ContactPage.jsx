@@ -52,7 +52,7 @@ export const ContactPage = () => {
                 <MapPin className="w-4 h-4 text-crimson-700 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-stone-900">Boutique Address</strong>
-                  <span>BL Jewels House, Zaveri Bazaar, Kalbadevi, Mumbai, Maharashtra 400002</span>
+                  <span>Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002</span>
                 </div>
               </div>
 
@@ -60,7 +60,7 @@ export const ContactPage = () => {
                 <Phone className="w-4 h-4 text-crimson-700 shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-stone-900">Direct Concierge</strong>
-                  <span>+91 98765 43210 / +91 98200 12345</span>
+                  <a href="tel:07454986610" className="hover:text-crimson-700 transition-colors">074549 86610</a>
                 </div>
               </div>
 

@@ -79,21 +79,25 @@ export const ProductCard = ({ product }) => {
           <Heart className={`w-4 h-4 ${isFav ? 'fill-white' : ''}`} />
         </button>
 
-        {/* Hover Quick Actions */}
-        <div className="absolute inset-0 bg-charcoal/20 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-3 gap-2 pointer-events-none">
+        {/* Hover / Mobile Quick Actions */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-charcoal/25 md:backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-2.5 sm:p-3 gap-2 pointer-events-none">
           <button
+            type="button"
             onClick={handleQuickView}
-            className="pointer-events-auto flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white/95 text-charcoal hover:bg-charcoal hover:text-white transition-colors text-xs font-medium font-body shadow-md"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-white/95 hover:bg-charcoal text-charcoal hover:text-white transition-colors text-[11px] sm:text-xs font-semibold font-body shadow-md active:scale-95 cursor-pointer"
+            aria-label="Quick View"
           >
-            <Eye className="w-3.5 h-3.5" />
+            <Eye className="w-3.5 h-3.5 text-crimson-800" />
             <span>Quick View</span>
           </button>
           <button
+            type="button"
             onClick={handleQuickAdd}
-            className="pointer-events-auto p-2 rounded-full bg-crimson-700 text-white hover:bg-crimson-800 transition-colors shadow-md"
+            className="pointer-events-auto p-1.5 sm:p-2 rounded-full bg-crimson-700 text-white hover:bg-crimson-800 transition-colors shadow-md active:scale-95 cursor-pointer"
             title="Quick add to bag"
+            aria-label="Add to bag"
           >
-            <ShoppingBag className="w-4 h-4" />
+            <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
         </div>
       </div>

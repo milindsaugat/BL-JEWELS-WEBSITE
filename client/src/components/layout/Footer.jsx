@@ -69,14 +69,18 @@ export const Footer = () => {
             <p className="text-xs text-stone-400 leading-relaxed font-body">
               Crafting generational fine jewelry since 1984. Every necklace, ring, and bangle is hallmarked with BIS 916 authenticity, celebrating India’s rich regal heritage and auspicious moments.
             </p>
-            <div className="pt-2 text-xs text-stone-300 space-y-1.5 font-body">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-3.5 h-3.5 text-gold-400 shrink-0" />
-                <span>Zaveri Bazaar, Mumbai, Maharashtra</span>
+            <div className="pt-2 text-xs text-stone-300 space-y-2 font-body">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-gold-400 shrink-0 mt-0.5" />
+                <span className="leading-relaxed">
+                  Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="w-3.5 h-3.5 text-gold-400 shrink-0" />
-                <span>+91 98765 43210</span>
+                <a href="tel:07454986610" className="hover:text-gold-300 transition-colors font-medium">
+                  074549 86610
+                </a>
               </div>
             </div>
           </div>

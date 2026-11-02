@@ -116,25 +116,11 @@ export const HeroSection = ({ initialBanners = [] }) => {
               idx === currentIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            {/* Ambient Blurred Background (Edge-to-edge luxury depth for graphic banners) */}
-            {isImageOnly && (
-              <img
-                src={banner.image}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-110 pointer-events-none"
-              />
-            )}
-
-            {/* Banner Image: 100% full fit without cropping */}
+            {/* Banner Image: 100% full cover without blur or gloss */}
             <img
               src={banner.image}
               alt={banner.title || 'Hero Banner'}
-              className={`w-full h-full ${
-                isImageOnly
-                  ? 'relative z-10 object-contain object-center'
-                  : 'object-cover object-center scale-100 transition-transform duration-7000 ease-out'
-              }`}
+              className="w-full h-full object-cover object-center scale-100 transition-transform duration-7000 ease-out"
               {...(idx === 0 ? { fetchpriority: 'high' } : { fetchpriority: 'low' })}
             />
 

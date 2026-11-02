@@ -11,7 +11,7 @@ const DEFAULT_MESSAGES = [
 export const AnnouncementBar = () => {
   const [activeMessageIdx, setActiveMessageIdx] = useState(0);
   const [messages, setMessages] = useState(DEFAULT_MESSAGES);
-  const [contactPhone, setContactPhone] = useState('+91 98765 43210');
+  const [contactPhone, setContactPhone] = useState('074549 86610');
 
   useEffect(() => {
     settingService.getSettings()
@@ -85,10 +85,10 @@ export const AnnouncementBar = () => {
       </div>
 
       {/* Mobile Rotating Bar */}
-      <div className="lg:hidden py-2 px-3 text-center whitespace-nowrap">
-        <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+      <div className="lg:hidden py-1.5 px-3 text-center">
+        <div className="flex items-center justify-center gap-1.5">
           <i className="ri-sparkling-fill text-[#E6C975] text-xs shrink-0"></i>
-          <p className="text-[11px] font-medium tracking-wide truncate max-w-[90vw] text-[#F3E5AB] transition-all duration-300 whitespace-nowrap">
+          <p className="text-[11px] font-medium tracking-wide text-[#F3E5AB] leading-tight">
             {messages[activeMessageIdx]}
           </p>
         </div>

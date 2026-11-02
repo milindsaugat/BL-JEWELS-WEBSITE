@@ -404,11 +404,11 @@ export const Navbar = () => {
 
           <div className="pt-3 border-t border-stone-200 space-y-2 text-xs">
             <a
-              href="tel:+919876543210"
+              href="tel:07454986610"
               className="flex items-center gap-2.5 text-stone-800 font-medium py-1"
             >
               <PhoneCall className="w-4 h-4 text-crimson-800" />
-              <span>Direct Concierge: +91 98765 43210</span>
+              <span>Direct Concierge: 074549 86610</span>
             </a>
 
             <a

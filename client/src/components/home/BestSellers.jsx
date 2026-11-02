@@ -12,7 +12,7 @@ export const BestSellers = ({ products = [] }) => {
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ startX: 0, scrollLeft: 0, moved: false });
 
-  // Update button enabled/disabled states
+  // Update button enabled/disabled states 
   const checkScrollBounds = useCallback(() => {
     const el = sliderRef.current;
     if (!el) return;
@@ -50,6 +50,8 @@ export const BestSellers = ({ products = [] }) => {
 
   // Robust Pointer Events: captures mouse/touch even if cursor leaves container
   const handlePointerDown = (e) => {
+    // If clicked on button or interactive element, let the button handle it directly
+    if (e.target.closest('button, a')) return;
     if (e.button !== 0) return; // Only main left click
     const el = sliderRef.current;
     if (!el) return;
