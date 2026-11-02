@@ -7,7 +7,6 @@ import { BestSellers } from '../components/home/BestSellers';
 import { NewArrivals } from '../components/home/NewArrivals';
 import { BrandStory } from '../components/home/BrandStory';
 import { Testimonials } from '../components/home/Testimonials';
-import { BrandAmbassadorSpotlight } from '../components/home/BrandAmbassadorSpotlight';
 import { RoyalPromisesSection } from '../components/home/RoyalPromisesSection';
 import { NewsletterSection } from '../components/home/NewsletterSection';
 import {
@@ -112,10 +111,7 @@ export const Home = () => {
       {/* 6. Dynamic New Arrivals */}
       <NewArrivals products={newArrivals} />
 
-      {/* 7. The Royal Bridal Heritage Spotlight */}
-      <BrandAmbassadorSpotlight />
-
-      {/* 8. The BL Jewels Royal Promises & Itemized "Bill Yourself" Price Calculator */}
+      {/* 7. The BL Jewels Royal Promises & Itemized "Bill Yourself" Price Calculator */}
       <RoyalPromisesSection />
 
       {/* 9. Dynamic Patron Reflection Reviews (Testimonials at the End) */}
