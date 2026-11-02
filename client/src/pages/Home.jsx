@@ -112,7 +112,7 @@ export const Home = () => {
       {/* 6. Dynamic New Arrivals */}
       <NewArrivals products={newArrivals} />
 
-      {/* 7. Royal Brand Ambassador Spotlight (Tara Sutaria for BL Jewels) */}
+      {/* 7. The Royal Bridal Heritage Spotlight */}
       <BrandAmbassadorSpotlight />
 
       {/* 8. The BL Jewels Royal Promises & Itemized "Bill Yourself" Price Calculator */}
