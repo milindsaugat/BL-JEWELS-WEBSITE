@@ -1,0 +1,12 @@
+{
+  "name": "bl-jewels",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:admin": "cd admin && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "seed": "cd server && npm run seed"
+  }
+}
+

@@ -1,0 +1,264 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { MapPin, RefreshCw, PhoneCall, ShieldCheck, ArrowLeft, ExternalLink } from 'lucide-react';
+import { rateService } from '../services/api';
+
+export const LiveRatePage = () => {
+  const [ratesData, setRatesData] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchRates = async () => {
+    try {
+      setLoading(true);
+      const res = await rateService.getLiveRates();
+      if (res.success) {
+        setRatesData(res);
+      }
+    } catch (err) {
+      console.warn('Live rates fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRates();
+    const interval = setInterval(fetchRates, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const goldSpot = { ask: '3875.72', high: '4028.41', low: '3870.26' };
+  const silverSpot = { ask: '49.16', high: '52.24', low: '48.87' };
+  const inrSpot = { ask: '94.99', high: '95.28', low: '94.93' };
+
+  const tableRows = [
+    { label: 'GOLD MCX', rate: '1,38,499', isBold: true },
+    { label: '22KT RIGHT RATE (92%)', rate: '12,742' },
+    { label: '18KT RIGHT RATE (76%)', rate: '10,526' },
+    { label: '14KT RIGHT RATE (60%)', rate: '8,310' },
+    { label: '9KT RIGHT RATE (37.5%)', rate: '5,195' },
+    { label: '999 SILVER MCX', rate: '1,79,037', isBold: true },
+  ];
+
+  const stores = [
+    'Nirman Vihar',
+    'Lajpat Nagar',
+    'Laxmi Nagar',
+    'Krishna Nagar',
+    'Rohini',
+    'Noida',
+    'Gurgaon',
+  ];
+
+  return (
+    <div className="min-h-screen bg-white text-stone-900 py-8 px-4 sm:px-6 lg:px-8 font-body">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center justify-between">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-[#8B1A1A] transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Storefront</span>
+          </Link>
+
+          <button
+            onClick={fetchRates}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition-colors shadow-xs"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Refresh Rates</span>
+          </button>
+        </div>
+
+        {/* ── Outer Maroon Container (matching Right Gold reference) ── */}
+        <div className="bg-[#4D0D18] text-white rounded-2xl shadow-xl border border-[#C9A44A]/50 p-6 sm:p-8 space-y-6">
+          
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#C9A44A]/30">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-[#F3E5AB] tracking-wide flex items-center gap-2.5">
+                TODAY'S LIVE BULLION RATES
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-300 mt-1">
+                Real-time MCX bullion spot market deltas & verified BIS 916 gold purity benchmarks.
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-[#3B0711] text-[#F3E5AB] border border-[#C9A44A]/40 text-xs font-semibold self-start sm:self-auto">
+              MCX National Sync
+            </span>
+          </div>
+
+          {/* ── 3 SPOT CARDS ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            
+            {/* 1. GOLD SPOT */}
+            <div className="bg-[#5C0F1E] border border-[#C9A44A]/60 rounded-xl p-5 text-center shadow-lg">
+              <div className="text-xs font-bold text-stone-200 uppercase tracking-wider mb-1">
+                GOLD SPOT
+              </div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">
+                ASK
+              </div>
+              <div className="text-3xl font-bold text-[#F3E5AB] font-body tracking-tight my-1.5">
+                {goldSpot.ask}
+              </div>
+              <div className="flex items-center justify-center gap-3 text-xs text-stone-300 font-body">
+                <span>H-{goldSpot.high}</span>
+                <span>L-{goldSpot.low}</span>
+              </div>
+            </div>
+
+            {/* 2. SILVER SPOT */}
+            <div className="bg-[#5C0F1E] border border-[#C9A44A]/60 rounded-xl p-5 text-center shadow-lg">
+              <div className="text-xs font-bold text-stone-200 uppercase tracking-wider mb-1">
+                SILVER SPOT
+              </div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">
+                ASK
+              </div>
+              <div className="text-3xl font-bold text-[#F3E5AB] font-body tracking-tight my-1.5">
+                {silverSpot.ask}
+              </div>
+              <div className="flex items-center justify-center gap-3 text-xs text-stone-300 font-body">
+                <span>H-{silverSpot.high}</span>
+                <span>L-{silverSpot.low}</span>
+              </div>
+            </div>
+
+            {/* 3. INR SPOT */}
+            <div className="bg-[#5C0F1E] border border-[#C9A44A]/60 rounded-xl p-5 text-center shadow-lg">
+              <div className="text-xs font-bold text-stone-200 uppercase tracking-wider mb-1">
+                INR SPOT
+              </div>
+              <div className="text-[10px] text-stone-400 uppercase tracking-widest font-semibold">
+                ASK
+              </div>
+              <div className="text-3xl font-bold text-[#F3E5AB] font-body tracking-tight my-1.5">
+                {inrSpot.ask}
+              </div>
+              <div className="flex items-center justify-center gap-3 text-xs text-stone-300 font-body">
+                <span>H-{inrSpot.high}</span>
+                <span>L-{inrSpot.low}</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ── LOWER SECTION: TABLE + STORE BANNER ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            
+            {/* Left: Rate Guarantee Table (7 cols) */}
+            <div className="lg:col-span-7 bg-[#3B0711] rounded-xl border border-[#C9A44A]/40 overflow-hidden shadow-lg flex flex-col">
+              
+              <div className="px-6 py-3.5 bg-[#2D040C] border-b border-[#C9A44A]/40 flex items-center justify-between text-xs font-bold text-[#F3E5AB] uppercase tracking-wider">
+                <span>Right Rate Guarantee</span>
+                <span>Rate</span>
+              </div>
+
+              <div className="divide-y divide-[#5C0F1E]/80 flex-1">
+                {tableRows.map((row, idx) => (
+                  <div
+                    key={idx}
+                    className="px-6 py-3.5 flex items-center justify-between hover:bg-[#5C0F1E]/40 transition-colors"
+                  >
+                    <span className={`text-xs sm:text-sm ${row.isBold ? 'font-bold text-white' : 'text-stone-200'}`}>
+                      {row.label}
+                    </span>
+                    <span className="text-sm sm:text-base font-bold text-white font-body tracking-tight">
+                      {row.rate}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 bg-[#2D040C] border-t border-[#C9A44A]/30 text-center text-xs text-stone-300">
+                <p>
+                  Live Gold Rate — Get real-time gold rate accurate to the minute.
+                </p>
+              </div>
+
+            </div>
+
+            {/* Right: Multiple Stores Card (5 cols) */}
+            <div className="lg:col-span-5 bg-gradient-to-br from-[#FFF9EE] to-[#F5ECE0] text-stone-900 rounded-xl p-6 border border-[#C9A44A] shadow-lg flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src="/images/bl-jewels-icon.png"
+                      alt="BL Jewels"
+                      className="w-8 h-8 object-contain"
+                    />
+                    <span className="text-xs font-bold text-[#8B1A1A] tracking-wider uppercase">
+                      BL JEWELS
+                    </span>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-md bg-[#8B1A1A] text-white text-[10px] font-bold">
+                    STORE NETWORK
+                  </span>
+                </div>
+
+                <div className="text-center my-4">
+                  <span className="text-[10px] uppercase tracking-widest text-[#8B1A1A] font-bold block">
+                    NOW AT
+                  </span>
+                  <h3 className="text-xl font-extrabold text-[#4D0D18] tracking-tight">
+                    MULTIPLE STORES
+                  </h3>
+                  <p className="text-xs text-stone-600 font-medium">
+                    ACROSS DELHI NCR
+                  </p>
+                </div>
+
+                <div className="text-center mb-3">
+                  <span className="text-xs font-bold text-[#8B1A1A] border-b border-[#8B1A1A]/40 pb-0.5">
+                    Visit Us
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {stores.map((store, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 p-2 rounded-lg bg-white/90 border border-[#C9A44A]/40 shadow-xs"
+                    >
+                      <MapPin className="w-3.5 h-3.5 text-[#8B1A1A] shrink-0" />
+                      <span className="font-semibold text-stone-800 text-[11px] truncate">
+                        {store}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-stone-300 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                  <span className="text-xs text-stone-700 font-medium">
+                    100% BIS Hallmarked
+                  </span>
+                </div>
+
+                <Link
+                  to="/"
+                  className="px-4 py-1.5 bg-[#8B1A1A] hover:bg-[#721515] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                >
+                  <span>Back to Home</span>
+                </Link>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  );
+};
+export default LiveRatePage;
+

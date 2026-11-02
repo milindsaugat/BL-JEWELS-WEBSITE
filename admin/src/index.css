@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F5F2EB;
+    color: #1C1410;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif !important;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-accent {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+
+  .font-body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif !important;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F2EB;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C9A44A;
+  border-radius: 3px;
+}

@@ -1,0 +1,16 @@
+import React from 'react';
+import { RouterProvider } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { router } from './router';
+
+export function App() {
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster richColors position="top-right" />
+    </>
+  );
+}
+
+export default App;
+
