@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Occasion from '../models/Occasion.js';
-import { DEFAULT_OCCASIONS } from '../controllers/occasionController.js';
+import { DEFAULT_OCCASIONS } from './occasionData.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';

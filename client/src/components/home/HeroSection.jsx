@@ -1,79 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Sparkles, ArrowRight, ShieldCheck, Award } from 'lucide-react';
-import { bannerService } from '../../services/api';
-
-const DEFAULT_BANNERS = [
-  {
-    _id: 'ban_1',
-    eyebrow: '✦ PURITY WITH AUSPICIOUSNESS • BRIDAL TROUSSEAU',
-    title: 'Regal Rajputana & Kundan Bridal Sets',
-    subtitle: 'Handcrafted in certified 22K (916) Hallmark Gold with syndicate uncut polki diamonds, Zambian emerald drops, and South Sea pearls.',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=2000&q=90',
-    ctaText: 'Explore Bridal Collection',
-    ctaLink: '/collections/bridal-heritage',
-    secondaryCtaText: 'Book VIP Appointment',
-    secondaryCtaLink: '/contact',
-    badgeText: '100% BIS 916 Hallmark Purity',
-  },
-  {
-    _id: 'ban_2',
-    eyebrow: '✦ HERITAGE GOLD • SACRED TRADITIONS',
-    title: 'Pure 22K Auspicious Temple Gold Heirlooms',
-    subtitle: 'Sculpted by master karigars with ancient nakshi carving, portraying divine Lakshmi and sacred lotus motifs for generational blessings.',
-    image: 'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=2000&q=90',
-    ctaText: 'Discover Temple Gold',
-    ctaLink: '/collections/necklaces',
-    secondaryCtaText: 'Our Heritage Story',
-    secondaryCtaLink: '/about',
-    badgeText: 'Guaranteed Lifetime Buyback',
-  },
-  {
-    _id: 'ban_3',
-    eyebrow: '✦ RARE BRILLIANCE • GIA & IGI CERTIFIED',
-    title: 'Celestial Solitaires in 18K Rose & White Gold',
-    subtitle: 'Exquisite round brilliant and cushion cut solitaires boasting VVS clarity and Colorless perfection for your sacred proposal.',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=2000&q=90',
-    ctaText: 'Explore Solitaires',
-    ctaLink: '/collections/rings',
-    secondaryCtaText: 'Styling Consultation',
-    secondaryCtaLink: '/contact',
-    badgeText: 'GIA Certified Diamonds',
-  },
-  {
-    _id: 'ban_4',
-    eyebrow: '✦ SACRED UNION • ETERNAL DEVOTION',
-    title: 'The Auspicious Swarna Mangalsutra Collection',
-    subtitle: 'Delicate brilliant-cut diamonds set in pure 22K gold medallions, hand-strung with sacred black onyx beads for timeless daily grace.',
-    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=2000&q=90',
-    ctaText: 'Shop Mangalsutras',
-    ctaLink: '/collections/mangalsutra',
-    secondaryCtaText: 'View Bestsellers',
-    secondaryCtaLink: '/collections',
-    badgeText: 'Free Insured Express Delivery',
-  }
-];
 
 export const HeroSection = ({ initialBanners = [] }) => {
-  const [banners, setBanners] = useState(initialBanners.length > 0 ? initialBanners : DEFAULT_BANNERS);
+  const banners = initialBanners;
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const touchStartRef = useRef(null);
+  const didSwipeRef = useRef(false);
 
-  useEffect(() => {
-    if (initialBanners && initialBanners.length > 0) {
-      setBanners(initialBanners);
-      return;
-    }
-    bannerService.getBanners()
-      .then((res) => {
-        if (res.banners && res.banners.length > 0) {
-          setBanners(res.banners);
-        }
-      })
-      .catch(() => {
-        // Fallback to default luxury banners
-      });
-  }, [initialBanners]);
+  useEffect(() => { setCurrentIdx(0); }, [initialBanners]);
 
   // Autoplay slider (5.5s interval)
   useEffect(() => {
@@ -93,17 +29,51 @@ export const HeroSection = ({ initialBanners = [] }) => {
     setCurrentIdx((prev) => (prev + 1) % banners.length);
   };
 
+  const handleTouchStart = (event) => {
+    didSwipeRef.current = false;
+    touchStartRef.current = event.touches.length === 1
+      ? { x: event.touches[0].clientX, y: event.touches[0].clientY }
+      : null;
+    setIsPaused(true);
+  };
+
+  const handleTouchEnd = (event) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    setIsPaused(false);
+    if (!start || !event.changedTouches.length || banners.length < 2) return;
+    const dx = event.changedTouches[0].clientX - start.x;
+    const dy = event.changedTouches[0].clientY - start.y;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      didSwipeRef.current = true;
+      if (dx < 0) nextSlide();
+      else prevSlide();
+    }
+  };
+
   const activeBanner = banners[currentIdx] || banners[0];
+
+  if (!activeBanner) return null;
 
   return (
     <section
-      className={`group relative w-full overflow-hidden bg-[#140F0E] transition-all duration-300 ${
+      className={`group relative w-full overflow-hidden bg-[#140F0E] ${
         activeBanner?.isImageOnly
           ? 'aspect-[2.4/1] sm:aspect-[2.8/1] md:aspect-[3/1] min-h-[220px] max-h-[640px]'
-          : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px] h-[70vh] max-h-[700px]'
+          : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px] h-auto sm:h-[70svh] sm:max-h-[700px]'
       }`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={() => { touchStartRef.current = null; setIsPaused(false); }}
+      onClickCapture={(event) => {
+        if (didSwipeRef.current) {
+          event.preventDefault();
+          event.stopPropagation();
+          didSwipeRef.current = false;
+        }
+      }}
     >
       {/* Background Slides */}
       {banners.map((banner, idx) => {
@@ -121,7 +91,8 @@ export const HeroSection = ({ initialBanners = [] }) => {
               src={banner.image}
               alt={banner.title || 'Hero Banner'}
               className="w-full h-full object-cover object-center scale-100 transition-transform duration-7000 ease-out"
-              {...(idx === 0 ? { fetchpriority: 'high' } : { fetchpriority: 'low' })}
+              fetchPriority={idx === currentIdx ? 'high' : 'low'}
+              decoding="async"
             />
 
             {/* Multi-layer Gradient Overlays (Only for banners with text overlay) */}
@@ -212,11 +183,11 @@ export const HeroSection = ({ initialBanners = [] }) => {
 
       {/* Prev / Next Slider Arrow Controls (Completely hidden when single banner, reveals on hover when multiple) */}
       {banners.length > 1 && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="opacity-100 md:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-300">
           <button
             onClick={prevSlide}
             aria-label="Previous Slide"
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-crimson-700/90 backdrop-blur-md border border-gold-400/40 text-white flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
+            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-crimson-700/90 backdrop-blur-md border border-gold-400/40 text-white hidden md:flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
           >
             <ChevronLeft className="w-6 h-6 hover:-translate-x-0.5 transition-transform" />
           </button>
@@ -224,7 +195,7 @@ export const HeroSection = ({ initialBanners = [] }) => {
           <button
             onClick={nextSlide}
             aria-label="Next Slide"
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-crimson-700/90 backdrop-blur-md border border-gold-400/40 text-white flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
+            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-crimson-700/90 backdrop-blur-md border border-gold-400/40 text-white hidden md:flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
           >
             <ChevronRight className="w-6 h-6 hover:translate-x-0.5 transition-transform" />
           </button>

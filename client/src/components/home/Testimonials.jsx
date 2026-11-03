@@ -1,161 +1,14 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useCarousel } from '../../hooks/useCarousel';
 import { Star, ShieldCheck, Quote, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
-const DEFAULT_REVIEWS = [
-  {
-    userName: 'Radhika Mehra',
-    location: 'New Delhi',
-    title: 'Our bridal choker was the highlight of my wedding!',
-    comment: 'The Maya Royal Kundan Choker took everyone’s breath away. What surprised us most was the exquisite weight and the BIS 916 hallmarking report included in the velvet case. BL Jewels has our lifetime loyalty.',
-    rating: 5,
-    piece: 'Maya Royal Kundan Choker Necklace',
-    userImage: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    userName: 'Aditya & Priya Singhania',
-    location: 'Mumbai',
-    title: 'Flawless diamond solitaire proposal ring',
-    comment: 'I consulted Priya, their AI stylist, late at night, and then visited their Zaveri Bazaar boutique. The 1.25ct solitaire diamond ring came with GIA certification. My fiancée couldn’t stop crying with joy!',
-    rating: 5,
-    piece: 'Eternity Solitaire Diamond Ring',
-    userImage: 'https://images.unsplash.com/photo-1621784563330-caee0b138a00?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    userName: 'Meenakshi Sundaram',
-    location: 'Bengaluru',
-    title: 'Sacred Swarna Mangalsutra with daily elegance',
-    comment: 'The craftsmanship of the black beads paired with diamond floral motifs is pure auspicious perfection. Fast insured delivery right to our doorstep with blue ribbon packaging.',
-    rating: 5,
-    piece: 'Auspicious Swarna Mangalsutra 22K',
-    userImage: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    userName: 'Ananya Deshmukh',
-    location: 'Pune',
-    title: 'Purest 22K Antique Lakshmi Temple Kada',
-    comment: 'The nakshi hand-carving of Goddess Lakshmi with sacred lotus petals is divine work. The solid gold weight and BIS stamp give complete peace of mind. Truly heirloom grade.',
-    rating: 5,
-    piece: 'Antique Temple Lakshmi Gold Kada',
-    userImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    userName: 'Sunita & Rajesh Agarwal',
-    location: 'Jaipur',
-    title: 'Uncut Polki Chandbalis for daughter’s Sangeet',
-    comment: 'Syndicate polki stones with natural Zambian emerald drops. Every relative complimented the regal look. Blue Dart armored express reached in 2 days safely!',
-    rating: 5,
-    piece: 'Royal Rajputana Uncut Polki Chandbalis',
-    userImage: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=600&q=80',
-  },
-  {
-    userName: 'Kavita Chawla',
-    location: 'Chandigarh',
-    title: 'Auspicious Peacock Jhumkas in 22K Yellow Gold',
-    comment: 'Traditional rawa ball detailing and peacock feathers sculpted to perfection. The lifetime buyback commitment gives absolute trust in BL Jewels.',
-    rating: 5,
-    piece: 'Mayura Royal Heritage Gold Jhumkas',
-    userImage: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80',
-    image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?auto=format&fit=crop&w=600&q=80',
-  },
-];
-
 export const Testimonials = ({ initialReviews = [] }) => {
-  const reviews = initialReviews && initialReviews.length > 0 ? initialReviews : DEFAULT_REVIEWS;
+  const reviews = initialReviews;
 
-  const sliderRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
+  const { sliderRef, isDragging, canScrollLeft, canScrollRight, scrollSlider,
+    handlePointerDown, handlePointerMove, handlePointerUp, handleClickCapture } = useCarousel(reviews);
 
-  const isDraggingRef = useRef(false);
-  const dragStartRef = useRef({ startX: 0, scrollLeft: 0, moved: false });
-
-  // Update arrow enabled states
-  const checkScrollBounds = useCallback(() => {
-    const el = sliderRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-  }, []);
-
-  useEffect(() => {
-    checkScrollBounds();
-    const el = sliderRef.current;
-    if (!el) return;
-
-    el.addEventListener('scroll', checkScrollBounds, { passive: true });
-    window.addEventListener('resize', checkScrollBounds);
-
-    return () => {
-      el.removeEventListener('scroll', checkScrollBounds);
-      window.removeEventListener('resize', checkScrollBounds);
-    };
-  }, [reviews, checkScrollBounds]);
-
-  // Click scroll handler
-  const scrollSlider = (direction) => {
-    const el = sliderRef.current;
-    if (!el) return;
-    const card = el.querySelector('[data-testimonial-card]');
-    const step = card ? card.clientWidth + 24 : Math.min(el.clientWidth * 0.75, 420);
-
-    el.scrollBy({
-      left: direction === 'left' ? -step : step,
-      behavior: 'smooth',
-    });
-  };
-
-  // Robust Pointer Events
-  const handlePointerDown = (e) => {
-    if (e.button !== 0) return;
-    const el = sliderRef.current;
-    if (!el) return;
-
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    dragStartRef.current = {
-      startX: e.clientX,
-      scrollLeft: el.scrollLeft,
-      moved: false,
-    };
-
-    try {
-      el.setPointerCapture(e.pointerId);
-    } catch {}
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDraggingRef.current) return;
-    const el = sliderRef.current;
-    if (!el) return;
-
-    const deltaX = e.clientX - dragStartRef.current.startX;
-    if (Math.abs(deltaX) > 5) {
-      dragStartRef.current.moved = true;
-    }
-    el.scrollLeft = dragStartRef.current.scrollLeft - deltaX;
-  };
-
-  const handlePointerUp = (e) => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    setIsDragging(false);
-
-    const el = sliderRef.current;
-    if (el) {
-      try {
-        if (el.hasPointerCapture(e.pointerId)) {
-          el.releasePointerCapture(e.pointerId);
-        }
-      } catch {}
-    }
-  };
+  if (!reviews.length) return null;
 
   return (
     <section className="py-20 sm:py-24 bg-white border-b border-stone-200/80 relative overflow-hidden w-full">
@@ -199,7 +52,7 @@ export const Testimonials = ({ initialReviews = [] }) => {
           <button
             onClick={() => scrollSlider('left')}
             disabled={!canScrollLeft}
-            className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 flex items-center justify-center transition-all duration-200 ${
+            className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollLeft
                 ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
@@ -213,7 +66,7 @@ export const Testimonials = ({ initialReviews = [] }) => {
           <button
             onClick={() => scrollSlider('right')}
             disabled={!canScrollRight}
-            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 flex items-center justify-center transition-all duration-200 ${
+            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollRight
                 ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
@@ -223,24 +76,28 @@ export const Testimonials = ({ initialReviews = [] }) => {
             <ChevronRight className="w-6 h-6" />
           </button>
 
-          {/* Scroller Track: Hardware-accelerated, pointer-captured, touch & drag ready */}
+          {/* Native touch scrolling with mouse drag on desktop */}
           <div
             ref={sliderRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
-            className={`flex items-stretch gap-5 sm:gap-6 overflow-x-auto py-4 px-2 no-scrollbar ${
+            onLostPointerCapture={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onDragStart={(event) => event.preventDefault()}
+            onClickCapture={handleClickCapture}
+            className={`touch-carousel flex items-stretch gap-5 sm:gap-6 overflow-x-auto py-4 px-2 no-scrollbar ${
               isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
-              scrollSnapType: isDragging ? 'none' : 'x proximity',
-              scrollBehavior: isDragging ? 'auto' : 'smooth',
+              scrollBehavior: 'auto',
+              scrollPaddingInline: '8px',
               overscrollBehaviorX: 'contain',
-              touchAction: 'pan-y pinch-zoom',
+              touchAction: 'pan-x pan-y pinch-zoom',
             }}
           >
             {reviews.map((rev, idx) => {
@@ -251,7 +108,7 @@ export const Testimonials = ({ initialReviews = [] }) => {
                 <div
                   key={rev._id || idx}
                   data-testimonial-card="true"
-                  className="w-[320px] sm:w-[380px] md:w-[420px] shrink-0 flex flex-col justify-between bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-sm hover:shadow-gold hover:border-gold-300 transition-all duration-300 group"
+                  className="w-[min(320px,85vw)] sm:w-[380px] md:w-[420px] shrink-0 flex flex-col justify-between bg-white rounded-3xl p-6 sm:p-7 border border-stone-200/90 shadow-sm hover:shadow-gold hover:border-gold-300 transition-all duration-300 group"
                   style={{
                     scrollSnapAlign: 'start',
                   }}

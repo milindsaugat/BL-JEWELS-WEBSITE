@@ -1,20 +1,25 @@
+import { getRateDisplay, getRateError } from '../lib/rateDisplay';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, RefreshCw, PhoneCall, ShieldCheck, ArrowLeft, ExternalLink } from 'lucide-react';
+import { MapPin, RefreshCw, Phone, ShieldCheck, ArrowLeft } from 'lucide-react';
 import { rateService } from '../services/api';
 
 export const LiveRatePage = () => {
   const [ratesData, setRatesData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [rateError, setRateError] = useState('');
 
   const fetchRates = async () => {
     try {
       setLoading(true);
+      setRateError('');
       const res = await rateService.getLiveRates();
+      if (!res?.success) throw new Error('Rates unavailable');
       if (res.success) {
         setRatesData(res);
       }
     } catch (err) {
+      setRateError(getRateError(err));
       console.warn('Live rates fetch error:', err);
     } finally {
       setLoading(false);
@@ -27,22 +32,12 @@ export const LiveRatePage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const goldSpot = { ask: '3875.72', high: '4028.41', low: '3870.26' };
-  const silverSpot = { ask: '49.16', high: '52.24', low: '48.87' };
-  const inrSpot = { ask: '94.99', high: '95.28', low: '94.93' };
-
-  const tableRows = [
-    { label: 'GOLD MCX', rate: '1,38,499', isBold: true },
-    { label: '22KT RIGHT RATE (92%)', rate: '12,742' },
-    { label: '18KT RIGHT RATE (76%)', rate: '10,526' },
-    { label: '14KT RIGHT RATE (60%)', rate: '8,310' },
-    { label: '9KT RIGHT RATE (37.5%)', rate: '5,195' },
-    { label: '999 SILVER MCX', rate: '1,79,037', isBold: true },
-  ];
+  const { goldSpot, silverSpot, inrSpot, tableRows } = getRateDisplay(ratesData);
 
   return (
     <div className="min-h-screen bg-white text-stone-900 py-8 px-4 sm:px-6 lg:px-8 font-body">
       <div className="max-w-6xl mx-auto space-y-6">
+          {rateError && <p role="alert" className="rounded-lg border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950">{rateError}{ratesData ? ' Showing the last successfully loaded rates.' : ''}</p>}
         
         {/* Navigation Breadcrumb */}
         <div className="flex items-center justify-between">
@@ -56,6 +51,7 @@ export const LiveRatePage = () => {
 
           <button
             onClick={fetchRates}
+              disabled={loading}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-semibold text-stone-700 hover:bg-stone-50 transition-colors shadow-xs"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />

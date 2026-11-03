@@ -1,150 +1,17 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useCarousel } from '../../hooks/useCarousel';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ArrowRight, Sparkles } from 'lucide-react';
-import { occasionService } from '../../services/api';
-
-// Authentic Indian occasion wear default state (6 Curated Segments)
-const INITIAL_OCCASIONS = [
-  {
-    title: 'Everyday',
-    subtitle: 'Working women • Light rings, studs, chains',
-    badge: 'Everyday',
-    image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=80',
-    link: '/collections?occasion=everyday',
-  },
-  {
-    title: 'Office Wear',
-    subtitle: 'Corporate women • Subtle, minimal pieces',
-    badge: 'Office Wear',
-    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=700&q=80',
-    link: '/collections?occasion=office',
-  },
-  {
-    title: 'Festive',
-    subtitle: 'All Celebrations • Jhumkas, kadas, sets',
-    badge: 'Festive',
-    image: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=700&q=80',
-    link: '/collections?occasion=festive',
-  },
-  {
-    title: 'Puja & Religious',
-    subtitle: 'Traditional buyer • Temple jewelry, coins',
-    badge: 'Puja & Devotion',
-    image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=700&q=80',
-    link: '/collections?occasion=puja',
-  },
-  {
-    title: 'Wedding',
-    subtitle: 'Family + guests • Heavy sets, necklaces',
-    badge: 'Wedding',
-    image: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&fit=crop&w=700&q=80',
-    link: '/collections?occasion=wedding',
-  },
-  {
-    title: 'Bridal',
-    subtitle: 'The Bride • Full trousseau sets',
-    badge: 'Bridal',
-    image: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=700&q=80',
-    link: '/collections?occasion=bridal',
-  },
-];
 
 export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) => {
   // Metal Tabs: Gold, Diamond, Silver
   const [activeMetal, setActiveMetal] = useState('gold');
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const [occasions, setOccasions] = useState(
-    initialOccasions.length > 0 ? initialOccasions : INITIAL_OCCASIONS
-  );
-
-  const sliderRef = useRef(null);
-  const isDraggingRef = useRef(false);
-  const dragStartRef = useRef({ startX: 0, scrollLeft: 0, moved: false });
-
-  // Dedicated smooth scroll & drag state for Occasion Horizontal Slider (Pure Drag & Mouse Wheel, No Buttons)
-  const occSliderRef = useRef(null);
-  const occDraggingRef = useRef(false);
-  const occDragStartRef = useRef({ startX: 0, scrollLeft: 0, moved: false });
-
-  useEffect(() => {
-    const scroller = occSliderRef.current;
-    if (!scroller) return;
-
-    // Mouse wheel horizontal translation for effortless desktop scrolling
-    const onWheel = (e) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        const isRight = e.deltaY > 0;
-        const canScroll = isRight
-          ? scroller.scrollLeft < scroller.scrollWidth - scroller.clientWidth - 5
-          : scroller.scrollLeft > 5;
-
-        if (canScroll) {
-          e.preventDefault();
-          scroller.scrollBy({ left: e.deltaY * 1.4, behavior: 'auto' });
-        }
-      }
-    };
-
-    scroller.addEventListener('wheel', onWheel, { passive: false });
-
-    return () => {
-      scroller.removeEventListener('wheel', onWheel);
-    };
-  }, []);
-
-  // Robust mouse click & drag events for occasion slider
-  const handleOccPointerDown = (e) => {
-    if (e.button !== 0) return;
-    const scroller = occSliderRef.current;
-    if (!scroller) return;
-
-    occDraggingRef.current = true;
-    occDragStartRef.current = {
-      startX: e.clientX,
-      scrollLeft: scroller.scrollLeft,
-      moved: false,
-    };
-
-    try {
-      scroller.setPointerCapture(e.pointerId);
-    } catch {}
-  };
-
-  const handleOccPointerMove = (e) => {
-    if (!occDraggingRef.current) return;
-    const scroller = occSliderRef.current;
-    if (!scroller) return;
-
-    const deltaX = e.clientX - occDragStartRef.current.startX;
-    if (Math.abs(deltaX) > 6) {
-      occDragStartRef.current.moved = true;
-    }
-    scroller.scrollLeft = occDragStartRef.current.scrollLeft - deltaX;
-  };
-
-  const handleOccPointerUp = (e) => {
-    if (!occDraggingRef.current) return;
-    occDraggingRef.current = false;
-
-    const scroller = occSliderRef.current;
-    if (scroller) {
-      try {
-        if (scroller.hasPointerCapture(e.pointerId)) {
-          scroller.releasePointerCapture(e.pointerId);
-        }
-      } catch {}
-    }
-  };
-
-  const handleOccClickCapture = (e) => {
-    if (occDragStartRef.current.moved) {
-      e.preventDefault();
-      e.stopPropagation();
-      occDragStartRef.current.moved = false;
-    }
-  };
+  const occasions = initialOccasions;
+  const { sliderRef, isDragging, canScrollLeft, canScrollRight, scrollSlider,
+    handlePointerDown, handlePointerMove, handlePointerUp, handleClickCapture } = useCarousel(categories, activeMetal);
+  const { sliderRef: occSliderRef, handlePointerDown: handleOccPointerDown,
+    handlePointerMove: handleOccPointerMove, handlePointerUp: handleOccPointerUp,
+    handleClickCapture: handleOccClickCapture } = useCarousel(occasions);
 
   const metalTabs = [
     { id: 'gold', label: 'Gold Jewellery' },
@@ -152,128 +19,13 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
     { id: 'silver', label: 'Silver Jewellery' },
   ];
 
-  // Sync when parent provides concurrent occasions
-  useEffect(() => {
-    if (initialOccasions && initialOccasions.length > 0) {
-      setOccasions(initialOccasions);
-    }
-  }, [initialOccasions]);
-
-  // Fallback direct fetch if mounted standalone
-  useEffect(() => {
-    if (initialOccasions.length > 0) return;
-    let isMounted = true;
-    const fetchOccasions = async () => {
-      try {
-        const res = await occasionService.getOccasions();
-        if (isMounted && res?.occasions && res.occasions.length > 0) {
-          setOccasions(res.occasions);
-        }
-      } catch (err) {
-        console.error('Fetch occasions error:', err);
-      }
-    };
-    fetchOccasions();
-    return () => { isMounted = false; };
-  }, [initialOccasions]);
-
   // Filter categories by the active metal
   const filteredCategories = categories.filter((cat) => {
     if (!cat.metals || cat.metals.length === 0) return true;
     return cat.metals.includes(activeMetal);
   });
 
-  // Performance-driven scroll state update
-  const updateArrowStates = useCallback(() => {
-    const scroller = sliderRef.current;
-    if (!scroller) return;
-    const { scrollLeft, scrollWidth, clientWidth } = scroller;
-    setCanScrollLeft(scrollLeft > 8);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 8);
-  }, []);
-
-  useEffect(() => {
-    const scroller = sliderRef.current;
-    if (!scroller) return;
-
-    updateArrowStates();
-
-    scroller.addEventListener('scroll', updateArrowStates, { passive: true });
-    window.addEventListener('resize', updateArrowStates);
-
-    return () => {
-      scroller.removeEventListener('scroll', updateArrowStates);
-      window.removeEventListener('resize', updateArrowStates);
-    };
-  }, [filteredCategories, activeMetal, updateArrowStates]);
-
-  // Smooth button scroll by exact card steps
-  const scrollSlider = (direction) => {
-    const scroller = sliderRef.current;
-    if (!scroller) return;
-
-    const firstCard = scroller.querySelector('a');
-    const step = firstCard ? (firstCard.clientWidth + 24) * 2 : Math.min(scroller.clientWidth * 0.75, 500);
-
-    scroller.scrollBy({
-      left: direction === 'left' ? -step : step,
-      behavior: 'smooth',
-    });
-  };
-
-  // Robust Pointer Events: captures mouse/touch even outside container
-  const handlePointerDown = (e) => {
-    if (e.button !== 0) return;
-    const scroller = sliderRef.current;
-    if (!scroller) return;
-
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    dragStartRef.current = {
-      startX: e.clientX,
-      scrollLeft: scroller.scrollLeft,
-      moved: false,
-    };
-
-    try {
-      scroller.setPointerCapture(e.pointerId);
-    } catch {}
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDraggingRef.current) return;
-    const scroller = sliderRef.current;
-    if (!scroller) return;
-
-    const deltaX = e.clientX - dragStartRef.current.startX;
-    if (Math.abs(deltaX) > 5) {
-      dragStartRef.current.moved = true;
-    }
-    scroller.scrollLeft = dragStartRef.current.scrollLeft - deltaX;
-  };
-
-  const handlePointerUp = (e) => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    setIsDragging(false);
-
-    const scroller = sliderRef.current;
-    if (scroller) {
-      try {
-        if (scroller.hasPointerCapture(e.pointerId)) {
-          scroller.releasePointerCapture(e.pointerId);
-        }
-      } catch {}
-    }
-  };
-
-  const handleClickCapture = (e) => {
-    if (dragStartRef.current.moved) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragStartRef.current.moved = false;
-    }
-  };
+  if (!categories.length && !occasions.length) return null;
 
   return (
     <section className="py-14 sm:py-20 bg-white relative overflow-hidden w-full">
@@ -327,14 +79,14 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
           })}
         </div>
 
-        {/* ── 2. Full Width SQUARE Category Slider (Hardware-Accelerated 120 FPS, No Scrollbar) ── */}
+        {/* ── 2. Category slider with native touch scrolling ── */}
         <div className="relative group/slider">
           
           {/* Left Arrow Button */}
           <button
             onClick={() => scrollSlider('left')}
             disabled={!canScrollLeft}
-            className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 flex items-center justify-center transition-all duration-200 ${
+            className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollLeft
                 ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
@@ -348,7 +100,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
           <button
             onClick={() => scrollSlider('right')}
             disabled={!canScrollRight}
-            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 flex items-center justify-center transition-all duration-200 ${
+            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollRight
                 ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
@@ -358,25 +110,28 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
             <ChevronRight className="w-6 h-6" />
           </button>
 
-          {/* Scroller Track: Hardware-accelerated, pointer-captured, touch & drag ready */}
+          {/* Native touch scrolling with mouse drag on desktop */}
           <div
             ref={sliderRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onLostPointerCapture={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onDragStart={(event) => event.preventDefault()}
             onClickCapture={handleClickCapture}
-            className={`flex items-stretch gap-4 sm:gap-5 md:gap-6 overflow-x-auto py-3 px-2 no-scrollbar ${
+            className={`touch-carousel flex items-stretch gap-4 sm:gap-5 md:gap-6 overflow-x-auto py-3 px-2 no-scrollbar ${
               isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
-              scrollSnapType: isDragging ? 'none' : 'x proximity',
-              scrollBehavior: isDragging ? 'auto' : 'smooth',
+              scrollBehavior: 'auto',
+              scrollPaddingInline: '8px',
               overscrollBehaviorX: 'contain',
-              touchAction: 'pan-y pinch-zoom',
+              touchAction: 'pan-x pan-y pinch-zoom',
             }}
           >
             {filteredCategories.map((cat) => (
@@ -427,6 +182,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
         </div>
 
         {/* ── 3. Centered Heading: BL Jewels Royal World / A Companion for Every Occasion ── */}
+        {occasions.length > 0 && <>
         <div className="text-center max-w-2xl mx-auto mt-16 sm:mt-20 mb-8 sm:mb-11 space-y-2 px-4">
           <div className="inline-flex items-center gap-2">
             <span className="w-8 h-px bg-gold-400/80" />
@@ -461,8 +217,11 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
             onPointerMove={handleOccPointerMove}
             onPointerUp={handleOccPointerUp}
             onPointerCancel={handleOccPointerUp}
+            onLostPointerCapture={handleOccPointerUp}
+            onPointerLeave={handleOccPointerUp}
+            onDragStart={(event) => event.preventDefault()}
             onClickCapture={handleOccClickCapture}
-            className="flex items-stretch gap-5 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-5 pt-2 px-1 select-none cursor-grab active:cursor-grabbing"
+            className="touch-carousel flex items-stretch gap-5 sm:gap-6 overflow-x-auto no-scrollbar pb-5 pt-2 px-1 select-none cursor-grab active:cursor-grabbing"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -474,7 +233,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
                 key={occ._id || i}
                 to={occ.link}
                 draggable={false}
-                className="group relative shrink-0 w-[280px] sm:w-[320px] md:w-[350px] aspect-[3/4] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl hover:shadow-gold-500/25 transition-all duration-500 bg-stone-900 block border border-stone-200/90 hover:border-gold-400 transform hover:-translate-y-2 select-none"
+                className="group relative shrink-0 w-[min(280px,80vw)] sm:w-[320px] md:w-[350px] aspect-[3/4] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl hover:shadow-gold-500/25 transition-all duration-500 bg-stone-900 block border border-stone-200/90 hover:border-gold-400 transform hover:-translate-y-2 select-none"
               >
                 {/* High-res Model Image actively wearing occasion jewelry */}
                 <img
@@ -493,10 +252,10 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
                 </div>
 
                 {/* Gradient Vignette: Only Appears on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
                 {/* Bottom Details: Slides Up & Only Appears on Hover */}
-                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white flex flex-col justify-end space-y-1.5 z-10 pointer-events-none translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
+                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6 text-white flex flex-col justify-end space-y-1.5 z-10 pointer-events-none translate-y-0 opacity-100 md:translate-y-3 md:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 ease-out">
                   <span className="text-xs font-accent text-gold-300 uppercase tracking-widest font-semibold">
                     {occ.badge} Collection
                   </span>
@@ -518,6 +277,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
           </div>
         </div>
 
+        </>}
       </div>
     </section>
   );

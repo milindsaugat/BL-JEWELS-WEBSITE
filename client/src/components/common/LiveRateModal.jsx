@@ -1,5 +1,6 @@
+import { getRateDisplay, getRateError } from '../../lib/rateDisplay';
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, RefreshCw, PhoneCall, ShieldCheck, ArrowRight } from 'lucide-react';
+import { X, MapPin, RefreshCw, Phone, PhoneCall, ShieldCheck } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { rateService } from '../../services/api';
 
@@ -7,15 +8,19 @@ export const LiveRateModal = () => {
   const { isLiveRateOpen, closeLiveRate } = useUIStore();
   const [ratesData, setRatesData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [rateError, setRateError] = useState('');
 
   const fetchRates = async () => {
     try {
       setLoading(true);
+      setRateError('');
       const res = await rateService.getLiveRates();
+      if (!res?.success) throw new Error('Rates unavailable');
       if (res.success) {
         setRatesData(res);
       }
     } catch (err) {
+      setRateError(getRateError(err));
       console.warn('Live rates fetch in modal:', err);
     } finally {
       setLoading(false);
@@ -32,37 +37,7 @@ export const LiveRateModal = () => {
 
   if (!isLiveRateOpen) return null;
 
-  // Real live bullion benchmarks synced with GoldAPI.io feed
-  const goldRateItem = ratesData?.goldRates?.[0]; // GOLD SPOT
-  const goldSpot = {
-    ask: ratesData?.goldSpotAsk?.toFixed ? ratesData.goldSpotAsk.toFixed(2) : (goldRateItem?.ask || '3897.58'),
-    high: goldRateItem?.high || '3919.29',
-    low: goldRateItem?.low || '3875.65',
-  };
-  const silverRateItem = ratesData?.silverRates?.[0]; // SILVER SPOT
-  const silverSpot = {
-    ask: ratesData?.silverSpotAsk?.toFixed ? ratesData.silverSpotAsk.toFixed(2) : (silverRateItem?.ask || '49.16'),
-    high: silverRateItem?.high || '52.24',
-    low: silverRateItem?.low || '48.87',
-  };
-  const inrSpot = { ask: ratesData?.inrSpotAsk?.toFixed ? ratesData.inrSpotAsk.toFixed(2) : '94.99', high: '95.28', low: '94.93' };
-
-  const numRates = ratesData?.numericRates || {};
-  const g24k = numRates['24K'] || 13900;
-  const g22k = numRates['22K'] || 12742;
-  const g18k = numRates['18K'] || 10425;
-  const g14k = numRates['14K'] || 8108;
-  const g9k = numRates['9K'] || 5212;
-  const silverKg = (numRates.silverPerGram ? numRates.silverPerGram * 1000 : 165000).toLocaleString('en-IN');
-
-  const tableRows = [
-    { label: 'GOLD MCX (10g)', rate: (g24k * 10).toLocaleString('en-IN'), isBold: true },
-    { label: '22KT BL RATE (92%)', rate: g22k.toLocaleString('en-IN') },
-    { label: '18KT BL RATE (76%)', rate: g18k.toLocaleString('en-IN') },
-    { label: '14KT BL RATE (60%)', rate: g14k.toLocaleString('en-IN') },
-    { label: '9KT BL RATE (37.5%)', rate: g9k.toLocaleString('en-IN') },
-    { label: '999 SILVER MCX (1 Kg)', rate: silverKg, isBold: true },
-  ];
+  const { goldSpot, silverSpot, inrSpot, tableRows } = getRateDisplay(ratesData);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
@@ -90,6 +65,7 @@ export const LiveRateModal = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={fetchRates}
+              disabled={loading}
               className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-stone-200 transition-colors"
               title="Refresh Bullion Feed"
             >
@@ -107,6 +83,7 @@ export const LiveRateModal = () => {
 
         {/* Scrollable Content */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+          {rateError && <p role="alert" className="rounded-lg border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950">{rateError}{ratesData ? ' Showing the last successfully loaded rates.' : ''}</p>}
           
           {/* ── 3 SPOT CARDS GRID ── */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">

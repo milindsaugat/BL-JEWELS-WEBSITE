@@ -17,28 +17,11 @@ const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
 const INDIAN_DOMESTIC_GOLD_DUTY_MULTIPLIER = 1.16934;
 const INDIAN_DOMESTIC_SILVER_DUTY_MULTIPLIER = 1.07843;
 
-// Domestic Indian Retail Benchmarks (100% matched with IBJA / Google / Goodreturns live rates)
-const FALLBACK_BENCHMARKS = {
-  gold24k: 13900,
-  gold22k: 12742,
-  gold18k: 10425,
-  gold14k: 8108,
-  gold9k: 5212,
-  goldSpotAsk: 3897.58,
-  goldSpotHigh: 3919.29,
-  goldSpotLow: 3875.65,
-  goldChangePct: '+0.57%',
-  silver24kGram: 165,
-  silverSpotAsk: 49.16,
-  silverSpotHigh: 52.24,
-  silverSpotLow: 48.87,
-  silverChangePct: '+1.15%',
-};
-
 export const getLiveRates = async (req, res) => {
   try {
     const now = Date.now();
-    const token = process.env.GOLD_API_KEY || 'goldapi-278aa674b75f13593451f21a4051ac2b-io';
+    const token = process.env.GOLD_API_KEY;
+    if (!token) return res.status(503).json({ success: false, code: 'RATE_PROVIDER_NOT_CONFIGURED', message: 'Live rates are not configured.' });
 
     // Check if cached data is fresh (less than 5 minutes old)
     if (cachedRateData && (now - lastFetchTimestamp < CACHE_TTL_MS)) {
@@ -52,19 +35,34 @@ export const getLiveRates = async (req, res) => {
     let goldData = null;
     let silverData = null;
     let goldUsdData = null;
+    let silverUsdData = null;
+    let providerFailure = 'RATE_PROVIDER_UNAVAILABLE';
 
     try {
+      const signal = AbortSignal.timeout(8000);
       const headers = {
         'x-access-token': token,
         'Content-Type': 'application/json',
       };
 
       // Fetch Gold in INR, Silver in INR, and Gold Spot in USD simultaneously
-      const [xauInrRes, xagInrRes, xauUsdRes] = await Promise.allSettled([
-        fetch('https://www.goldapi.io/api/XAU/INR', { headers }),
-        fetch('https://www.goldapi.io/api/XAG/INR', { headers }),
-        fetch('https://www.goldapi.io/api/XAU/USD', { headers }),
+      const [xauInrRes, xagInrRes, xauUsdRes, xagUsdRes] = await Promise.allSettled([
+        fetch('https://www.goldapi.io/api/XAU/INR', { headers, signal }),
+        fetch('https://www.goldapi.io/api/XAG/INR', { headers, signal }),
+        fetch('https://www.goldapi.io/api/XAU/USD', { headers, signal }),
+        fetch('https://www.goldapi.io/api/XAG/USD', { headers, signal }),
       ]);
+
+      for (const result of [xauInrRes, xagInrRes, xauUsdRes, xagUsdRes]) {
+        if (result.status !== 'fulfilled' || result.value.ok) continue;
+        const response = result.value;
+        const body = await response.json().catch(() => ({}));
+        if (response.status === 429 || /quota|request limit/i.test(String(body.error ?? ''))) {
+          providerFailure = 'RATE_PROVIDER_QUOTA';
+        } else if (providerFailure !== 'RATE_PROVIDER_QUOTA' && [401, 403].includes(response.status)) {
+          providerFailure = 'RATE_PROVIDER_AUTH';
+        }
+      }
 
       if (xauInrRes.status === 'fulfilled' && xauInrRes.value.ok) {
         goldData = await xauInrRes.value.json();
@@ -75,16 +73,29 @@ export const getLiveRates = async (req, res) => {
       if (xauUsdRes.status === 'fulfilled' && xauUsdRes.value.ok) {
         goldUsdData = await xauUsdRes.value.json();
       }
+      if (xagUsdRes.status === 'fulfilled' && xagUsdRes.value.ok) {
+        silverUsdData = await xagUsdRes.value.json();
+      }
     } catch (apiErr) {
-      console.warn('GoldAPI live fetch error, using fallback benchmarks:', apiErr.message);
+      console.warn('GoldAPI live fetch error:', apiErr.message);
+    }
+
+    if (![goldData?.price_gram_24k, silverData?.price_gram_24k, goldUsdData?.ask, silverUsdData?.ask].every(value => Number.isFinite(value) && value > 0)) {
+      return res.status(503).json({
+        success: false,
+        code: providerFailure,
+        message: providerFailure === 'RATE_PROVIDER_QUOTA'
+          ? 'The live-rate provider request limit has been reached. Please try again later.'
+          : 'Live rates are temporarily unavailable. Please try again later.',
+      });
     }
 
     // Convert raw international spot to exact Indian Domestic Market Rates (IBJA standard)
-    let g24k = FALLBACK_BENCHMARKS.gold24k;
-    let g22k = FALLBACK_BENCHMARKS.gold22k;
-    let g18k = FALLBACK_BENCHMARKS.gold18k;
-    let g14k = FALLBACK_BENCHMARKS.gold14k;
-    let g9k = FALLBACK_BENCHMARKS.gold9k;
+    let g24k;
+    let g22k;
+    let g18k;
+    let g14k;
+    let g9k;
 
     if (goldData?.price_gram_24k) {
       // Calculate 24K domestic landed rate
@@ -96,15 +107,15 @@ export const getLiveRates = async (req, res) => {
       g9k = Math.round(g24k * (9 / 24));   // ₹5,212
     }
 
-    const goldSpotAsk = goldUsdData?.ask ? Number(goldUsdData.ask) : FALLBACK_BENCHMARKS.goldSpotAsk;
-    const goldSpotHigh = goldUsdData?.high_price ? Number(goldUsdData.high_price) : FALLBACK_BENCHMARKS.goldSpotHigh;
-    const goldSpotLow = goldUsdData?.low_price ? Number(goldUsdData.low_price) : FALLBACK_BENCHMARKS.goldSpotLow;
+    const goldSpotAsk = goldUsdData?.ask ? Number(goldUsdData.ask) : null;
+    const goldSpotHigh = goldUsdData?.high_price ? Number(goldUsdData.high_price) : null;
+    const goldSpotLow = goldUsdData?.low_price ? Number(goldUsdData.low_price) : null;
     const goldChp = goldUsdData?.chp !== undefined 
       ? `${goldUsdData.chp >= 0 ? '+' : ''}${goldUsdData.chp.toFixed(2)}%` 
-      : FALLBACK_BENCHMARKS.goldChangePct;
+      : '';
 
     // Convert raw silver spot to Indian domestic retail silver
-    let s24kGram = FALLBACK_BENCHMARKS.silver24kGram;
+    let s24kGram;
     if (silverData?.price_gram_24k) {
       s24kGram = Math.round(silverData.price_gram_24k * INDIAN_DOMESTIC_SILVER_DUTY_MULTIPLIER);
     }
@@ -112,25 +123,25 @@ export const getLiveRates = async (req, res) => {
     const silver10g = s24kGram * 10;   // ~₹1,650
     const silver925_10g = Math.round(s24kGram * 10 * 0.925); // ~₹1,526
 
-    const silverSpotAsk = FALLBACK_BENCHMARKS.silverSpotAsk;
-    const silverSpotHigh = FALLBACK_BENCHMARKS.silverSpotHigh;
-    const silverSpotLow = FALLBACK_BENCHMARKS.silverSpotLow;
+    const silverSpotAsk = silverUsdData.ask;
+    const silverSpotHigh = silverUsdData.high_price;
+    const silverSpotLow = silverUsdData.low_price;
     const silverChp = silverData?.chp !== undefined
       ? `${silverData.chp >= 0 ? '+' : ''}${silverData.chp.toFixed(2)}%`
-      : FALLBACK_BENCHMARKS.silverChangePct;
+      : '';
 
-    const inrSpotAsk = 94.99;
-    const inrSpotHigh = 95.28;
-    const inrSpotLow = 94.93;
+    const inrSpotAsk = goldData?.price && goldUsdData?.price ? goldData.price / goldUsdData.price : null;
+    const inrSpotHigh = null;
+    const inrSpotLow = null;
 
     // Structured Gold Rates Matrix (Synchronized with Domestic IBJA & GoldAPI Live Feed)
     const goldRates = [
       {
         type: 'spot',
         label: 'GOLD SPOT',
-        ask: goldSpotAsk.toFixed(2),
-        high: goldSpotHigh.toFixed(2),
-        low: goldSpotLow.toFixed(2),
+        ask: goldSpotAsk?.toFixed(2) ?? 'Unavailable',
+        high: goldSpotHigh?.toFixed(2) ?? 'Unavailable',
+        low: goldSpotLow?.toFixed(2) ?? 'Unavailable',
         change: goldChp,
         icon: 'fa-solid fa-chart-line',
         iconLibrary: 'fa',
@@ -139,7 +150,7 @@ export const getLiveRates = async (req, res) => {
         type: 'rate',
         label: 'GOLD MCX (10g)',
         rate: `₹${(g24k * 10).toLocaleString('en-IN')}`,
-        change: goldData?.ch ? `+₹${Math.round(goldData.ch * INDIAN_DOMESTIC_GOLD_DUTY_MULTIPLIER * 10)}` : '+₹520',
+        change: goldData?.ch ? `+₹${Math.round(goldData.ch * INDIAN_DOMESTIC_GOLD_DUTY_MULTIPLIER * 10)}` : '',
         hub: 'National Benchmark',
         icon: 'ri-copper-coin-line',
         iconLibrary: 'ri',
@@ -191,10 +202,10 @@ export const getLiveRates = async (req, res) => {
       {
         type: 'spot',
         label: 'INR SPOT',
-        ask: inrSpotAsk.toFixed(2),
-        high: inrSpotHigh.toFixed(2),
-        low: inrSpotLow.toFixed(2),
-        change: '+0.15%',
+        ask: inrSpotAsk?.toFixed(2) ?? 'Unavailable',
+        high: inrSpotHigh?.toFixed(2) ?? 'Unavailable',
+        low: inrSpotLow?.toFixed(2) ?? 'Unavailable',
+        change: '',
         icon: 'fa-solid fa-arrow-trend-up',
         iconLibrary: 'fa',
       },
@@ -250,9 +261,9 @@ export const getLiveRates = async (req, res) => {
       {
         type: 'spot',
         label: 'SILVER SPOT',
-        ask: silverSpotAsk.toFixed(2),
-        high: silverSpotHigh.toFixed(2),
-        low: silverSpotLow.toFixed(2),
+        ask: silverSpotAsk?.toFixed(2) ?? 'Unavailable',
+        high: silverSpotHigh?.toFixed(2) ?? 'Unavailable',
+        low: silverSpotLow?.toFixed(2) ?? 'Unavailable',
         change: silverChp,
         icon: 'fa-solid fa-coins',
         iconLibrary: 'fa',

@@ -1,22 +1,9 @@
-import { seedCategories, seedProducts, seedCoupons, seedBanners } from '../seed/seedData.js';
-
-// Deep clone seed data for memory store
+// Runtime memory storage starts without a hardcoded storefront catalog.
 export const memoryStore = {
-  banners: [...seedBanners],
-  categories: seedCategories.map((cat, idx) => ({
-    _id: `cat_${idx + 1}`,
-    ...cat,
-    createdAt: new Date().toISOString(),
-  })),
-  products: seedProducts.map((prod, idx) => {
-    return {
-      _id: `prod_${idx + 1}`,
-      category: `cat_${idx + 1}`,
-      ...prod,
-      createdAt: new Date().toISOString(),
-    };
-  }),
-  coupons: [...seedCoupons],
+  banners: [],
+  categories: [],
+  products: [],
+  coupons: [],
   users: [
     {
       _id: 'usr_admin',
@@ -112,27 +99,6 @@ export const memoryStore = {
       createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
     }
   ],
-  reviews: [
-    {
-      _id: 'rev_1',
-      productId: 'prod_1',
-      userName: 'Kavita Singhania',
-      rating: 5,
-      title: 'Heirloom perfection for my daughter’s wedding!',
-      comment: 'The 22K craftsmanship is unmatched. The weight feels substantial and the BIS hallmark stamp gave my family 100% peace of mind.',
-      verifiedPurchase: true,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      _id: 'rev_2',
-      productId: 'prod_2',
-      userName: 'Pooja Verma',
-      rating: 5,
-      title: 'Delicate yet sacred design',
-      comment: 'Loved the blend of diamonds and traditional black beads. Customer support also confirmed hallmarking immediately.',
-      verifiedPurchase: true,
-      createdAt: new Date().toISOString(),
-    }
-  ]
+  reviews: []
 };
 

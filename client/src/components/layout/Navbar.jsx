@@ -23,7 +23,7 @@ export const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
-  const [liveGoldPrice, setLiveGoldPrice] = useState('₹12,742/g');
+  const [liveGoldPrice, setLiveGoldPrice] = useState('Unavailable');
   const [dbCategories, setDbCategories] = useState([]);
 
   const { getItemCount, openDrawer } = useCartStore();
@@ -33,21 +33,15 @@ export const Navbar = () => {
   const location = useLocation();
 
   useEffect(() => {
-    // Concurrent fetch for header live rate and category navigation
-    Promise.allSettled([
-      rateService.getLiveRates(),
-      categoryService.getCategories(),
-    ]).then(([rateRes, catRes]) => {
-      if (rateRes.status === 'fulfilled' && rateRes.value?.goldRates) {
-        const bl22k = rateRes.value.goldRates.find(r => r.label?.includes('22KT'));
-        if (bl22k?.rate) {
-          setLiveGoldPrice(`${bl22k.rate}/g`);
-        }
-      }
-      if (catRes.status === 'fulfilled' && catRes.value?.categories?.length > 0) {
-        setDbCategories(catRes.value.categories);
-      }
-    });
+    let active = true;
+    rateService.getLiveRates().then((data) => {
+      const rate = data?.goldRates?.find(item => item.label?.includes('22KT'));
+      if (active && rate?.rate) setLiveGoldPrice(rate.rate + '/g');
+    }).catch(() => {});
+    categoryService.getCategories().then((data) => {
+      if (active) setDbCategories(data?.categories ?? []);
+    }).catch(() => {});
+    return () => { active = false; };
   }, []);
 
   const cartCount = getItemCount();

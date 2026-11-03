@@ -37,14 +37,6 @@ connectDB().catch((err) => {
   console.warn('Initial connectDB note:', err.message);
 });
 
-// Middleware to ensure DB connection is ready on each serverless invocation
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-  } catch {}
-  next();
-});
-
 // Security & Parsing Middleware
 app.use(helmet({
   crossOriginResourcePolicy: false,
@@ -130,6 +122,13 @@ app.get('/api/v1/health', (req, res) => {
     adminUrl: 'https://admin-xi-five-53.vercel.app',
     timestamp: new Date().toISOString(),
   });
+});
+
+// Preflights and health checks never wait for MongoDB. Rates use an external API.
+app.use(async (req, res, next) => {
+  if (req.path.startsWith('/api/v1/rates/')) return next();
+  try { await connectDB(); } catch {}
+  next();
 });
 
 // API Routes

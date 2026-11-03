@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { ShieldCheck, Award, Sparkles, ArrowRight } from 'lucide-react';
 
 export const BrandStory = ({ storyData = null }) => {
-  const eyebrow = storyData?.eyebrow || 'Our Heritage & Philosophy';
-  const legacyYears = storyData?.legacyYears || '40+ YEARS LEGACY';
-  const legacySubtitle = storyData?.legacySubtitle || 'Serving Indian royal families & connoisseurs since 1984';
-  const image = storyData?.image || 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1200&q=85';
-  const p1 = storyData?.paragraph1 || 'Founded in the historic jewelry quarter of Zaveri Bazaar, Mumbai, BL Jewels was born from a singular sacred vow: Purity with Auspiciousness. We believe that fine jewelry is not merely an ornament — it is a blessing, a family heirloom, and a sacred celebration of love.';
-  const p2 = storyData?.paragraph2 || 'Every polki choker, auspicious mangalsutra, and solitaire ring is shaped by master karigars whose lineages have sculpted jewelry for generations. With 100% government BIS 916 hallmarking and transparent karat certifications, we guarantee that the beauty you wear today retains its auspicious value for generations to come.';
+  const eyebrow = storyData?.eyebrow;
+  const legacyYears = storyData?.legacyYears;
+  const legacySubtitle = storyData?.legacySubtitle;
+  const image = storyData?.image;
+  const p1 = storyData?.paragraph1;
+  const p2 = storyData?.paragraph2;
+
+  if (!storyData || !Object.values(storyData).some(Boolean)) return null;
 
   return (
     <section className="py-24 bg-white border-y border-stone-200/80 relative overflow-hidden">
@@ -18,11 +20,13 @@ export const BrandStory = ({ storyData = null }) => {
           {/* Left Editorial Visual */}
           <div className="lg:col-span-5 relative">
             <div className="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-              <img
+              {image && <img
                 src={image}
+                loading="lazy"
+                decoding="async"
                 alt="BL Jewels Heritage Artisan Craftsmanship"
                 className="w-full aspect-[4/5] object-cover"
-              />
+              />}
             </div>
             
             {/* Floating Trust Badge */}
@@ -50,7 +54,7 @@ export const BrandStory = ({ storyData = null }) => {
             </span>
             
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal sm:font-medium text-crimson-900 leading-tight">
-              Where Auspicious Gold Meets <span className="italic font-normal text-gold-700">Artisanal Royalty</span>
+              {storyData.title}
             </h2>
 
             <p className="font-body text-base text-stone-600 leading-relaxed">

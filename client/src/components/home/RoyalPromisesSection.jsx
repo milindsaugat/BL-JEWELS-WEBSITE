@@ -18,25 +18,22 @@ export const RoyalPromisesSection = () => {
   const [calcKarat, setCalcKarat] = useState('22K');
 
   // Bullion rates per gram (synced with GoldAPI.io real live rates & Indian Domestic Benchmark)
-  const [rates, setRates] = useState({
-    '24K': 13901,
-    '22K': 12743,
-    '18K': 10426,
-  });
+  const [rates, setRates] = useState({});
 
   useEffect(() => {
     rateService.getLiveRates().then((res) => {
       if (res?.numericRates) {
         setRates({
-          '24K': res.numericRates['24K'] || 13901,
-          '22K': res.numericRates['22K'] || 12743,
-          '18K': res.numericRates['18K'] || 10426,
+          '24K': res.numericRates['24K'],
+          '22K': res.numericRates['22K'],
+          '18K': res.numericRates['18K'],
         });
       }
     }).catch(() => {});
   }, []);
 
-  const selectedRate = rates[calcKarat] || 12743;
+  const selectedRate = rates[calcKarat];
+  const displayAmount = (value) => Number.isFinite(selectedRate) && selectedRate > 0 ? formatCurrency(value) : 'Unavailable';
   const goldValue = Math.round(Number(calcWeight || 0) * selectedRate);
   const makingCharge = Math.round(goldValue * 0.03); // 3% making charge
   const subtotal = goldValue + makingCharge;
@@ -222,7 +219,7 @@ export const RoyalPromisesSection = () => {
                           : 'bg-white/5 text-stone-300 border-white/10 hover:bg-white/10'
                       }`}
                     >
-                      {karat} ({formatCurrency(rates[karat] || 0)}/g)
+                      {karat} ({rates[karat] ? formatCurrency(rates[karat]) : 'Unavailable'}/g)
                     </button>
                   ))}
                 </div>
@@ -257,23 +254,23 @@ export const RoyalPromisesSection = () => {
             {/* Price Breakdown Card */}
             <div className="bg-[#18090E] rounded-2xl p-4 border border-[#C9A44A]/30 space-y-2 text-xs shadow-inner">
               <div className="flex justify-between text-stone-300">
-                <span>Pure Gold Value ({calcWeight}g @ {formatCurrency(selectedRate)}):</span>
-                <span className="font-semibold text-white">{formatCurrency(goldValue)}</span>
+                <span>Pure Gold Value ({calcWeight}g @ {displayAmount(selectedRate)}):</span>
+                <span className="font-semibold text-white">{displayAmount(goldValue)}</span>
               </div>
               <div className="flex justify-between text-stone-300">
                 <span className="flex items-center gap-1">
                   Making Charges (Fair 3% Direct-from-Karigar):
                 </span>
-                <span className="font-semibold text-emerald-400">{formatCurrency(makingCharge)}</span>
+                <span className="font-semibold text-emerald-400">{displayAmount(makingCharge)}</span>
               </div>
               <div className="flex justify-between text-stone-300">
                 <span>Applicable GST (3% Govt. Sovereign Tax):</span>
-                <span className="font-semibold text-white">{formatCurrency(gst)}</span>
+                <span className="font-semibold text-white">{displayAmount(gst)}</span>
               </div>
               <div className="border-t border-white/10 pt-2.5 flex justify-between items-baseline">
                 <span className="font-display text-sm font-bold text-white">Estimated Invoice Total:</span>
                 <span className="font-display text-lg font-bold text-[#E6C875]">
-                  {formatCurrency(grandTotal)}
+                  {displayAmount(grandTotal)}
                 </span>
               </div>
             </div>

@@ -1,108 +1,14 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useCarousel } from '../../hooks/useCarousel';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductCard } from '../product/ProductCard';
 
 export const NewArrivals = ({ products = [] }) => {
-  const sliderRef = useRef(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
+  const { sliderRef, isDragging, canScrollLeft, canScrollRight, scrollSlider,
+    handlePointerDown, handlePointerMove, handlePointerUp, handleClickCapture } = useCarousel(products);
 
-  const isDraggingRef = useRef(false);
-  const dragStartRef = useRef({ startX: 0, scrollLeft: 0, moved: false });
-
-  // Update button enabled/disabled states
-  const checkScrollBounds = useCallback(() => {
-    const el = sliderRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-  }, []);
-
-  useEffect(() => {
-    checkScrollBounds();
-    const el = sliderRef.current;
-    if (!el) return;
-
-    el.addEventListener('scroll', checkScrollBounds, { passive: true });
-    window.addEventListener('resize', checkScrollBounds);
-
-    return () => {
-      el.removeEventListener('scroll', checkScrollBounds);
-      window.removeEventListener('resize', checkScrollBounds);
-    };
-  }, [products, checkScrollBounds]);
-
-  // Click scroll by exact visible cards step
-  const scrollSlider = (direction) => {
-    const el = sliderRef.current;
-    if (!el) return;
-    const card = el.querySelector('[data-new-arrival-card]');
-    const step = card ? (card.clientWidth + 24) * 2 : Math.min(el.clientWidth * 0.75, 720);
-
-    el.scrollBy({
-      left: direction === 'left' ? -step : step,
-      behavior: 'smooth',
-    });
-  };
-
-  // Robust Pointer Events
-  const handlePointerDown = (e) => {
-    // If clicked on button or interactive element, let the button handle it directly
-    if (e.target.closest('button, a')) return;
-    if (e.button !== 0) return;
-    const el = sliderRef.current;
-    if (!el) return;
-
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    dragStartRef.current = {
-      startX: e.clientX,
-      scrollLeft: el.scrollLeft,
-      moved: false,
-    };
-
-    try {
-      el.setPointerCapture(e.pointerId);
-    } catch {}
-  };
-
-  const handlePointerMove = (e) => {
-    if (!isDraggingRef.current) return;
-    const el = sliderRef.current;
-    if (!el) return;
-
-    const deltaX = e.clientX - dragStartRef.current.startX;
-    if (Math.abs(deltaX) > 5) {
-      dragStartRef.current.moved = true;
-    }
-    el.scrollLeft = dragStartRef.current.scrollLeft - deltaX;
-  };
-
-  const handlePointerUp = (e) => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    setIsDragging(false);
-
-    const el = sliderRef.current;
-    if (el) {
-      try {
-        if (el.hasPointerCapture(e.pointerId)) {
-          el.releasePointerCapture(e.pointerId);
-        }
-      } catch {}
-    }
-  };
-
-  const handleClickCapture = (e) => {
-    if (dragStartRef.current.moved) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragStartRef.current.moved = false;
-    }
-  };
+  if (!products.length) return null;
 
   return (
     <section className="py-20 sm:py-24 bg-stone-50/50 border-t border-stone-200/80 relative overflow-hidden w-full">
@@ -140,7 +46,7 @@ export const NewArrivals = ({ products = [] }) => {
           <button
             onClick={() => scrollSlider('left')}
             disabled={!canScrollLeft}
-            className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 flex items-center justify-center transition-all duration-200 ${
+            className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollLeft
                 ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
@@ -154,7 +60,7 @@ export const NewArrivals = ({ products = [] }) => {
           <button
             onClick={() => scrollSlider('right')}
             disabled={!canScrollRight}
-            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 flex items-center justify-center transition-all duration-200 ${
+            className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollRight
                 ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
@@ -164,32 +70,35 @@ export const NewArrivals = ({ products = [] }) => {
             <ChevronRight className="w-6 h-6" />
           </button>
 
-          {/* Scroller Track: Hardware-accelerated, pointer-captured, touch & drag ready */}
+          {/* Native touch scrolling with mouse drag on desktop */}
           <div
             ref={sliderRef}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            onLostPointerCapture={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onDragStart={(event) => event.preventDefault()}
             onClickCapture={handleClickCapture}
-            className={`flex items-stretch gap-5 sm:gap-6 overflow-x-auto py-3 px-2 no-scrollbar ${
+            className={`touch-carousel flex items-stretch gap-5 sm:gap-6 overflow-x-auto py-3 px-2 no-scrollbar ${
               isDragging ? 'cursor-grabbing select-none' : 'cursor-grab'
             }`}
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               WebkitOverflowScrolling: 'touch',
-              scrollSnapType: isDragging ? 'none' : 'x proximity',
-              scrollBehavior: isDragging ? 'auto' : 'smooth',
+              scrollBehavior: 'auto',
+              scrollPaddingInline: '8px',
               overscrollBehaviorX: 'contain',
-              touchAction: 'pan-y pinch-zoom',
+              touchAction: 'pan-x pan-y pinch-zoom',
             }}
           >
             {products.map((product) => (
               <div
                 key={product._id}
                 data-new-arrival-card="true"
-                className="w-[280px] sm:w-[320px] md:w-[340px] shrink-0 flex flex-col"
+                className="w-[min(280px,80vw)] sm:w-[320px] md:w-[340px] shrink-0 flex flex-col"
                 style={{
                   scrollSnapAlign: 'start',
                 }}

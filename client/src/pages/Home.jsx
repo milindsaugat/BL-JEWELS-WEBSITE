@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HeroSection } from '../components/home/HeroSection';
 import { LiveRatesMarquee } from '../components/layout/LiveRatesMarquee';
-import { USPStrip } from '../components/home/USPStrip';
+import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { FeaturedCollections } from '../components/home/FeaturedCollections';
 import { BestSellers } from '../components/home/BestSellers';
 import { NewArrivals } from '../components/home/NewArrivals';
@@ -28,70 +28,35 @@ export const Home = () => {
   const [liveRates, setLiveRates] = useState(null);
   const [testimonials, setTestimonials] = useState([]);
   const [siteSettings, setSiteSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [bannersLoading, setBannersLoading] = useState(true);
 
   useEffect(() => {
-    // Concurrent instant data fetching across all 8 core jewelry domain endpoints
-    const fetchAllHomeDataConcurrently = async () => {
-      try {
-        const [
-          catsRes,
-          occRes,
-          featRes,
-          newRes,
-          bannersRes,
-          ratesRes,
-          reviewsRes,
-          settingsRes,
-        ] = await Promise.allSettled([
-          categoryService.getCategories(),
-          occasionService.getOccasions(),
-          productService.getFeatured(),
-          productService.getNewArrivals(),
-          bannerService.getBanners(),
-          rateService.getLiveRates(),
-          reviewService.getFeaturedReviews(),
-          settingService.getSettings(),
-        ]);
+    let active = true;
+    // Render each section as soon as its own request completes.
+    const load = (request, key, setter) => request.then((data) => {
+      if (active) setter(key ? (data?.[key] ?? []) : data);
+    }).catch(() => {});
 
-        if (catsRes.status === 'fulfilled' && catsRes.value?.categories) {
-          setCategories(catsRes.value.categories);
-        }
-        if (occRes.status === 'fulfilled' && occRes.value?.occasions) {
-          setOccasions(occRes.value.occasions);
-        }
-        if (featRes.status === 'fulfilled' && featRes.value?.products) {
-          setBestSellers(featRes.value.products);
-        }
-        if (newRes.status === 'fulfilled' && newRes.value?.products) {
-          setNewArrivals(newRes.value.products);
-        }
-        if (bannersRes.status === 'fulfilled' && bannersRes.value?.banners) {
-          setBanners(bannersRes.value.banners);
-        }
-        if (ratesRes.status === 'fulfilled' && ratesRes.value?.success) {
-          setLiveRates(ratesRes.value);
-        }
-        if (reviewsRes.status === 'fulfilled' && reviewsRes.value?.reviews) {
-          setTestimonials(reviewsRes.value.reviews);
-        }
-        if (settingsRes.status === 'fulfilled' && settingsRes.value?.settings) {
-          setSiteSettings(settingsRes.value.settings);
-        }
-      } catch (err) {
-        console.error('Concurrent home data load error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllHomeDataConcurrently();
+    load(bannerService.getBanners(), 'banners', setBanners)
+      .finally(() => { if (active) setBannersLoading(false); });
+    load(categoryService.getCategories(), 'categories', setCategories);
+    load(occasionService.getOccasions(), 'occasions', setOccasions);
+    load(productService.getFeatured(), 'products', setBestSellers);
+    load(productService.getNewArrivals(), 'products', setNewArrivals);
+    load(rateService.getLiveRates(), null, setLiveRates);
+    load(reviewService.getFeaturedReviews(), 'reviews', setTestimonials);
+    load(settingService.getSettings(), 'settings', setSiteSettings);
+    return () => { active = false; };
   }, []);
 
   return (
     <main>
       {/* 1. Dynamic Hero Showcase Banners (Managed from Executive Admin CMS) */}
-      <HeroSection initialBanners={banners} />
+      {bannersLoading ? (
+        <div role="status" aria-label="Loading banners">
+          <LoadingSkeleton className="w-full aspect-[2.4/1] min-h-[220px] sm:aspect-[2.8/1] md:aspect-[3/1]" />
+        </div>
+      ) : <HeroSection initialBanners={banners} />}
 
       {/* 2. Dynamic Live Bullion Rates Dual Marquee (Direct from Backend Rate Service) */}
       <LiveRatesMarquee initialRates={liveRates} />

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test:live-rate": "node scripts/check-live-rate.mjs",
+    "test:carousel": "node scripts/check-carousel.mjs",
     "lint": "oxlint",
     "preview": "vite preview"
   },

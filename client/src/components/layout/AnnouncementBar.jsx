@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { settingService } from '../../services/api';
 
-const DEFAULT_MESSAGES = [
-  '✦ 100% Certified 22K (916) BIS Hallmarked Gold Guaranteed ✦',
-  '✦ Complimentary Insured Express Delivery across India (Orders > ₹5,000) ✦',
-  '✦ Auspicious Festive Offer: Use Code SHUBH10 for 10% Off ✦',
-  '✦ Lifetime Gold Buyback Guarantee · 15-Day Easy Returns ✦',
-];
-
 export const AnnouncementBar = () => {
   const [activeMessageIdx, setActiveMessageIdx] = useState(0);
-  const [messages, setMessages] = useState(DEFAULT_MESSAGES);
-  const [contactPhone, setContactPhone] = useState('074549 86610');
+  const [messages, setMessages] = useState([]);
+  const [contactPhone, setContactPhone] = useState('');
 
   useEffect(() => {
     settingService.getSettings()
@@ -27,6 +20,7 @@ export const AnnouncementBar = () => {
   }, []);
 
   useEffect(() => {
+    if (messages.length < 2) return;
     const timer = setInterval(() => {
       setActiveMessageIdx((prev) => (prev + 1) % messages.length);
     }, 4200);
@@ -73,26 +67,26 @@ export const AnnouncementBar = () => {
 
           <span className="text-[#C9A44A]/40 shrink-0">|</span>
 
-          <a
+          {contactPhone && <a
             href={`tel:${contactPhone.replace(/\s+/g, '')}`}
             className="flex items-center gap-1.5 text-stone-200 hover:text-[#F3E5AB] transition-colors whitespace-nowrap font-medium"
           >
             <i className="ri-phone-line text-[#E6C975] text-xs shrink-0"></i>
             <span className="whitespace-nowrap">{contactPhone}</span>
-          </a>
+          </a>}
         </div>
 
       </div>
 
       {/* Mobile Rotating Bar */}
-      <div className="lg:hidden py-1.5 px-3 text-center">
+      {messages.length > 0 && <div className="lg:hidden py-1.5 px-3 text-center">
         <div className="flex items-center justify-center gap-1.5">
           <i className="ri-sparkling-fill text-[#E6C975] text-xs shrink-0"></i>
           <p className="text-[11px] font-medium tracking-wide text-[#F3E5AB] leading-tight">
-            {messages[activeMessageIdx]}
+            {messages[activeMessageIdx % messages.length]}
           </p>
         </div>
-      </div>
+      </div>}
 
     </div>
   );

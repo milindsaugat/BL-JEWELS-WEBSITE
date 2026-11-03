@@ -1,3 +1,4 @@
+import { createSharedRead } from './sharedRead';
 import axios from 'axios';
 
 const getApiBaseUrl = () => {
@@ -15,9 +16,6 @@ const API_BASE_URL = getApiBaseUrl();
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 api.interceptors.request.use((config) => {
@@ -35,10 +33,16 @@ api.interceptors.response.use(
   }
 );
 
+const shareRead = createSharedRead();
+const readPublic = (path, ttl = 0) => {
+  const token = localStorage.getItem('bl_access_token') || '';
+  return shareRead(path + ':' + token, () => api.get(path, { timeout: 15000 }).then(res => res.data), ttl);
+};
+
 export const productService = {
   getProducts: (params) => api.get('/products', { params }).then(res => res.data),
-  getFeatured: () => api.get('/products/featured').then(res => res.data),
-  getNewArrivals: () => api.get('/products/new-arrivals').then(res => res.data),
+  getFeatured: () => readPublic('/products/featured'),
+  getNewArrivals: () => readPublic('/products/new-arrivals'),
   getProductBySlug: (slug) => api.get(`/products/${slug}`).then(res => res.data),
   createProduct: (data) => api.post('/products', data).then(res => res.data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data).then(res => res.data),
@@ -46,12 +50,12 @@ export const productService = {
 };
 
 export const categoryService = {
-  getCategories: () => api.get('/categories').then(res => res.data),
+  getCategories: () => readPublic('/categories'),
   getCategoryBySlug: (slug) => api.get(`/categories/${slug}`).then(res => res.data),
 };
 
 export const occasionService = {
-  getOccasions: () => api.get('/occasions').then(res => res.data),
+  getOccasions: () => readPublic('/occasions'),
 };
 
 export const authService = {
@@ -77,7 +81,7 @@ export const paymentService = {
 };
 
 export const bannerService = {
-  getBanners: () => api.get('/banners').then(res => res.data),
+  getBanners: () => readPublic('/banners'),
   getAllBanners: () => api.get('/banners/all').then(res => res.data),
   createBanner: (data) => api.post('/banners', data).then(res => res.data),
   updateBanner: (id, data) => api.put(`/banners/${id}`, data).then(res => res.data),
@@ -85,17 +89,17 @@ export const bannerService = {
 };
 
 export const rateService = {
-  getLiveRates: () => api.get('/rates/live').then(res => res.data),
+  getLiveRates: () => readPublic('/rates/live', 20000),
 };
 
 export const reviewService = {
-  getFeaturedReviews: () => api.get('/reviews').then(res => res.data),
+  getFeaturedReviews: () => readPublic('/reviews'),
   getProductReviews: (productId) => api.get(`/reviews/${productId}`).then(res => res.data),
   addReview: (productId, data) => api.post(`/reviews/${productId}`, data).then(res => res.data),
 };
 
 export const settingService = {
-  getSettings: () => api.get('/settings').then(res => res.data),
+  getSettings: () => readPublic('/settings'),
   updateSettings: (data) => api.put('/settings', data).then(res => res.data),
 };
 
