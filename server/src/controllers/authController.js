@@ -2,6 +2,7 @@ import { getDbStatus } from '../config/db.js';
 import User from '../models/User.js';
 import { memoryStore } from '../config/memoryStore.js';
 import { generateTokens } from '../utils/generateToken.js';
+import { isEmailConfigured, sendPasswordResetOtpEmail } from '../services/emailService.js';
 import bcrypt from 'bcryptjs';
 
 export const register = async (req, res) => {
@@ -108,41 +109,12 @@ export const login = async (req, res) => {
           wishlist: user.wishlist,
         },
       });
-    } else {
-      // Memory store fallback
-      let user = memoryStore.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-      
-      // Auto-create if demo user or matches admin
-      if (!user && (email.toLowerCase().includes('admin') || email.toLowerCase().includes('demo') || email.toLowerCase().includes('test'))) {
-        user = {
-          _id: email.includes('admin') ? 'usr_admin' : `usr_${Date.now()}`,
-          name: email.includes('admin') ? 'BL Jewels Administrator' : 'Valued Customer',
-          email: email.toLowerCase(),
-          role: email.includes('admin') ? 'admin' : 'customer',
-          addresses: [],
-          wishlist: [],
-        };
-        memoryStore.users.push(user);
-      } else if (!user) {
-        // Allow instant login for demo simplicity
-        user = {
-          _id: `usr_${Date.now()}`,
-          name: email.split('@')[0].toUpperCase(),
-          email: email.toLowerCase(),
-          role: 'customer',
-          addresses: [],
-          wishlist: [],
-        };
-        memoryStore.users.push(user);
-      }
-
-      const { accessToken, refreshToken } = generateTokens(user._id, user.role);
-      return res.json({
-        success: true,
-        accessToken,
-        user,
-      });
     }
+
+    return res.status(503).json({
+      success: false,
+      message: 'Database service is currently unavailable. Please verify MongoDB connection.',
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -193,6 +165,142 @@ export const toggleWishlist = async (req, res) => {
       }
       return res.json({ success: true, wishlist: user.wishlist });
     }
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Initiates forgot password flow by dispatching 6-digit OTP via Google SMTP.
+ * Strictly checks for real SMTP credentials - no mock, no fallback.
+ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Please provide your registered email address.' });
+    }
+
+    if (!getDbStatus()) {
+      return res.status(503).json({ success: false, message: 'Database service is currently unavailable.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No registered administrator or customer account found with this email.' });
+    }
+
+    // Check if live Google SMTP is configured
+    if (!isEmailConfigured()) {
+      return res.status(503).json({
+        success: false,
+        code: 'EMAIL_SERVICE_NOT_CONFIGURED',
+        message: 'Google SMTP email service is not configured yet. Please configure EMAIL_USER and EMAIL_APP_PASSWORD in server/.env to enable live OTP delivery.',
+      });
+    }
+
+    // Generate secure 6-digit verification OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetOtp = otp;
+    user.resetExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes validity
+    await user.save();
+
+    await sendPasswordResetOtpEmail({
+      to: user.email,
+      otp,
+      userName: user.name || 'Administrator',
+    });
+
+    return res.json({
+      success: true,
+      message: `A 6-digit verification code has been dispatched to ${user.email}.`,
+    });
+  } catch (error) {
+    console.error('forgotPassword error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to dispatch password reset code.',
+    });
+  }
+};
+
+/**
+ * Validates the 6-digit OTP before allowing password change.
+ */
+export const verifyOtp = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ success: false, message: 'Please provide both email address and verification code.' });
+    }
+
+    if (!getDbStatus()) {
+      return res.status(503).json({ success: false, message: 'Database service is currently unavailable.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User account not found.' });
+    }
+
+    if (!user.resetOtp || user.resetOtp !== String(otp).trim()) {
+      return res.status(400).json({ success: false, message: 'Invalid verification code entered. Please check and try again.' });
+    }
+
+    if (!user.resetExpiry || user.resetExpiry < new Date()) {
+      return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new code.' });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Verification code confirmed successfully.',
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+/**
+ * Resets the password using confirmed OTP.
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Please provide email, verification code, and new password.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters long.' });
+    }
+
+    if (!getDbStatus()) {
+      return res.status(503).json({ success: false, message: 'Database service is currently unavailable.' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User account not found.' });
+    }
+
+    if (!user.resetOtp || user.resetOtp !== String(otp).trim()) {
+      return res.status(400).json({ success: false, message: 'Invalid verification code.' });
+    }
+
+    if (!user.resetExpiry || user.resetExpiry < new Date()) {
+      return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new code.' });
+    }
+
+    // Set new password (bcrypt hashing handled by User model pre-save hook)
+    user.password = newPassword;
+    user.resetOtp = undefined;
+    user.resetExpiry = undefined;
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: 'Your administrator password has been updated successfully. Please log in with your new password.',
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

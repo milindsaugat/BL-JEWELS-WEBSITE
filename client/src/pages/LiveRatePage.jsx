@@ -1,3 +1,4 @@
+import { RateCacheNotice } from '../components/common/RateCacheNotice';
 import { getRateDisplay, getRateError } from '../lib/rateDisplay';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,21 +16,29 @@ export const LiveRatePage = () => {
       setRateError('');
       const res = await rateService.getLiveRates();
       if (!res?.success) throw new Error('Rates unavailable');
-      if (res.success) {
-        setRatesData(res);
-      }
+      setRatesData(res);
+      return true;
     } catch (err) {
       setRateError(getRateError(err));
-      console.warn('Live rates fetch error:', err);
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRates();
-    const interval = setInterval(fetchRates, 30000);
-    return () => clearInterval(interval);
+    let intervalId = null;
+
+    fetchRates().then((ok) => {
+      // Only start 30s auto-refresh loop if rates are active/ok
+      if (ok) {
+        intervalId = setInterval(fetchRates, 30000);
+      }
+    });
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   const { goldSpot, silverSpot, inrSpot, tableRows } = getRateDisplay(ratesData);
@@ -37,6 +46,7 @@ export const LiveRatePage = () => {
   return (
     <div className="min-h-screen bg-white text-stone-900 py-8 px-4 sm:px-6 lg:px-8 font-body">
       <div className="max-w-6xl mx-auto space-y-6">
+          <RateCacheNotice meta={ratesData?.meta} />
           {rateError && <p role="alert" className="rounded-lg border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950">{rateError}{ratesData ? ' Showing the last successfully loaded rates.' : ''}</p>}
         
         {/* Navigation Breadcrumb */}
@@ -70,7 +80,7 @@ export const LiveRatePage = () => {
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
               </h1>
               <p className="text-xs sm:text-sm text-stone-300 mt-1">
-                Real-time MCX bullion spot market deltas & verified BIS 916 gold purity benchmarks.
+                Cached gold and silver reference prices with transparent update times.
               </p>
             </div>
             <span className="px-3 py-1 rounded-full bg-[#3B0711] text-[#F3E5AB] border border-[#C9A44A]/40 text-xs font-semibold self-start sm:self-auto">

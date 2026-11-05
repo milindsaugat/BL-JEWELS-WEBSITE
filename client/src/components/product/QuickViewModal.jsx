@@ -70,7 +70,7 @@ export const QuickViewModal = () => {
           </button>
 
           {/* Left: Luxury Jewelry Showcase (Proper Image Cover) */}
-          <div className="relative w-full h-[320px] xs:h-[360px] sm:h-[420px] md:h-full md:min-h-[500px] bg-stone-100 shrink-0 overflow-hidden border-b md:border-b-0 md:border-r border-stone-200/80 flex items-center justify-center group">
+          <div className="relative w-full h-[280px] xs:h-[320px] sm:h-[380px] md:h-full md:min-h-[500px] bg-stone-100 shrink-0 overflow-hidden border-b md:border-b-0 md:border-r border-stone-200/80 flex items-center justify-center group">
             {/* Main Jewelry Image: 100% proper edge-to-edge cover */}
             <img
               src={currentImageUrl}

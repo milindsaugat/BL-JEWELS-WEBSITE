@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { rateService } from '../../services/api';
+import { RateCacheNotice } from '../common/RateCacheNotice';
 
 export const LiveRatesMarquee = ({ initialRates = null }) => {
+  const [rateMeta, setRateMeta] = useState(initialRates?.meta ?? null);
   const [goldRates, setGoldRates] = useState(
     initialRates?.goldRates ?? []
   );
@@ -11,34 +13,59 @@ export const LiveRatesMarquee = ({ initialRates = null }) => {
 
   useEffect(() => {
     if (initialRates) {
+      setRateMeta(initialRates.meta ?? null);
       setGoldRates(initialRates.goldRates ?? []);
       setSilverRates(initialRates.silverRates ?? []);
     }
   }, [initialRates]);
 
   useEffect(() => {
+    let intervalId = null;
+
     const fetchRates = () => {
       rateService.getLiveRates()
         .then((res) => {
-          if (res.success) {
+          if (res?.success) {
+            setRateMeta(res.meta ?? null);
             setGoldRates(res.goldRates ?? []);
             setSilverRates(res.silverRates ?? []);
+          } else {
+            // API returned failure/unavailable - pause 45s timer
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
           }
         })
-        .catch((err) => {
-          console.warn('Live rates API error:', err);
+        .catch(() => {
+          // On 503 / cooldown / network error, pause the 45s timer to prevent terminal spam
+          if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
         });
     };
 
-    fetchRates();
-    const interval = setInterval(fetchRates, 45000); // 45-second live refresh
-    return () => clearInterval(interval);
+    // If parent passed initial rates, don't duplicate immediate fetch on mount
+    if (!initialRates?.goldRates?.length) {
+      fetchRates();
+    }
+
+    // 45-second live refresh timer (automatically pauses on 503 or error)
+    intervalId = setInterval(fetchRates, 45000);
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, []);
 
   if (!goldRates.length && !silverRates.length) return null;
 
   return (
     <section className="w-full text-xs font-body bg-white border-y border-stone-200 relative z-30 overflow-hidden">
+      {rateMeta?.stale && <RateCacheNotice meta={rateMeta} />}
       {/* ── TRACK 1: GOLD LIVE SPOT & MCX RATES (FLOWS LEFT TO RIGHT) ── */}
       <div className="bg-white border-b border-stone-100 py-2.5 overflow-hidden marquee-pause">
         <div className="animate-marquee-ltr flex items-center">

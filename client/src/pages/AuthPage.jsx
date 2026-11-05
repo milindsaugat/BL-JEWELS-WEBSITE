@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ShieldCheck, Lock, Sparkles, User, Mail, ArrowRight } from 'lucide-react';
+import { ShieldCheck, Lock, Sparkles, User, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
 export const AuthPage = () => {
@@ -8,6 +8,7 @@ export const AuthPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -38,16 +39,6 @@ export const AuthPage = () => {
     }
   };
 
-  const handleQuickDemoLogin = async (role) => {
-    if (role === 'admin') {
-      await login('admin@bljewels.com', 'AdminPassword123!');
-      navigate('/admin');
-    } else {
-      await login('ananya@example.com', 'Customer123!');
-      navigate('/');
-    }
-  };
-
   return (
     <div className="py-16 bg-pearl min-h-screen flex items-center justify-center">
       <div className="container-bl max-w-md mx-auto">
@@ -68,29 +59,6 @@ export const AuthPage = () => {
                 ? 'Sign in to access your saved heirlooms & VIP privileges'
                 : 'Join our auspicious circle for exclusive festival benefits'}
             </p>
-          </div>
-
-          {/* Quick Demo Logins Bar */}
-          <div className="p-3 bg-ivory rounded-2xl border border-gold-200 text-center space-y-2">
-            <span className="text-[11px] font-accent uppercase text-gold-800 font-bold tracking-wider block">
-              ✦ Quick One-Click Demo Logins ✦
-            </span>
-            <div className="flex gap-2 justify-center">
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('customer')}
-                className="px-3 py-1.5 bg-white hover:bg-gold-50 border border-gold-300 rounded-lg text-xs font-semibold text-charcoal transition-colors font-body shadow-sm"
-              >
-                Customer Demo
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickDemoLogin('admin')}
-                className="px-3 py-1.5 bg-crimson-700 hover:bg-crimson-800 text-white rounded-lg text-xs font-semibold transition-colors font-body shadow-sm"
-              >
-                Admin Portal Demo
-              </button>
-            </div>
           </div>
 
           {/* Toggle Tab */}
@@ -164,14 +132,25 @@ export const AuthPage = () => {
 
             <div>
               <label className="block font-semibold text-stone-700 mb-1">Password</label>
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full pl-3.5 pr-10 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors p-0.5"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <button

@@ -1,6 +1,9 @@
-export const getRateError = (error) => error?.response?.data?.code === 'RATE_PROVIDER_QUOTA'
-  ? 'Live rates are temporarily unavailable because the rate provider has reached its request limit. Please try again later.'
-  : 'Live rates could not be loaded. Please try Refresh Rates again later.';
+export const getRateError = (error) => {
+  const code = error?.response?.data?.code;
+  if (code === 'RATE_PROVIDER_DISABLED') return 'Live-rate updates are currently paused by the store.';
+  if (code === 'RATE_PROVIDER_QUOTA') return 'Live rates are temporarily unavailable because the rate provider has reached its request limit. Please try again later.';
+  return 'Live rates could not be loaded. Please try Refresh Rates again later.';
+};
 
 export const getRateDisplay = (data) => {
   const format = (value, multiplier = 1) => Number.isFinite(value) ? (value * multiplier).toLocaleString('en-IN') : 'Unavailable';

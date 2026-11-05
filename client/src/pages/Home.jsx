@@ -54,7 +54,7 @@ export const Home = () => {
       {/* 1. Dynamic Hero Showcase Banners (Managed from Executive Admin CMS) */}
       {bannersLoading ? (
         <div role="status" aria-label="Loading banners">
-          <LoadingSkeleton className="w-full aspect-[2.4/1] min-h-[220px] sm:aspect-[2.8/1] md:aspect-[3/1]" />
+          <LoadingSkeleton className="w-full aspect-[2.1/1] min-h-[195px] sm:aspect-[2.6/1] md:aspect-[3/1] max-h-[640px]" />
         </div>
       ) : <HeroSection initialBanners={banners} />}
 

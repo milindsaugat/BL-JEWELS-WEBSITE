@@ -30,6 +30,8 @@ export const AdminLayout = () => {
     { label: 'Products', path: '/products', iconClass: 'uil uil-gold' },
     { label: 'Orders', path: '/orders', iconClass: 'fa-solid fa-truck-fast' },
     { label: 'Banners', path: '/banners', iconClass: 'ri-image-edit-line' },
+    { label: 'Gold API & Rates', path: '/gold-rates', iconClass: 'uil uil-gold' },
+    { label: 'Announcement Bar', path: '/announcements', iconClass: 'ri-megaphone-line' },
     { label: 'Coupons', path: '/coupons', iconClass: 'uil uil-tag-alt' },
     { label: 'Testimonials', path: '/testimonials', iconClass: 'ri-chat-quote-line' },
   ];

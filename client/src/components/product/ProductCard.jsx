@@ -81,7 +81,7 @@ export const ProductCard = ({ product }) => {
         </button>
 
         {/* Hover / Mobile Quick Actions */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-charcoal/25 md:backdrop-blur-[2px] opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center p-2.5 sm:p-3 gap-2 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent md:bg-charcoal/25 md:backdrop-blur-[2px] opacity-0 group-hover:opacity-100 group-active:opacity-100 focus-within:opacity-100 transition-opacity duration-300 flex items-end justify-center p-2.5 sm:p-3 gap-2 pointer-events-none">
           <button
             type="button"
             onClick={handleQuickView}

@@ -1,3 +1,4 @@
+import { RateCacheNotice } from './RateCacheNotice';
 import { getRateDisplay, getRateError } from '../../lib/rateDisplay';
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, RefreshCw, Phone, PhoneCall, ShieldCheck } from 'lucide-react';
@@ -57,7 +58,7 @@ export const LiveRateModal = () => {
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </h2>
               <p className="text-[11px] text-stone-300">
-                {ratesData?.source ? `✦ ${ratesData.source}` : 'Official MCX & Spot Rates'} • Govt BIS 916 Benchmark
+                {ratesData?.source ? `✦ ${ratesData.source}` : 'Gold and Silver Reference Rates'} • Govt BIS 916 Benchmark
               </p>
             </div>
           </div>
@@ -83,6 +84,7 @@ export const LiveRateModal = () => {
 
         {/* Scrollable Content */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-6">
+          <RateCacheNotice meta={ratesData?.meta} />
           {rateError && <p role="alert" className="rounded-lg border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950">{rateError}{ratesData ? ' Showing the last successfully loaded rates.' : ''}</p>}
           
           {/* ── 3 SPOT CARDS GRID ── */}
@@ -255,7 +257,7 @@ export const LiveRateModal = () => {
           {/* Action Footer */}
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
             <span className="text-stone-300 text-[11px]">
-              Rates refreshed every 30 seconds via MCX live API benchmark.
+              Reference prices refresh every 4 hours.
             </span>
             <button
               onClick={closeLiveRate}

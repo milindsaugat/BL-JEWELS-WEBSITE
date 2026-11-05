@@ -32,6 +32,9 @@ export const authService = {
   login: (credentials) => api.post('/auth/login', credentials).then(res => res.data),
   logout: () => api.post('/auth/logout').then(res => res.data),
   getMe: () => api.get('/auth/me').then(res => res.data),
+  forgotPassword: (email) => api.post('/auth/forgot-password', { email }).then(res => res.data),
+  verifyOtp: (email, otp) => api.post('/auth/verify-otp', { email, otp }).then(res => res.data),
+  resetPassword: (email, otp, newPassword) => api.post('/auth/reset-password', { email, otp, newPassword }).then(res => res.data),
 };
 
 export const productService = {

@@ -1,69 +1,47 @@
 import { create } from 'zustand';
 import { authService } from '../services/api';
 
-const loadAdminFromStorage = () => {
+const loadSession = () => {
   try {
-    const saved = localStorage.getItem('bl_admin_user');
-    return saved ? JSON.parse(saved) : {
-      name: 'BL Jewels Administrator',
-      email: 'admin@bljewels.com',
-      role: 'admin',
-    };
-  } catch {
-    return {
-      name: 'BL Jewels Administrator',
-      email: 'admin@bljewels.com',
-      role: 'admin',
-    };
-  }
+    const token = localStorage.getItem('bl_admin_token');
+    const user = JSON.parse(localStorage.getItem('bl_admin_user') || 'null');
+    if (!token || token.startsWith('demo_admin_token') || user?.role !== 'admin') return null;
+    return { token, user };
+  } catch { return null; }
+};
+const session = loadSession();
+const clearSession = () => {
+  localStorage.removeItem('bl_admin_token');
+  localStorage.removeItem('bl_admin_user');
 };
 
 export const useAuthStore = create((set) => ({
-  user: loadAdminFromStorage(),
-  token: localStorage.getItem('bl_admin_token') || 'demo_admin_token',
-  isAuthenticated: true, // Default to true for ease of use or via login
+  user: session?.user ?? null,
+  token: session?.token ?? null,
+  isAuthenticated: Boolean(session),
   isLoading: false,
-
   login: async (email, password) => {
     set({ isLoading: true });
     try {
       const data = await authService.login({ email, password });
-      if (data.success) {
-        localStorage.setItem('bl_admin_token', data.accessToken);
-        localStorage.setItem('bl_admin_user', JSON.stringify(data.user));
-        set({
-          user: data.user,
-          token: data.accessToken,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-        return { success: true };
+      if (!data.success || !data.accessToken || data.accessToken.startsWith('demo_admin_token') || data.user?.role !== 'admin') {
+        throw new Error(data.message || 'Please sign in with an administrator account.');
       }
-      set({ isLoading: false });
-      return { success: false, message: data.message };
-    } catch {
-      // Offline fallback login for demo
-      const demoUser = {
-        name: 'BL Jewels Administrator',
-        email: email || 'admin@bljewels.com',
-        role: 'admin',
-      };
-      localStorage.setItem('bl_admin_token', 'demo_admin_token_2026');
-      localStorage.setItem('bl_admin_user', JSON.stringify(demoUser));
-      set({
-        user: demoUser,
-        token: 'demo_admin_token_2026',
-        isAuthenticated: true,
-        isLoading: false,
-      });
+      localStorage.setItem('bl_admin_token', data.accessToken);
+      // Verify the backend recognises the session before unlocking the admin UI.
+      const verified = await authService.getMe();
+      if (!verified.success || verified.user?.role !== 'admin') throw new Error('An administrator account is required.');
+      localStorage.setItem('bl_admin_user', JSON.stringify(verified.user));
+      set({ user: verified.user, token: data.accessToken, isAuthenticated: true, isLoading: false });
       return { success: true };
+    } catch (error) {
+      clearSession();
+      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+      return { success: false, message: error.response?.data?.message || error.message || 'Unable to sign in. Please try again.' };
     }
   },
-
   logout: () => {
-    localStorage.removeItem('bl_admin_token');
-    localStorage.removeItem('bl_admin_user');
+    clearSession();
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));
-

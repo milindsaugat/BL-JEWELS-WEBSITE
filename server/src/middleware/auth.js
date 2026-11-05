@@ -20,28 +20,6 @@ export const protect = async (req, res, next) => {
     });
   }
 
-  // Support local dev admin tokens seamlessly
-  if (token === 'demo_admin_token' || token === 'demo_admin_token_2026') {
-    try {
-      const adminUser = await User.findOne({ role: 'admin' });
-      req.user = adminUser || {
-        _id: 'usr_admin_default',
-        name: 'BL Jewels Administrator',
-        email: 'admin@bljewels.com',
-        role: 'admin',
-      };
-      return next();
-    } catch {
-      req.user = {
-        _id: 'usr_admin_default',
-        name: 'BL Jewels Administrator',
-        email: 'admin@bljewels.com',
-        role: 'admin',
-      };
-      return next();
-    }
-  }
-
   try {
     const secret = process.env.JWT_SECRET || 'bl_jewels_super_secret_jwt_key_2026_dev';
     const decoded = jwt.verify(token, secret);

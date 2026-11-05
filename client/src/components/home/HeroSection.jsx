@@ -58,9 +58,9 @@ export const HeroSection = ({ initialBanners = [] }) => {
   return (
     <section
       className={`group relative w-full overflow-hidden bg-[#140F0E] ${
-        activeBanner?.isImageOnly
-          ? 'aspect-[2.4/1] sm:aspect-[2.8/1] md:aspect-[3/1] min-h-[220px] max-h-[640px]'
-          : 'min-h-[520px] sm:min-h-[580px] lg:min-h-[640px] h-auto sm:h-[70svh] sm:max-h-[700px]'
+        (activeBanner?.isImageOnly === true || activeBanner?.isImageOnly === 'true')
+          ? 'aspect-[2.1/1] sm:aspect-[2.6/1] md:aspect-[3/1] min-h-[195px] sm:min-h-[220px] max-h-[640px]'
+          : 'min-h-[460px] sm:min-h-[540px] md:min-h-[600px] h-auto sm:h-[65svh] sm:max-h-[700px]'
       }`}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
@@ -86,11 +86,13 @@ export const HeroSection = ({ initialBanners = [] }) => {
               idx === currentIdx ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
             }`}
           >
-            {/* Banner Image: 100% full cover without blur or gloss */}
+            {/* Banner Image: 100% full cover without blur or gloss (Anchored left on mobile so text never crops) */}
             <img
               src={banner.image}
               alt={banner.title || 'Hero Banner'}
-              className="w-full h-full object-cover object-center scale-100 transition-transform duration-7000 ease-out"
+              className={`w-full h-full object-cover scale-100 transition-transform duration-7000 ease-out ${
+                isImageOnly ? 'object-left sm:object-center' : 'object-center'
+              }`}
               fetchPriority={idx === currentIdx ? 'high' : 'low'}
               decoding="async"
             />
