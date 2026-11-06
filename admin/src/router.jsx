@@ -8,6 +8,7 @@ import { AdminCategories } from './pages/AdminCategories';
 import { AdminOccasions } from './pages/AdminOccasions';
 import { AdminProducts } from './pages/AdminProducts';
 import { AdminOrders } from './pages/AdminOrders';
+import { AdminUsers } from './pages/AdminUsers';
 import { AdminCoupons } from './pages/AdminCoupons';
 import { AdminReviews } from './pages/AdminReviews';
 import { AdminGoldRates } from './pages/AdminGoldRates';
@@ -60,6 +61,10 @@ export const router = createBrowserRouter([
       {
         path: 'orders',
         element: <AdminOrders />,
+      },
+      {
+        path: 'users',
+        element: <AdminUsers />,
       },
       {
         path: 'coupons',

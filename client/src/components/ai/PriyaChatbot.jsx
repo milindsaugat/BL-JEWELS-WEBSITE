@@ -74,7 +74,7 @@ export const PriyaChatbot = () => {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="relative group w-14 h-14 rounded-full bg-gradient-to-tr from-crimson-900 via-crimson-700 to-crimson-600 text-white shadow-crimson border-2 border-gold-300 flex items-center justify-center hover:scale-105 transition-all duration-300"
+          className="relative group w-14 h-14 rounded-full bg-gradient-to-tr from-[#930303] via-[#7A0303] to-[#5C0202] text-white shadow-lg shadow-[#930303]/40 border-2 border-gold-300 flex items-center justify-center hover:scale-105 transition-all duration-300"
           title="Chat with Priya — BL Jewels Stylist"
         >
           {/* Subtle pulse ring */}
@@ -97,11 +97,11 @@ export const PriyaChatbot = () => {
         <div className="w-[360px] sm:w-[390px] h-[520px] bg-pearl rounded-2xl shadow-2xl border border-gold-300/60 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-200">
           
           {/* Header */}
-          <div className="bg-gradient-to-r from-crimson-900 via-crimson-800 to-crimson-700 text-white p-4 flex items-center justify-between border-b border-gold-400/40">
+          <div className="bg-gradient-to-r from-[#930303] via-[#7A0303] to-[#5C0202] text-white p-4 flex items-center justify-between border-b border-gold-400/40">
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-full bg-gold-500/20 border border-gold-300 flex items-center justify-center text-gold-200">
                 <Sparkles className="w-5 h-5 text-gold-300" />
-                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-crimson-900" />
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-[#930303]" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
@@ -140,14 +140,14 @@ export const PriyaChatbot = () => {
                 className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-crimson-700 text-gold-300 flex items-center justify-center shrink-0 border border-gold-400/40 text-xs">
+                  <div className="w-7 h-7 rounded-full bg-[#930303] text-gold-300 flex items-center justify-center shrink-0 border border-gold-400/40 text-xs">
                     P
                   </div>
                 )}
                 <div
                   className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs font-body leading-relaxed ${
                     m.role === 'user'
-                      ? 'bg-crimson-700 text-white rounded-tr-none'
+                      ? 'bg-[#930303] text-white rounded-tr-none'
                       : 'bg-white text-stone-800 rounded-tl-none border border-border-light shadow-sm'
                   }`}
                 >
@@ -158,7 +158,7 @@ export const PriyaChatbot = () => {
 
             {loading && (
               <div className="flex gap-2 justify-start items-center">
-                <div className="w-7 h-7 rounded-full bg-crimson-700 text-gold-300 flex items-center justify-center text-xs">
+                <div className="w-7 h-7 rounded-full bg-[#930303] text-gold-300 flex items-center justify-center text-xs">
                   P
                 </div>
                 <div className="bg-white px-4 py-2.5 rounded-2xl rounded-tl-none border border-border-light shadow-sm flex items-center gap-1.5 text-stone-400 text-xs">
@@ -204,7 +204,7 @@ export const PriyaChatbot = () => {
             <button
               type="submit"
               disabled={!input.trim() || loading}
-              className="p-2 rounded-xl bg-crimson-700 hover:bg-crimson-800 disabled:opacity-40 text-white transition-colors"
+              className="p-2 rounded-xl bg-[#930303] hover:bg-[#7A0303] disabled:opacity-40 text-white transition-colors"
             >
               <Send className="w-4 h-4" />
             </button>

@@ -8,6 +8,7 @@ import { AISearchBar } from '../components/ai/AISearchBar';
 import { PriyaChatbot } from '../components/ai/PriyaChatbot';
 import { QuickViewModal } from '../components/product/QuickViewModal';
 import { LiveRateModal } from '../components/common/LiveRateModal';
+import { AuthModal } from '../components/common/AuthModal';
 
 export const CustomerLayout = () => {
   return (
@@ -29,6 +30,7 @@ export const CustomerLayout = () => {
       <PriyaChatbot />
       <QuickViewModal />
       <LiveRateModal />
+      <AuthModal />
 
       {/* Luxury Customer Footer */}
       <Footer />

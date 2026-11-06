@@ -15,7 +15,7 @@ export const PriceDisplay = ({ price, discountPrice, size = 'md', className = ''
 
   return (
     <div className={`flex items-baseline flex-wrap gap-2 ${className}`}>
-      <span className={`font-body font-bold text-crimson-900 tracking-tight ${sizeClasses[size]}`}>
+      <span className={`font-body font-bold text-[#930303] tracking-tight ${sizeClasses[size]}`}>
         ₹{formatCurrency(currentPrice)}
       </span>
       {originalPrice && (

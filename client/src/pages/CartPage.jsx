@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Trash2, Plus, Minus, ArrowRight, ShieldCheck, Tag, ShoppingBag, Sparkles } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
+import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
 import { paymentService } from '../services/api';
 import { formatCurrency } from '../lib/utils';
 import { PriceDisplay } from '../components/common/PriceDisplay';
@@ -25,12 +27,22 @@ export const CartPage = () => {
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [isApplying, setIsApplying] = useState(false);
+  const { isAuthenticated } = useAuthStore();
+  const { openAuthModal } = useUIStore();
   const navigate = useNavigate();
 
   const subtotal = getSubtotal();
   const shipping = getShipping();
   const tax = getTax();
   const total = getTotal();
+
+  const handleProceedToCheckout = () => {
+    if (!isAuthenticated) {
+      openAuthModal('checkout');
+      return;
+    }
+    navigate('/checkout');
+  };
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -79,7 +91,7 @@ export const CartPage = () => {
           </p>
           <Link
             to="/collections"
-            className="inline-block px-8 py-3.5 bg-crimson-700 hover:bg-crimson-800 text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-crimson"
+            className="inline-block px-8 py-3.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25"
           >
             Explore Fine Collections
           </Link>
@@ -92,7 +104,7 @@ export const CartPage = () => {
     <div className="py-12 bg-pearl min-h-screen">
       <div className="container-bl">
         
-        <h1 className="font-display text-3xl sm:text-4xl font-bold text-crimson-900 mb-8">
+        <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#930303] mb-8">
           Your Shopping Bag ({items.length} {items.length === 1 ? 'Design' : 'Designs'})
         </h1>
 
@@ -118,7 +130,7 @@ export const CartPage = () => {
                         {item.product.metal?.karat || '22K'} Gold • {item.variant?.label}
                       </span>
                       <Link to={`/products/${item.product.slug}`} className="block">
-                        <h3 className="font-display text-base sm:text-lg font-semibold text-charcoal truncate hover:text-crimson-700 transition-colors">
+                        <h3 className="font-display text-base sm:text-lg font-semibold text-charcoal truncate hover:text-[#930303] transition-colors">
                           {item.product.name}
                         </h3>
                       </Link>
@@ -147,7 +159,7 @@ export const CartPage = () => {
                     </div>
 
                     {/* Total item price */}
-                    <span className="font-accent text-base font-bold text-crimson-700 shrink-0">
+                    <span className="font-accent text-base font-bold text-[#930303] shrink-0">
                       ₹{formatCurrency(item.price * item.quantity)}
                     </span>
 
@@ -165,7 +177,7 @@ export const CartPage = () => {
             })}
 
             <div className="flex items-center justify-between pt-2">
-              <Link to="/collections" className="text-xs font-semibold text-crimson-700 hover:underline font-body">
+              <Link to="/collections" className="text-xs font-semibold text-[#930303] hover:underline font-body">
                 ← Continue Exploring Collections
               </Link>
               <button onClick={clearCart} className="text-xs text-stone-400 hover:text-stone-700 font-body">
@@ -237,13 +249,13 @@ export const CartPage = () => {
                 </div>
                 <div className="flex justify-between text-base font-bold text-charcoal border-t border-border-light pt-3">
                   <span>Total Payable</span>
-                  <span className="font-accent text-lg text-crimson-700">₹{formatCurrency(total)}</span>
+                  <span className="font-accent text-lg text-[#930303]">₹{formatCurrency(total)}</span>
                 </div>
               </div>
 
               <button
-                onClick={() => navigate('/checkout')}
-                className="w-full py-3.5 bg-gradient-to-r from-crimson-700 to-crimson-600 hover:from-crimson-800 hover:to-crimson-700 text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-crimson flex items-center justify-center gap-2"
+                onClick={handleProceedToCheckout}
+                className="w-full py-3.5 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Proceed to Checkout</span>
                 <ArrowRight className="w-4 h-4" />

@@ -25,7 +25,7 @@ export const LiveRatesMarquee = ({ initialRates = null }) => {
     const fetchRates = () => {
       rateService.getLiveRates()
         .then((res) => {
-          if (res?.success) {
+          if (res?.success && res?.liveAvailable) {
             setRateMeta(res.meta ?? null);
             setGoldRates(res.goldRates ?? []);
             setSilverRates(res.silverRates ?? []);
@@ -72,7 +72,7 @@ export const LiveRatesMarquee = ({ initialRates = null }) => {
           {[...goldRates, ...goldRates].map((item, idx) => (
             <div
               key={`gold-${idx}`}
-              className="inline-flex items-center gap-3 px-4 py-2 mx-2 rounded-xl bg-[#4D0D18] hover:bg-[#5C101E] border border-[#C9A44A]/50 transition-all duration-200 shrink-0 group cursor-default shadow-md shadow-[#4D0D18]/15 hover:shadow-lg"
+              className="inline-flex items-center gap-3 px-4 py-2 mx-2 rounded-xl bg-[#930303] hover:bg-[#7A0303] border border-[#C9A44A]/50 transition-all duration-200 shrink-0 group cursor-default shadow-md shadow-[#930303]/15 hover:shadow-lg"
             >
               {/* Icon Badge using FontAwesome / Remix / Unicons */}
               <div className="w-7 h-7 rounded-lg bg-[#C9A44A]/20 border border-[#C9A44A]/50 flex items-center justify-center text-[#F3E5AB] shrink-0 group-hover:scale-110 transition-transform">
@@ -86,7 +86,7 @@ export const LiveRatesMarquee = ({ initialRates = null }) => {
                     <span className="text-[11px] font-bold text-[#F3E5AB] uppercase tracking-wider">
                       {item.label}
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#6B1120] border border-[#C9A44A]/60 font-semibold text-white font-body">
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#7A0303] border border-[#C9A44A]/60 font-semibold text-white font-body">
                       ASK {item.ask}
                     </span>
                   </div>

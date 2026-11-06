@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit, CheckCircle, XCircle, ArrowUpRight, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { bannerService } from '../../services/api';
+import { toast } from 'sonner';
 
 export const AdminBanners = () => {
   const [banners, setBanners] = useState([]);
@@ -96,13 +97,19 @@ export const AdminBanners = () => {
     try {
       if (editingBanner) {
         await bannerService.updateBanner(editingBanner._id, formData);
+        toast.success('Hero banner updated successfully!');
+        setEditingBanner((prev) => ({ ...prev, ...formData }));
       } else {
-        await bannerService.createBanner(formData);
+        const res = await bannerService.createBanner(formData);
+        toast.success('Hero banner created successfully!');
+        const created = res?.banner || res;
+        if (created && created._id) {
+          setEditingBanner(created);
+        }
       }
-      setShowModal(false);
       fetchBanners();
     } catch {
-      alert('Failed to save banner');
+      toast.error('Failed to save banner');
     }
   };
 
@@ -122,7 +129,7 @@ export const AdminBanners = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-crimson-700 hover:bg-crimson-800 text-white rounded-xl text-xs font-semibold font-body flex items-center gap-2 shadow-crimson transition-all"
+          className="px-4 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body flex items-center gap-2 shadow-md shadow-[#930303]/25 transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Hero Slide</span>
@@ -136,7 +143,7 @@ export const AdminBanners = () => {
         <div className="py-16 text-center bg-white rounded-2xl border border-stone-200">
           <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-2" />
           <p className="font-display text-lg font-bold text-stone-800">No Hero Banners Configured</p>
-          <button onClick={handleOpenAdd} className="mt-3 px-4 py-2 bg-crimson-700 text-white rounded-lg text-xs font-semibold">
+          <button onClick={handleOpenAdd} className="mt-3 px-4 py-2 bg-[#930303] text-white rounded-lg text-xs font-semibold">
             Create First Slide
           </button>
         </div>
@@ -234,7 +241,7 @@ export const AdminBanners = () => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-gold-300 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
-              <h3 className="font-display text-xl font-bold text-crimson-900">
+              <h3 className="font-display text-xl font-bold text-[#930303]">
                 {editingBanner ? 'Edit Hero Slide' : 'Add New Hero Banner'}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-stone-400 hover:text-charcoal text-sm">
@@ -347,7 +354,7 @@ export const AdminBanners = () => {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="text-crimson-700 rounded"
+                    className="accent-[#930303] rounded"
                   />
                   <span>Publish & Show in Live Homepage Hero Slider</span>
                 </label>
@@ -363,7 +370,7 @@ export const AdminBanners = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-crimson-700 text-white rounded-xl text-xs font-semibold"
+                  className="px-6 py-2 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold"
                 >
                   {editingBanner ? 'Save Changes' : 'Add Hero Slide'}
                 </button>

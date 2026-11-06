@@ -5,6 +5,8 @@ import { useCartStore } from '../../store/cartStore';
 import { paymentService } from '../../services/api';
 import { formatCurrency } from '../../lib/utils';
 import { PriceDisplay } from '../common/PriceDisplay';
+import { useAuthStore } from '../../store/authStore';
+import { useUIStore } from '../../store/uiStore';
 
 export const CartDrawer = () => {
   const {
@@ -26,6 +28,8 @@ export const CartDrawer = () => {
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [isApplying, setIsApplying] = useState(false);
+  const { isAuthenticated } = useAuthStore();
+  const { openAuthModal } = useUIStore();
   const navigate = useNavigate();
 
   if (!isDrawerOpen) return null;
@@ -73,6 +77,10 @@ export const CartDrawer = () => {
   };
 
   const handleCheckout = () => {
+    if (!isAuthenticated) {
+      openAuthModal('checkout');
+      return;
+    }
     closeDrawer();
     navigate('/checkout');
   };
@@ -92,7 +100,7 @@ export const CartDrawer = () => {
           {/* Header */}
           <div className="p-4 md:p-5 border-b border-border-light bg-ivory flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-crimson-700" />
+              <ShoppingBag className="w-5 h-5 text-[#930303]" />
               <h2 className="font-display text-xl font-bold text-charcoal">
                 Your Shopping Bag
               </h2>
@@ -125,7 +133,7 @@ export const CartDrawer = () => {
             </div>
             <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-gold-500 to-crimson-600 transition-all duration-300 rounded-full"
+                className="h-full bg-gradient-to-r from-gold-500 to-[#930303] transition-all duration-300 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -147,7 +155,7 @@ export const CartDrawer = () => {
                     closeDrawer();
                     navigate('/collections');
                   }}
-                  className="px-6 py-2.5 bg-crimson-700 hover:bg-crimson-800 text-white text-xs font-medium font-body rounded-lg transition-colors shadow-sm"
+                  className="px-6 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white text-xs font-medium font-body rounded-lg transition-colors shadow-sm cursor-pointer"
                 >
                   Explore Collections
                 </button>
@@ -210,7 +218,7 @@ export const CartDrawer = () => {
                         </div>
 
                         {/* Price */}
-                        <span className="font-body text-sm font-bold text-crimson-800">
+                        <span className="font-body text-sm font-bold text-[#930303]">
                           ₹{formatCurrency(item.price * item.quantity)}
                         </span>
                       </div>
@@ -286,7 +294,7 @@ export const CartDrawer = () => {
                 </div>
                 <div className="flex justify-between text-sm font-bold text-stone-900 border-t border-border-light pt-2">
                   <span>Total Payable</span>
-                  <span className="font-body text-base font-bold text-crimson-800">
+                  <span className="font-body text-base font-bold text-[#930303]">
                     ₹{formatCurrency(total)}
                   </span>
                 </div>
@@ -295,7 +303,7 @@ export const CartDrawer = () => {
               {/* Checkout Button */}
               <button
                 onClick={handleCheckout}
-                className="w-full py-3 bg-gradient-to-r from-crimson-700 to-crimson-600 hover:from-crimson-600 hover:to-crimson-500 text-white rounded-xl text-xs font-semibold font-body tracking-wide transition-all shadow-crimson flex items-center justify-center gap-2"
+                className="w-full py-3 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-xl text-xs font-semibold font-body tracking-wide transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Proceed to Secure Checkout</span>
                 <ArrowRight className="w-4 h-4" />

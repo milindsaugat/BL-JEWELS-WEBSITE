@@ -5,12 +5,32 @@
 @tailwind utilities;
 
 @layer base {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  html {
+    overflow-y: auto;
+  }
+
   body {
-    background-color: #F5F2EB;
+    background-color: #F6F7F9 !important;
     color: #1C1410;
     font-family: 'DM Sans', system-ui, -apple-system, sans-serif !important;
     font-feature-settings: 'tnum' 1, 'lnum' 1;
     font-variant-numeric: tabular-nums lining-nums;
+    overflow-y: visible;
+  }
+
+  #root {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
   }
 
   h1, h2, h3, h4, h5, h6, .font-heading, .font-display, .font-accent {
@@ -24,17 +44,22 @@
   }
 }
 
-/* Custom Scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Hide every scrollbar, including portal dialogs, without disabling scrolling. */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
-::-webkit-scrollbar-track {
-  background: #F5F2EB;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #C9A44A;
-  border-radius: 3px;
-}
+/* The document is the only page scroller. Menus remain keyboard/wheel accessible. */
+.admin-sidebar-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.admin-sidebar-scroll::-webkit-scrollbar { display: none; }
+html:has([aria-modal="true"]) { overflow: hidden; }
+body:has([aria-modal="true"]) { overflow: hidden; }
+.admin-shell main { overflow: visible; }
+.admin-shell :focus-visible { outline: 2px solid #930303; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .admin-shell * { transition-duration: 0s !important; } }

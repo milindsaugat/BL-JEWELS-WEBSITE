@@ -26,6 +26,8 @@ test('rate settings reject anonymous, demo and non-admin sessions; validate upda
     assert.equal((await invoke('GET', '/settings', token)).status, 403);
     User.findById = () => ({ select: async () => ({ role: 'admin' }) });
     assert.equal((await invoke('PUT', '/settings', token, { enabled: 'yes' })).status, 400);
+    delete process.env.JWT_SECRET;
+    assert.equal((await invoke('GET', '/settings', token)).status, 503);
   } finally {
     User.findById = previousFind;
     if (previousSecret === undefined) delete process.env.JWT_SECRET;

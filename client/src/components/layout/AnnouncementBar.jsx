@@ -74,7 +74,7 @@ export const AnnouncementBar = () => {
   const seamlessItems = [...marqueeList, ...marqueeList];
 
   return (
-    <div className="bg-[#330808] text-[#F3E5AB] text-[11px] md:text-xs font-body border-b border-[#C9A44A]/40 relative z-50 overflow-hidden shadow-xs">
+    <div className="bg-[#930303] text-[#F3E5AB] text-[11px] md:text-xs font-body border-b border-[#C9A44A]/40 relative z-50 overflow-hidden shadow-xs">
       
       {/* ────────────────────────────────────────────────────────────
           MODE 1: CONTINUOUS INFINITE MARQUEE (Storewide Ticker)
@@ -82,8 +82,8 @@ export const AnnouncementBar = () => {
       {isMarquee ? (
         <div className="relative w-full overflow-hidden marquee-pause py-2 sm:py-2.5">
           {/* Edge Luxury Vignettes for smooth entrance and exit */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 sm:w-16 bg-gradient-to-r from-[#330808] to-transparent z-10" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:w-16 bg-gradient-to-l from-[#330808] to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 sm:w-16 bg-gradient-to-r from-[#930303] to-transparent z-10" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 sm:w-16 bg-gradient-to-l from-[#930303] to-transparent z-10" />
 
           {/* Infinite Marquee Track (Smooth Hardware Accelerated) */}
           <div
@@ -103,7 +103,7 @@ export const AnnouncementBar = () => {
                   </span>
 
                   {hasCode && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#521212] border border-[#C9A44A]/60 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap shadow-sm">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap shadow-sm">
                       <i className="uil uil-tag-alt text-[10px]" />
                       <span>Special Offer</span>
                     </span>
@@ -155,13 +155,13 @@ export const AnnouncementBar = () => {
                 config.pillLink ? (
                   <a
                     href={config.pillLink}
-                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#521212] hover:bg-[#681818] border border-[#C9A44A]/60 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap ml-1 shadow-sm transition-colors cursor-pointer shrink-0"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#7A0303] hover:bg-[#5C0202] border border-[#C9A44A]/70 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap ml-1 shadow-sm transition-colors cursor-pointer shrink-0"
                   >
                     <i className="uil uil-tag-alt text-[10px]" />
                     <span>{config.pillText}</span>
                   </a>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#521212] border border-[#C9A44A]/60 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap ml-1 shadow-sm shrink-0">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap ml-1 shadow-sm shrink-0">
                     <i className="uil uil-tag-alt text-[10px]" />
                     <span>{config.pillText}</span>
                   </span>
@@ -203,7 +203,7 @@ export const AnnouncementBar = () => {
                 {config.staticText}
               </p>
               {config.showPill && config.pillText && (
-                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#521212] border border-[#C9A44A]/60 text-[9px] font-bold text-[#F9E59B] uppercase whitespace-nowrap shrink-0">
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[9px] font-bold text-[#F9E59B] uppercase whitespace-nowrap shrink-0">
                   <span>{config.pillText}</span>
                 </span>
               )}

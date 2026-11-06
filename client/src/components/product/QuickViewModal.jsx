@@ -134,7 +134,7 @@ export const QuickViewModal = () => {
                       onClick={() => setActiveImageIdx(idx)}
                       className={`w-10 h-10 sm:w-11 sm:h-11 rounded-xl overflow-hidden border-2 transition-all p-0.5 bg-white shrink-0 ${
                         activeImageIdx === idx
-                          ? 'border-crimson-700 ring-2 ring-gold-400/40 shadow-xs scale-105'
+                          ? 'border-[#930303] ring-2 ring-gold-400/40 shadow-xs scale-105'
                           : 'border-stone-200 opacity-70 hover:opacity-100 hover:border-gold-300'
                       }`}
                     >
@@ -162,7 +162,7 @@ export const QuickViewModal = () => {
                         onClick={() => setSelectedVariantIdx(idx)}
                         className={`text-xs px-3 py-1.5 rounded-lg border font-body font-medium transition-all ${
                           selectedVariantIdx === idx
-                            ? 'bg-crimson-800 text-white border-crimson-800 shadow-xs'
+                            ? 'bg-[#930303] text-white border-[#930303] shadow-xs'
                             : 'bg-white text-stone-700 border-stone-200 hover:border-gold-400'
                         }`}
                       >
@@ -178,7 +178,7 @@ export const QuickViewModal = () => {
             <div className="space-y-2.5 pt-3 border-t border-stone-200">
               <button
                 onClick={handleAddToCart}
-                className="w-full py-3 bg-gradient-to-r from-crimson-800 to-crimson-700 hover:from-crimson-700 hover:to-crimson-600 text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md active:scale-98 flex items-center justify-center gap-2"
+                className="w-full py-3 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <ShoppingBag className="w-4 h-4" />
                 <span>Add to Shopping Bag</span>
@@ -188,7 +188,7 @@ export const QuickViewModal = () => {
                 <Link
                   to={`/products/${product.slug}`}
                   onClick={closeQuickView}
-                  className="text-xs font-semibold text-gold-800 hover:text-crimson-800 font-body inline-flex items-center gap-1 transition-colors"
+                  className="text-xs font-semibold text-gold-800 hover:text-[#930303] font-body inline-flex items-center gap-1 transition-colors"
                 >
                   <span>View Full Product Details & Sizing</span>
                   <ArrowRight className="w-3.5 h-3.5" />

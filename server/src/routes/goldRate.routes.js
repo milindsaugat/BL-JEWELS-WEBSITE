@@ -13,7 +13,10 @@ router.get('/', async (req, res) => {
 // API credentials require a real administrator session, never the legacy demo bypass.
 router.use('/settings', (req, res, next) => {
   const token = req.headers.authorization?.replace(/^Bearer\s+/i, '') || req.cookies?.accessToken;
-  if (!process.env.JWT_SECRET || token?.startsWith('demo_admin_token')) {
+  if (!process.env.JWT_SECRET) {
+    return res.status(503).json({ success: false, message: 'Configure JWT_SECRET on the server to manage API credentials. Your session has not been changed.' });
+  }
+  if (token?.startsWith('demo_admin_token')) {
     return res.status(401).json({ success: false, message: 'Sign in with a real administrator account to manage API settings.' });
   }
   res.set('Cache-Control', 'no-store');

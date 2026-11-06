@@ -21,12 +21,26 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('bl_admin_token') || localStorage.getItem('bl_access_token');
+  const token = localStorage.getItem('bl_admin_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('bl_admin_token');
+      localStorage.removeItem('bl_admin_user');
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login?expired=1';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   login: (credentials) => api.post('/auth/login', credentials).then(res => res.data),
@@ -95,6 +109,15 @@ export const reviewService = {
 
 export const aiService = {
   generateDescription: (details) => api.post('/ai/generate-description', details).then(res => res.data),
+};
+
+export const userService = {
+  getUsers: (params) => api.get('/users', { params }).then(res => res.data),
+  getUserStats: () => api.get('/users/stats').then(res => res.data),
+  getUserById: (id) => api.get(`/users/${id}`).then(res => res.data),
+  updateStatus: (id, isActive) => api.patch(`/users/${id}/status`, { isActive }).then(res => res.data),
+  updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }).then(res => res.data),
+  deleteUser: (id) => api.delete(`/users/${id}`).then(res => res.data),
 };
 
 export const uploadService = {

@@ -65,11 +65,47 @@ const productSchema = new mongoose.Schema({
     label: String,        // e.g. "22K · 4.2g"
     weight: Number,       // grams
     size: String,         // ring size / length
+    color: String,
+    karat: String,
     price: { type: Number, required: true },
     discountPrice: Number,
-    stock: { type: Number, default: 10 },
+    stock: { type: Number, default: 0, min: 0 },
     sku: String,
+    image: String,        // variant image URL
     isDefault: { type: Boolean, default: false },
+  }],
+  // ── Luxury Jewellery Specifications ──
+  labelName: { type: String, default: '' },         // e.g. "Set 18Kt"
+  branchLocation: { type: String, default: 'Agra, Uttar Pradesh' },
+  groupName: { type: String, default: '' },         // e.g. "18Kt Gold Ornaments"
+  varietyName: { type: String, default: '' },       // e.g. "TURK"
+  netWeight: { type: Number, default: 0 },          // e.g. 17.090
+  grossWeight: { type: Number, default: 0 },        // e.g. 17.09
+  pieces: { type: Number, default: 1 },             // e.g. 3
+  labourRate: { type: Number, default: 0 },         // e.g. 548.70
+  labourPercent: { type: Number, default: 0 },      // e.g. 5.00
+  todaysRate: { type: Number, default: 0 },         // e.g. 10974.00
+  jewelType: { type: String, default: '' },         // e.g. "FLAT SET"
+  categoryName: { type: String, default: '' },      // e.g. "Set"
+  serviceablePincodes: [{ type: String }],          // e.g. ["110085", "110001", "282002"]
+  studdedDetails: {
+    styleName: { type: String, default: 'Other Charges [H]' },
+    studSalesAmount: { type: Number, default: 0 },
+    salesAmount: { type: Number, default: 0 },
+    otherCharges: { type: Number, default: 0 },
+  },
+  priceBreakup: {
+    metalAmount: { type: Number, default: 0 },
+    otherCharge: { type: Number, default: 0 },
+    makingCharge: { type: Number, default: 0 },
+    gstAmount: { type: Number, default: 0 },
+    grandTotal: { type: Number, default: 0 },
+  },
+  productType: { type: String, enum: ['single', 'combo'], default: 'single' },
+  comboItems: [{
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    variantSku: String,
+    quantity: { type: Number, min: 1, required: true },
   }],
   images: [{
     url: { type: String, required: true },
@@ -105,8 +141,8 @@ const productSchema = new mongoose.Schema({
     default: true,
   },
   ratings: {
-    average: { type: Number, default: 4.8, min: 0, max: 5 },
-    count: { type: Number, default: 12 },
+    average: { type: Number, default: 0, min: 0, max: 5 },
+    count: { type: Number, default: 0 },
   },
   seo: {
     metaTitle: String,

@@ -44,10 +44,10 @@ export const LiveRateModal = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
       
       {/* Modal Container */}
-      <div className="relative w-full max-w-5xl bg-[#4D0D18] text-white rounded-2xl shadow-2xl border border-[#C9A44A]/50 overflow-hidden max-h-[92vh] flex flex-col font-body">
+      <div className="relative w-full max-w-5xl bg-[#930303] text-white rounded-2xl shadow-2xl border border-[#C9A44A]/50 overflow-hidden max-h-[92vh] flex flex-col font-body">
         
         {/* Top Header Bar */}
-        <div className="px-6 py-4 bg-[#3B0711] border-b border-[#C9A44A]/40 flex items-center justify-between shrink-0">
+        <div className="px-6 py-4 bg-[#7A0303] border-b border-[#C9A44A]/40 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center">
               <img src="/images/bl-jewels-icon.png" alt="BL Jewels" className="w-full h-full object-contain" />
@@ -91,7 +91,7 @@ export const LiveRateModal = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
             
             {/* 1. GOLD SPOT */}
-            <div className="bg-[#5C0F1E] border border-[#C9A44A]/60 rounded-xl p-4 text-center shadow-lg relative group">
+            <div className="bg-[#7A0303] border border-[#C9A44A]/60 rounded-xl p-4 text-center shadow-lg relative group">
               <div className="text-[11px] font-bold text-stone-200 tracking-wider uppercase mb-1">
                 GOLD SPOT
               </div>
@@ -108,7 +108,7 @@ export const LiveRateModal = () => {
             </div>
 
             {/* 2. SILVER SPOT */}
-            <div className="bg-[#5C0F1E] border border-[#C9A44A]/60 rounded-xl p-4 text-center shadow-lg relative group">
+            <div className="bg-[#7A0303] border border-[#C9A44A]/60 rounded-xl p-4 text-center shadow-lg relative group">
               <div className="text-[11px] font-bold text-stone-200 tracking-wider uppercase mb-1">
                 SILVER SPOT
               </div>
@@ -125,7 +125,7 @@ export const LiveRateModal = () => {
             </div>
 
             {/* 3. INR SPOT */}
-            <div className="bg-[#5C0F1E] border border-[#C9A44A]/60 rounded-xl p-4 text-center shadow-lg relative group">
+            <div className="bg-[#7A0303] border border-[#C9A44A]/60 rounded-xl p-4 text-center shadow-lg relative group">
               <div className="text-[11px] font-bold text-stone-200 tracking-wider uppercase mb-1">
                 INR SPOT
               </div>
@@ -147,20 +147,20 @@ export const LiveRateModal = () => {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
             
             {/* Left: Rate Guarantee Table (7 cols) */}
-            <div className="lg:col-span-7 bg-[#3B0711] rounded-xl border border-[#C9A44A]/40 overflow-hidden shadow-lg flex flex-col">
+            <div className="lg:col-span-7 bg-[#7A0303] rounded-xl border border-[#C9A44A]/40 overflow-hidden shadow-lg flex flex-col">
               
               {/* Table Header */}
-              <div className="px-5 py-3 bg-[#2D040C] border-b border-[#C9A44A]/40 flex items-center justify-between text-xs font-bold text-[#F3E5AB] uppercase tracking-wider">
+              <div className="px-5 py-3 bg-[#5C0202] border-b border-[#C9A44A]/40 flex items-center justify-between text-xs font-bold text-[#F3E5AB] uppercase tracking-wider">
                 <span>Right Rate Guarantee</span>
                 <span>Rate</span>
               </div>
 
               {/* Table Rows */}
-              <div className="divide-y divide-[#5C0F1E]/80 flex-1">
+              <div className="divide-y divide-[#7A0303]/80 flex-1">
                 {tableRows.map((row, idx) => (
                   <div
                     key={idx}
-                    className="px-5 py-3 flex items-center justify-between hover:bg-[#5C0F1E]/40 transition-colors"
+                    className="px-5 py-3 flex items-center justify-between hover:bg-[#5C0202]/40 transition-colors"
                   >
                     <span className={`text-xs ${row.isBold ? 'font-bold text-stone-100' : 'text-stone-200'}`}>
                       {row.label}
@@ -173,7 +173,7 @@ export const LiveRateModal = () => {
               </div>
 
               {/* Table Footer */}
-              <div className="p-3.5 bg-[#2D040C] border-t border-[#C9A44A]/30 text-center text-[11px] text-stone-300">
+              <div className="p-3.5 bg-[#5C0202] border-t border-[#C9A44A]/30 text-center text-[11px] text-stone-300">
                 <p>
                   Live Gold Rate — Get real-time gold rate accurate to the minute.
                 </p>
@@ -193,20 +193,20 @@ export const LiveRateModal = () => {
                       alt="BL Jewels"
                       className="w-7 h-7 object-contain"
                     />
-                    <span className="text-xs font-bold text-[#8B1A1A] tracking-wider uppercase">
+                    <span className="text-xs font-bold text-[#930303] tracking-wider uppercase">
                       BL JEWELS
                     </span>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded-md bg-[#8B1A1A] text-white text-[10px] font-bold">
-                    FLAGSHIP BOUTIQUE
+                  <span className="px-2.5 py-0.5 rounded-md bg-[#930303] text-white text-[10px] font-bold">
+                    FLAGSHIP SHOWROOM
                   </span>
                 </div>
 
                 <div className="text-center my-3">
-                  <span className="text-[10px] uppercase tracking-widest text-[#8B1A1A] font-bold block">
+                  <span className="text-[10px] uppercase tracking-widest text-[#930303] font-bold block">
                     VISIT OUR ATELIER
                   </span>
-                  <h3 className="text-lg sm:text-xl font-extrabold text-[#4D0D18] tracking-tight">
+                  <h3 className="text-lg sm:text-xl font-extrabold text-[#930303] tracking-tight">
                     AGRA SHOWROOM
                   </h3>
                   <p className="text-[11px] text-stone-600 font-medium">
@@ -217,15 +217,15 @@ export const LiveRateModal = () => {
                 {/* Boutique Address Box */}
                 <div className="p-3.5 rounded-xl bg-white/90 border border-[#C9A44A]/40 shadow-xs space-y-2 text-xs">
                   <div className="flex items-start gap-2">
-                    <MapPin className="w-4 h-4 text-[#8B1A1A] shrink-0 mt-0.5" />
+                    <MapPin className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
                     <span className="text-stone-800 text-[11px] leading-relaxed font-medium">
                       Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2 pt-2 border-t border-stone-200">
-                    <Phone className="w-3.5 h-3.5 text-[#8B1A1A] shrink-0" />
-                    <a href="tel:07454986610" className="text-stone-900 font-bold text-xs hover:text-[#8B1A1A] transition-colors">
+                    <Phone className="w-3.5 h-3.5 text-[#930303] shrink-0" />
+                    <a href="tel:07454986610" className="text-stone-900 font-bold text-xs hover:text-[#930303] transition-colors">
                       074549 86610
                     </a>
                   </div>
@@ -243,7 +243,7 @@ export const LiveRateModal = () => {
 
                 <a
                   href="tel:07454986610"
-                  className="px-3.5 py-1.5 bg-[#8B1A1A] hover:bg-[#721515] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+                  className="px-3.5 py-1.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
                 >
                   <PhoneCall className="w-3 h-3" />
                   <span>Call Store</span>

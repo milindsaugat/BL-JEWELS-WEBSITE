@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ShieldCheck, ArrowRight, Eye, EyeOff, KeyRound, Mail, Lock, X, CheckCircle2, RotateCw } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Eye, EyeOff, KeyRound, Mail, Lock, X, CheckCircle2, RotateCw, Zap, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/api';
 
@@ -26,10 +26,24 @@ export const AdminLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isSessionExpired = new URLSearchParams(location.search).get('expired') === '1';
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     const res = await login(email, password);
+    if (res.success) {
+      navigate(location.state?.from || '/', { replace: true });
+    } else {
+      setErrorMsg(res.message || 'Invalid administrator credentials.');
+    }
+  };
+
+  const handleQuickDemoAdminLogin = async () => {
+    setEmail('admin@bljewels.com');
+    setPassword('adminpassword123');
+    setErrorMsg('');
+    const res = await login('admin@bljewels.com', 'adminpassword123');
     if (res.success) {
       navigate(location.state?.from || '/', { replace: true });
     } else {
@@ -85,8 +99,8 @@ export const AdminLogin = () => {
     e.preventDefault();
     setForgotError('');
 
-    if (newPassword.length < 6) {
-      setForgotError('New password must be at least 6 characters long.');
+    if (newPassword.length < 8) {
+      setForgotError('New password must be at least 8 characters long.');
       return;
     }
 
@@ -123,10 +137,10 @@ export const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#140E0B] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#FAF6F3] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-[radial-gradient(#C9A44A_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
 
-      <div className="relative z-10 w-full max-w-md bg-[#1C1410] border border-[#C9A44A]/40 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6 text-white">
+      <div className="relative z-10 w-full max-w-md bg-white border border-[#C9A44A]/40 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6 text-stone-900">
         
         {/* Emblem */}
         <div className="text-center space-y-3">
@@ -138,24 +152,56 @@ export const AdminLogin = () => {
             />
           </div>
           <div>
-            <h1 className="font-accent text-xl sm:text-2xl font-bold tracking-cinzel text-gold-300">
+            <h1 className="font-accent text-xl sm:text-2xl font-bold tracking-cinzel text-[#930303]">
               BL JEWELS
             </h1>
-            <p className="font-accent text-[11px] tracking-[0.25em] text-stone-400 uppercase mt-0.5">
-              Executive Portal Authentication
+            <p className="font-accent text-[11px] tracking-[0.25em] text-stone-500 uppercase mt-0.5">
+              Welcome Back • Store Administration
             </p>
           </div>
         </div>
 
+        {isSessionExpired && !errorMsg && (
+          <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs font-body flex items-start gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+            <p>Your executive administrative session has expired. Please sign in to re-authenticate.</p>
+          </div>
+        )}
+
+        {/* 1-Click Instant Demo Admin Access */}
+        <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-gold-300/70 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+              <span className="font-accent text-[11px] font-bold text-gold-900 uppercase tracking-wider">
+                1-Click Executive Admin
+              </span>
+            </div>
+            <p className="text-[11px] text-stone-500 font-body truncate mt-0.5">
+              admin@bljewels.com • Pass: adminpassword123
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleQuickDemoAdminLogin}
+            disabled={isLoading}
+            className="px-3 py-1.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body shadow-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <Zap className="w-3.5 h-3.5 text-gold-300" />
+            <span>Instant Login</span>
+          </button>
+        </div>
+
         {errorMsg && (
-          <div className="p-3 bg-red-900/40 border border-red-500/50 rounded-xl text-red-200 text-xs font-body">
+          <div className="p-3 bg-red-50 border border-red-500/50 rounded-xl text-red-800 text-xs font-body">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-body">
           <div>
-            <label className="block text-stone-300 font-semibold mb-1">Admin Email Address</label>
+            <label className="block text-stone-700 font-semibold mb-1">Admin Email Address</label>
             <input
               type="email"
               autoComplete="username"
@@ -163,13 +209,13 @@ export const AdminLogin = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. admin@bljewels.com"
-              className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
+              className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-stone-300 font-semibold">Admin Password</label>
+              <label className="block text-stone-700 font-semibold">Admin Password</label>
               <button
                 type="button"
                 onClick={() => {
@@ -178,7 +224,7 @@ export const AdminLogin = () => {
                   setForgotStep('email');
                   setForgotError('');
                 }}
-                className="text-[11px] text-gold-400 hover:text-gold-300 transition-colors font-medium cursor-pointer"
+                className="text-[11px] text-[#930303] hover:text-[#930303] transition-colors font-medium cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -192,12 +238,12 @@ export const AdminLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your admin password"
-                className="w-full pl-3.5 pr-10 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
+                className="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-gold-300 transition-colors cursor-pointer p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-[#930303] transition-colors cursor-pointer p-0.5"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -209,20 +255,20 @@ export const AdminLogin = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-crimson-700 hover:bg-crimson-600 disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-crimson flex items-center justify-center gap-2 border border-gold-400/40 cursor-pointer"
+            className="w-full py-3.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-2 border border-gold-400/40 cursor-pointer"
           >
-            <span>Authorize & Enter Admin Suite</span>
+            <span>Sign in to your store</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="pt-2 text-center text-[11px] text-stone-400 flex items-center justify-center gap-1.5 font-body">
-          <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
+        <div className="pt-2 text-center text-[11px] text-stone-500 flex items-center justify-center gap-1.5 font-body">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#930303]" />
           <span>Restricted to BL Jewels Authorized Personnel Only</span>
         </div>
 
         <div className="text-center pt-2">
-          <a href="http://localhost:5173" className="text-xs text-stone-400 hover:text-gold-300 transition-colors">
+          <a href="http://localhost:5173" className="text-xs text-stone-500 hover:text-[#930303] transition-colors">
             ← Return to Customer Storefront
           </a>
         </div>
@@ -231,26 +277,27 @@ export const AdminLogin = () => {
 
       {/* ── FORGOT PASSWORD MODAL (EMAIL OTP FLOW VIA GOOGLE SMTP) ── */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-[#1C1410] border border-[#C9A44A]/50 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white border border-[#C9A44A]/50 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-stone-900">
             
             {/* Close Modal Button */}
             <button
+              aria-label="Close password recovery"
               onClick={closeForgotModal}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-stone-500 hover:text-stone-900 hover:bg-white/10 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Modal Header */}
             <div className="text-center space-y-1">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-white/5 border border-gold-400/50 text-gold-300 flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-stone-50 border border-gold-400/50 text-[#930303] flex items-center justify-center shadow-sm">
                 <KeyRound className="w-5 h-5" />
               </div>
-              <h2 className="text-base font-bold text-gold-300 font-accent tracking-wide pt-1">
+              <h2 className="text-base font-bold text-[#930303] font-accent tracking-wide pt-1">
                 Admin Password Recovery
               </h2>
-              <p className="text-[11px] text-stone-400">
+              <p className="text-[11px] text-stone-500">
                 {forgotStep === 'email' && 'Enter your registered email address to receive a 6-digit OTP verification code.'}
                 {forgotStep === 'otp' && `Enter the 6-digit verification code sent to ${forgotEmail}.`}
                 {forgotStep === 'newPassword' && 'Create a strong, new password for your administrator account.'}
@@ -260,14 +307,14 @@ export const AdminLogin = () => {
 
             {/* Error Message Notice */}
             {forgotError && (
-              <div className="p-3 bg-red-950/60 border border-red-500/60 rounded-xl text-red-200 text-xs font-body leading-relaxed">
+              <div className="p-3 bg-red-50 border border-red-500/60 rounded-xl text-red-800 text-xs font-body leading-relaxed">
                 {forgotError}
               </div>
             )}
 
             {/* Success Message Notice */}
             {forgotSuccessMsg && forgotStep === 'otp' && (
-              <div className="p-2.5 bg-emerald-950/60 border border-emerald-500/60 rounded-xl text-emerald-200 text-xs font-body flex items-center gap-2">
+              <div className="p-2.5 bg-emerald-50 border border-emerald-500/60 rounded-xl text-emerald-800 text-xs font-body flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
                 <span>{forgotSuccessMsg}</span>
               </div>
@@ -277,7 +324,7 @@ export const AdminLogin = () => {
             {forgotStep === 'email' && (
               <form onSubmit={handleRequestOtp} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-stone-300 font-semibold mb-1">Administrator Email</label>
+                  <label className="block text-stone-700 font-semibold mb-1">Administrator Email</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -285,9 +332,9 @@ export const AdminLogin = () => {
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder="e.g. admin@bljewels.com"
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400"
                     />
-                    <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
 
@@ -312,7 +359,7 @@ export const AdminLogin = () => {
             {forgotStep === 'otp' && (
               <form onSubmit={handleVerifyOtp} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-stone-300 font-semibold mb-1">6-Digit Verification Code</label>
+                  <label className="block text-stone-700 font-semibold mb-1">6-Digit Verification Code</label>
                   <input
                     type="text"
                     required
@@ -320,9 +367,9 @@ export const AdminLogin = () => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                     placeholder="123456"
-                    className="w-full py-2.5 bg-white/5 border border-white/15 rounded-xl text-white text-center text-lg tracking-[8px] font-mono focus:outline-none focus:border-gold-400"
+                    className="w-full py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 text-center text-lg tracking-[8px] font-mono focus:outline-none focus:border-gold-400"
                   />
-                  <span className="block text-[10px] text-stone-400 text-center mt-1">
+                  <span className="block text-[10px] text-stone-500 text-center mt-1">
                     Valid for 10 minutes
                   </span>
                 </div>
@@ -347,7 +394,7 @@ export const AdminLogin = () => {
                     type="button"
                     onClick={handleRequestOtp}
                     disabled={forgotLoading}
-                    className="text-[11px] text-stone-400 hover:text-gold-300 transition-colors"
+                    className="text-[11px] text-stone-500 hover:text-[#930303] transition-colors"
                   >
                     Resend OTP Code
                   </button>
@@ -359,7 +406,7 @@ export const AdminLogin = () => {
             {forgotStep === 'newPassword' && (
               <form onSubmit={handleResetPassword} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-stone-300 font-semibold mb-1">New Password (Min 6 chars)</label>
+                  <label className="block text-stone-700 font-semibold mb-1">New Password (Min 6 chars)</label>
                   <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
@@ -367,13 +414,13 @@ export const AdminLogin = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Enter new strong password"
-                      className="w-full pl-9 pr-10 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400"
+                      className="w-full pl-9 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400"
                     />
-                    <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-gold-300 p-0.5"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-[#930303] p-0.5"
                     >
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -381,7 +428,7 @@ export const AdminLogin = () => {
                 </div>
 
                 <div>
-                  <label className="block text-stone-300 font-semibold mb-1">Confirm New Password</label>
+                  <label className="block text-stone-700 font-semibold mb-1">Confirm New Password</label>
                   <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
@@ -389,16 +436,16 @@ export const AdminLogin = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter new password"
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400"
                     />
-                    <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full py-3 bg-crimson-700 hover:bg-crimson-600 text-white font-bold text-xs rounded-xl shadow-crimson transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-gold-400/40 cursor-pointer"
+                  className="w-full py-3 bg-[#930303] hover:bg-[#7A0303] text-white font-bold text-xs rounded-xl shadow-md shadow-[#930303]/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-gold-400/40 cursor-pointer"
                 >
                   {forgotLoading ? (
                     <>
@@ -422,13 +469,13 @@ export const AdminLogin = () => {
                   <h3 className="text-sm font-bold text-emerald-300">
                     Password Reset Successfully!
                   </h3>
-                  <p className="text-[11px] text-stone-400 mt-1">
+                  <p className="text-[11px] text-stone-500 mt-1">
                     Your administrator credentials have been updated. You can now log in with your new password.
                   </p>
                 </div>
                 <button
                   onClick={closeForgotModal}
-                  className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                  className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
                 >
                   Proceed to Login
                 </button>

@@ -14,7 +14,7 @@ export const BrandAmbassadorSpotlight = () => {
       <div 
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
-          backgroundImage: `radial-gradient(#8B1A1A 1.5px, transparent 1.5px), radial-gradient(#C9A44A 1.5px, #FCFAF7 1.5px)`,
+          backgroundImage: `radial-gradient(#930303 1.5px, transparent 1.5px), radial-gradient(#C9A44A 1.5px, #FCFAF7 1.5px)`,
           backgroundSize: `48px 48px`,
           backgroundPosition: `0 0, 24px 24px`,
         }}
@@ -37,7 +37,7 @@ export const BrandAmbassadorSpotlight = () => {
               {/* Signature Block (Cursive Signature + Atelier Subhead) */}
               <div className="space-y-1">
                 <span 
-                  className="ambassador-signature text-4xl sm:text-5xl lg:text-[50px] xl:text-[56px] text-[#7A1D28] block tracking-wide select-none drop-shadow-xs leading-tight"
+                  className="ambassador-signature text-4xl sm:text-5xl lg:text-[50px] xl:text-[56px] text-[#930303] block tracking-wide select-none drop-shadow-xs leading-tight"
                   style={{ fontFamily: "'Great Vibes', 'Alex Brush', 'Allura', cursive" }}
                 >
                   The Royal Bridal Heritage
@@ -49,7 +49,7 @@ export const BrandAmbassadorSpotlight = () => {
 
               {/* Main Headline */}
               <div className="space-y-1.5">
-                <h2 className="font-display text-2xl sm:text-3xl lg:text-[34px] xl:text-[38px] font-semibold text-[#5B101D] tracking-tight leading-tight">
+                <h2 className="font-display text-2xl sm:text-3xl lg:text-[34px] xl:text-[38px] font-semibold text-[#930303] tracking-tight leading-tight">
                   Auspicious Heirlooms Sculpted for
                 </h2>
                 <span className="font-display text-2xl sm:text-3xl lg:text-[34px] xl:text-[38px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#B68936] via-[#D4AF37] to-[#8F6A24] tracking-tight block">
@@ -74,7 +74,7 @@ export const BrandAmbassadorSpotlight = () => {
                 <span>7th-Gen Master Karigar Artistry</span>
               </div>
               <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/95 border border-stone-200/90 shadow-2xs text-stone-800 text-xs font-semibold">
-                <Gem className="w-3.5 h-3.5 text-[#8B1A1A] shrink-0" />
+                <Gem className="w-3.5 h-3.5 text-[#930303] shrink-0" />
                 <span>Syndicate Uncut Polki Diamonds</span>
               </div>
             </div>
@@ -83,7 +83,7 @@ export const BrandAmbassadorSpotlight = () => {
             <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
               <Link
                 to="/collections?occasion=bridal"
-                className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-[#7A1D28] to-[#5B101D] hover:from-[#5B101D] hover:to-[#400B14] text-white rounded-full text-xs font-semibold tracking-wider uppercase transition-all shadow-md hover:shadow-xl flex items-center justify-center gap-2 group"
+                className="w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-full text-xs font-semibold tracking-wider uppercase transition-all shadow-md hover:shadow-xl flex items-center justify-center gap-2 group"
               >
                 <span>Explore Bridal Vault</span>
                 <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />

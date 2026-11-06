@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Coins, Clock3, KeyRound, ShieldCheck, Save, RefreshCw } from 'lucide-react';
 import { api } from '../services/api';
-import { useAuthStore } from '../store/authStore';
+
 
 export const AdminGoldRates = () => {
-  const logout = useAuthStore(state => state.logout);
+
   const [settings, setSettings] = useState(null);
   const [cache, setCache] = useState({});
   const [enabled, setEnabled] = useState(true);
@@ -18,7 +18,6 @@ export const AdminGoldRates = () => {
     setBusy(true); setError('');
     try { apply((await api.get('/gold-rates/settings')).data); }
     catch (err) {
-      if (err.response?.status === 401) logout();
       setError(err.response?.data?.message || 'Unable to load rate settings.');
     }
     finally { setBusy(false); }
@@ -31,7 +30,6 @@ export const AdminGoldRates = () => {
       apply(data); setApiKey(''); setUseEnvironmentKey(false);
       setMessage('Settings saved. The existing refresh schedule is preserved.');
     } catch (err) {
-      if (err.response?.status === 401) logout();
       setError(err.response?.data?.message || 'Unable to save rate settings.');
     }
     finally { setBusy(false); }
@@ -43,7 +41,7 @@ export const AdminGoldRates = () => {
       <div><p className="text-xs uppercase tracking-widest text-amber-700 font-semibold">Market data</p><h1 className="text-2xl sm:text-3xl font-semibold mt-1">Gold & silver rates</h1><p className="text-sm text-stone-500 mt-2">Manage your feed and keep provider requests under control.</p></div>
       <button onClick={load} disabled={busy} className="inline-flex justify-center items-center gap-2 border rounded-xl px-4 py-2.5 text-sm bg-white disabled:opacity-50"><RefreshCw size={16} /> Reload status</button>
     </div>
-    {error && <p role="alert" className="rounded-xl bg-red-50 border border-red-200 text-red-800 p-4 text-sm">{error}</p>}
+    {error && <p role="alert" className="rounded-xl bg-red-50 border border-red-200 text-red-800 p-4 text-sm">{error} <a href="/login" className="underline ml-2">Sign in again</a></p>}
     {message && <p role="status" className="rounded-xl bg-emerald-50 text-emerald-800 p-4 text-sm">{message}</p>}
     {settings && <>
       <div className="grid sm:grid-cols-3 gap-4">

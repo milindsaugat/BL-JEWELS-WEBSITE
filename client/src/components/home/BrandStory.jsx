@@ -32,7 +32,7 @@ export const BrandStory = ({ storyData = null }) => {
             {/* Floating Trust Badge */}
             <div className="absolute -bottom-6 -right-4 sm:right-6 bg-white p-5 rounded-2xl shadow-premium border border-gold-300 max-w-xs">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-crimson-700 text-gold-300 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-full bg-[#930303] text-gold-300 flex items-center justify-center shrink-0">
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
@@ -53,7 +53,7 @@ export const BrandStory = ({ storyData = null }) => {
               {eyebrow}
             </span>
             
-            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal sm:font-medium text-crimson-900 leading-tight">
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal sm:font-medium text-[#930303] leading-tight">
               {storyData.title}
             </h2>
 
@@ -68,7 +68,7 @@ export const BrandStory = ({ storyData = null }) => {
             <div className="pt-4 flex items-center gap-4">
               <Link
                 to="/about"
-                className="px-6 py-3 bg-crimson-700 hover:bg-crimson-800 text-white rounded-xl text-xs font-semibold tracking-wider font-body shadow-crimson transition-all inline-flex items-center gap-2"
+                className="px-6 py-3 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold tracking-wider font-body shadow-md shadow-[#930303]/25 transition-all inline-flex items-center gap-2"
               >
                 <span>Read Full Brand Story</span>
                 <ArrowRight className="w-4 h-4" />

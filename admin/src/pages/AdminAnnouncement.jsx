@@ -137,7 +137,7 @@ export const AdminAnnouncement = () => {
     return (
       <div className="p-8 flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3 text-stone-500">
-          <RotateCw className="w-6 h-6 animate-spin text-[#8B1A1A]" />
+          <RotateCw className="w-6 h-6 animate-spin text-[#930303]" />
           <p className="text-xs font-medium">Loading Announcement Bar configuration...</p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export const AdminAnnouncement = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#8B1A1A]/10 text-[#8B1A1A]">
+            <span className="p-1.5 rounded-lg bg-[#930303]/10 text-[#930303]">
               <Megaphone className="w-4 h-4" />
             </span>
             <h1 className="text-xl sm:text-2xl font-bold text-[#1C1410] font-heading">
@@ -168,7 +168,7 @@ export const AdminAnnouncement = () => {
             href="http://localhost:5173"
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-200 text-stone-600 hover:text-[#8B1A1A] hover:bg-white text-xs font-medium transition-colors shadow-xs"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-200 text-stone-600 hover:text-[#930303] hover:bg-white text-xs font-medium transition-colors shadow-xs"
           >
             <span>View Live Site</span>
             <ExternalLink className="w-3.5 h-3.5" />
@@ -177,7 +177,7 @@ export const AdminAnnouncement = () => {
           <button
             onClick={handleSubmit}
             disabled={saving}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#8B1A1A] to-[#6E1212] hover:from-[#7A1515] hover:to-[#5B0F0F] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white text-xs font-semibold shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
           >
             {saving ? (
               <>
@@ -213,7 +213,7 @@ export const AdminAnnouncement = () => {
       <div className="bg-white rounded-2xl border border-stone-200 shadow-xs overflow-hidden">
         <div className="p-3.5 sm:p-4 bg-stone-50/80 border-b border-stone-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-[#8B1A1A]" />
+            <Eye className="w-4 h-4 text-[#930303]" />
             <span className="text-xs font-bold text-stone-700 font-heading">
               Real-Time Live Preview
             </span>
@@ -228,7 +228,7 @@ export const AdminAnnouncement = () => {
               onClick={() => setPreviewDevice('desktop')}
               className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all ${
                 previewDevice === 'desktop'
-                  ? 'bg-[#8B1A1A] text-white shadow-xs font-medium'
+                  ? 'bg-[#930303] text-white shadow-xs font-medium'
                   : 'text-stone-500 hover:text-stone-800'
               }`}
             >
@@ -239,7 +239,7 @@ export const AdminAnnouncement = () => {
               onClick={() => setPreviewDevice('mobile')}
               className={`px-2.5 py-1 rounded-md flex items-center gap-1.5 transition-all ${
                 previewDevice === 'mobile'
-                  ? 'bg-[#8B1A1A] text-white shadow-xs font-medium'
+                  ? 'bg-[#930303] text-white shadow-xs font-medium'
                   : 'text-stone-500 hover:text-stone-800'
               }`}
             >
@@ -257,7 +257,7 @@ export const AdminAnnouncement = () => {
             }`}
           >
             {/* Live Render Component inside Preview */}
-            <div className="bg-[#330808] text-[#F3E5AB] text-[11px] font-body relative overflow-hidden select-none">
+            <div className="bg-[#930303] text-[#F3E5AB] text-[11px] font-body relative overflow-hidden select-none">
               
               {!config.enabled ? (
                 <div className="py-2.5 px-4 text-center text-stone-400 text-xs italic">
@@ -266,8 +266,8 @@ export const AdminAnnouncement = () => {
               ) : config.mode === 'marquee' ? (
                 /* Preview Marquee Track */
                 <div className="relative w-full overflow-hidden py-2 sm:py-2.5">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#330808] to-transparent z-10" />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#330808] to-transparent z-10" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-[#930303] to-transparent z-10" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-[#930303] to-transparent z-10" />
 
                   <div
                     className="flex items-center whitespace-nowrap"
@@ -285,7 +285,7 @@ export const AdminAnnouncement = () => {
                             {item}
                           </span>
                           {hasCode && (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#521212] border border-[#C9A44A]/60 text-[9px] font-bold text-[#F9E59B] uppercase whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[9px] font-bold text-[#F9E59B] uppercase whitespace-nowrap">
                               <Tag className="w-2.5 h-2.5" />
                               <span>Offer</span>
                             </span>
@@ -314,7 +314,7 @@ export const AdminAnnouncement = () => {
                     <Sparkles className="w-3 h-3 text-[#E6C975]" />
                     <span className="text-stone-100">{config.staticText}</span>
                     {config.showPill && config.pillText && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#521212] border border-[#C9A44A]/60 text-[10px] font-bold text-[#F9E59B] uppercase ml-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[10px] font-bold text-[#F9E59B] uppercase ml-1">
                         <Tag className="w-2.5 h-2.5" />
                         <span>{config.pillText}</span>
                       </span>
@@ -341,7 +341,7 @@ export const AdminAnnouncement = () => {
                       {config.staticText}
                     </p>
                     {config.showPill && config.pillText && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#521212] border border-[#C9A44A]/60 text-[9px] font-bold text-[#F9E59B] uppercase shrink-0">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[9px] font-bold text-[#F9E59B] uppercase shrink-0">
                         <span>{config.pillText}</span>
                       </span>
                     )}
@@ -378,7 +378,7 @@ export const AdminAnnouncement = () => {
               type="button"
               onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                config.enabled ? 'bg-[#8B1A1A]' : 'bg-stone-300'
+                config.enabled ? 'bg-[#930303]' : 'bg-stone-300'
               }`}
             >
               <span
@@ -399,17 +399,17 @@ export const AdminAnnouncement = () => {
           onClick={() => setConfig(prev => ({ ...prev, mode: 'static' }))}
           className={`p-5 rounded-2xl border-2 text-left transition-all relative flex flex-col justify-between ${
             config.mode === 'static'
-              ? 'border-[#8B1A1A] bg-[#8B1A1A]/5 shadow-sm ring-1 ring-[#8B1A1A]/20'
+              ? 'border-[#930303] bg-[#930303]/5 shadow-sm ring-1 ring-[#930303]/20'
               : 'border-stone-200 bg-white hover:border-stone-300 shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between">
-              <span className="p-2 rounded-xl bg-amber-50 text-[#8B1A1A]">
+              <span className="p-2 rounded-xl bg-amber-50 text-[#930303]">
                 <Layers className="w-4 h-4" />
               </span>
               {config.mode === 'static' && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#8B1A1A] text-white">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#930303] text-white">
                   Active Mode
                 </span>
               )}
@@ -421,7 +421,7 @@ export const AdminAnnouncement = () => {
               Classical 3-segment luxury bar: BIS 916 assurances on left, custom offer with coupon pill in center, and returns & phone on right.
             </p>
           </div>
-          <span className="text-[11px] font-semibold text-[#8B1A1A] pt-3 block">
+          <span className="text-[11px] font-semibold text-[#930303] pt-3 block">
             Select Static Mode →
           </span>
         </button>
@@ -432,17 +432,17 @@ export const AdminAnnouncement = () => {
           onClick={() => setConfig(prev => ({ ...prev, mode: 'marquee' }))}
           className={`p-5 rounded-2xl border-2 text-left transition-all relative flex flex-col justify-between ${
             config.mode === 'marquee'
-              ? 'border-[#8B1A1A] bg-[#8B1A1A]/5 shadow-sm ring-1 ring-[#8B1A1A]/20'
+              ? 'border-[#930303] bg-[#930303]/5 shadow-sm ring-1 ring-[#930303]/20'
               : 'border-stone-200 bg-white hover:border-stone-300 shadow-xs'
           }`}
         >
           <div>
             <div className="flex items-center justify-between">
-              <span className="p-2 rounded-xl bg-amber-50 text-[#8B1A1A]">
+              <span className="p-2 rounded-xl bg-amber-50 text-[#930303]">
                 <RotateCw className="w-4 h-4" />
               </span>
               {config.mode === 'marquee' && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#8B1A1A] text-white">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#930303] text-white">
                   Active Mode
                 </span>
               )}
@@ -454,7 +454,7 @@ export const AdminAnnouncement = () => {
               Continuous smooth 360° infinite scrolling loop for multiple announcements, promo codes, and special festive offers separated by commas.
             </p>
           </div>
-          <span className="text-[11px] font-semibold text-[#8B1A1A] pt-3 block">
+          <span className="text-[11px] font-semibold text-[#930303] pt-3 block">
             Select Marquee Mode →
           </span>
         </button>
@@ -469,7 +469,7 @@ export const AdminAnnouncement = () => {
         <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs space-y-6">
           <div className="border-b border-stone-100 pb-4">
             <h2 className="text-base font-bold text-stone-900 font-heading flex items-center gap-2">
-              <RotateCw className="w-4 h-4 text-[#8B1A1A]" />
+              <RotateCw className="w-4 h-4 text-[#930303]" />
               <span>Infinite Marquee Content & Speed</span>
             </h2>
             <p className="text-xs text-stone-500 mt-1">
@@ -483,7 +483,7 @@ export const AdminAnnouncement = () => {
               <label className="text-xs font-bold text-stone-700">
                 Comma-Separated Marquee Items:
               </label>
-              <span className="text-[11px] text-[#8B1A1A] font-semibold bg-[#8B1A1A]/10 px-2 py-0.5 rounded-md">
+              <span className="text-[11px] text-[#930303] font-semibold bg-[#930303]/10 px-2 py-0.5 rounded-md">
                 {parsedMarqueeList.length} Items in Loop
               </span>
             </div>
@@ -493,7 +493,7 @@ export const AdminAnnouncement = () => {
               value={config.marqueeRawText}
               onChange={(e) => handleRawTextChange(e.target.value)}
               placeholder="e.g. 100% Certified 22K (916) Gold, Free Insured Armored Delivery across India on orders above ₹5,000, Auspicious Festive Offer: Code SHUBH10, 15-Day Easy Returns"
-              className="w-full px-3.5 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-body focus:bg-white focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all leading-relaxed"
+              className="w-full px-3.5 py-3 rounded-xl border border-stone-200 bg-stone-50/50 text-xs font-body focus:bg-white focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all leading-relaxed"
             />
             
             <p className="text-[11px] text-stone-400">
@@ -519,9 +519,9 @@ export const AdminAnnouncement = () => {
                   key={idx}
                   type="button"
                   onClick={() => handleAppendQuickChip(chip)}
-                  className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-amber-50 hover:text-[#8B1A1A] border border-stone-200/80 text-[11px] text-stone-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-stone-100 hover:bg-amber-50 hover:text-[#930303] border border-stone-200/80 text-[11px] text-stone-700 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  <PlusCircle className="w-3 h-3 text-[#8B1A1A]" />
+                  <PlusCircle className="w-3 h-3 text-[#930303]" />
                   <span>{chip}</span>
                 </button>
               ))}
@@ -539,7 +539,7 @@ export const AdminAnnouncement = () => {
                   key={idx}
                   className="px-3 py-1.5 rounded-lg bg-white border border-[#C9A44A]/40 text-stone-800 text-[11px] flex items-center gap-2 shadow-2xs font-medium"
                 >
-                  <span className="w-4 h-4 rounded-full bg-[#8B1A1A] text-[#F3E5AB] text-[9px] font-bold flex items-center justify-center shrink-0">
+                  <span className="w-4 h-4 rounded-full bg-[#930303] text-[#F3E5AB] text-[9px] font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </span>
                   <span>{item}</span>
@@ -552,10 +552,10 @@ export const AdminAnnouncement = () => {
           <div className="space-y-2 pt-2 border-t border-stone-100">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                <Sliders className="w-3.5 h-3.5 text-[#8B1A1A]" />
+                <Sliders className="w-3.5 h-3.5 text-[#930303]" />
                 <span>Marquee Loop Speed:</span>
               </label>
-              <span className="text-xs font-bold text-[#8B1A1A]">
+              <span className="text-xs font-bold text-[#930303]">
                 {config.marqueeSpeed || 35} seconds per cycle
               </span>
             </div>
@@ -569,7 +569,7 @@ export const AdminAnnouncement = () => {
                 step="5"
                 value={config.marqueeSpeed || 35}
                 onChange={(e) => setConfig(prev => ({ ...prev, marqueeSpeed: Number(e.target.value) }))}
-                className="flex-1 accent-[#8B1A1A] cursor-pointer"
+                className="flex-1 accent-[#930303] cursor-pointer"
               />
               <span className="text-[11px] text-stone-400">Gentle (60s)</span>
             </div>
@@ -586,7 +586,7 @@ export const AdminAnnouncement = () => {
         <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs space-y-6">
           <div className="border-b border-stone-100 pb-4">
             <h2 className="text-base font-bold text-stone-900 font-heading flex items-center gap-2">
-              <Layers className="w-4 h-4 text-[#8B1A1A]" />
+              <Layers className="w-4 h-4 text-[#930303]" />
               <span>Static 3-Column Luxury Bar Content</span>
             </h2>
             <p className="text-xs text-stone-500 mt-1">
@@ -606,7 +606,7 @@ export const AdminAnnouncement = () => {
                 value={config.staticText}
                 onChange={(e) => setConfig(prev => ({ ...prev, staticText: e.target.value }))}
                 placeholder="e.g. Complimentary Insured Armored Delivery across India on orders above ₹5,000"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
@@ -614,7 +614,7 @@ export const AdminAnnouncement = () => {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-[#8B1A1A]" />
+                  <Tag className="w-3.5 h-3.5 text-[#930303]" />
                   <span>Promo Pill Text / Coupon Code:</span>
                 </label>
                 <label className="flex items-center gap-1.5 text-[11px] text-stone-600 cursor-pointer">
@@ -622,7 +622,7 @@ export const AdminAnnouncement = () => {
                     type="checkbox"
                     checked={config.showPill}
                     onChange={(e) => setConfig(prev => ({ ...prev, showPill: e.target.checked }))}
-                    className="accent-[#8B1A1A] rounded"
+                    className="accent-[#930303] rounded"
                   />
                   <span>Show Pill</span>
                 </label>
@@ -633,7 +633,7 @@ export const AdminAnnouncement = () => {
                 value={config.pillText}
                 onChange={(e) => setConfig(prev => ({ ...prev, pillText: e.target.value }))}
                 placeholder="e.g. Code: SHUBH10"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
@@ -647,14 +647,14 @@ export const AdminAnnouncement = () => {
                 value={config.pillLink}
                 onChange={(e) => setConfig(prev => ({ ...prev, pillLink: e.target.value }))}
                 placeholder="e.g. /collections/bridal-heritage or leave empty"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
             {/* Left Badge 1 */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#8B1A1A]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#930303]" />
                 <span>Left Badge 1 (BIS Hallmarking):</span>
               </label>
               <input
@@ -662,7 +662,7 @@ export const AdminAnnouncement = () => {
                 value={config.leftText1}
                 onChange={(e) => setConfig(prev => ({ ...prev, leftText1: e.target.value }))}
                 placeholder="e.g. 100% BIS 916 Hallmarked Gold"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
@@ -676,7 +676,7 @@ export const AdminAnnouncement = () => {
                 value={config.leftText2}
                 onChange={(e) => setConfig(prev => ({ ...prev, leftText2: e.target.value }))}
                 placeholder="e.g. Lifetime Buyback"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
@@ -690,14 +690,14 @@ export const AdminAnnouncement = () => {
                 value={config.rightText}
                 onChange={(e) => setConfig(prev => ({ ...prev, rightText: e.target.value }))}
                 placeholder="e.g. 15-Day Easy Returns"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
             {/* Right Contact Phone */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-[#8B1A1A]" />
+                <Phone className="w-3.5 h-3.5 text-[#930303]" />
                 <span>Contact Phone (Click-to-Call):</span>
               </label>
               <input
@@ -705,7 +705,7 @@ export const AdminAnnouncement = () => {
                 value={config.phone}
                 onChange={(e) => setConfig(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="e.g. 074549 86610"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#8B1A1A] focus:outline-none transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 bg-white text-xs font-body focus:ring-2 focus:ring-[#930303] focus:outline-none transition-all"
               />
             </div>
 
@@ -725,7 +725,7 @@ export const AdminAnnouncement = () => {
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#8B1A1A] to-[#6E1212] hover:from-[#7A1515] hover:to-[#5B0F0F] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+          className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white text-xs font-semibold shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {saving ? (
             <>

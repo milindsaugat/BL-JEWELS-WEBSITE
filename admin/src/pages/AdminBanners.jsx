@@ -12,6 +12,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { bannerService, uploadService } from '../services/api';
+import { toast } from 'sonner';
 
 export const AdminBanners = () => {
   const [banners, setBanners] = useState([]);
@@ -53,6 +54,17 @@ export const AdminBanners = () => {
   useEffect(() => {
     fetchBanners();
   }, []);
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showModal]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -145,7 +157,7 @@ export const AdminBanners = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.image) {
-      alert('Please upload a banner image via Cloudinary or enter an image URL.');
+      toast.error('Please upload a banner image via Cloudinary or enter an image URL.');
       return;
     }
     try {
@@ -157,13 +169,19 @@ export const AdminBanners = () => {
 
       if (editingBanner) {
         await bannerService.updateBanner(editingBanner._id, submitPayload);
+        toast.success('Hero banner updated successfully!');
+        setEditingBanner((prev) => ({ ...prev, ...submitPayload }));
       } else {
-        await bannerService.createBanner(submitPayload);
+        const res = await bannerService.createBanner(submitPayload);
+        toast.success('Hero banner created successfully!');
+        const created = res?.banner || res;
+        if (created && created._id) {
+          setEditingBanner(created);
+        }
       }
-      setShowModal(false);
       fetchBanners();
     } catch (err) {
-      alert('Failed to save banner: ' + (err.response?.data?.message || err.message));
+      toast.error('Failed to save banner: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -181,7 +199,7 @@ export const AdminBanners = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-crimson-700 hover:bg-crimson-800 text-white rounded-xl text-xs font-semibold font-body flex items-center gap-2 shadow-crimson transition-all"
+          className="px-4 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body flex items-center gap-2 shadow-md shadow-[#930303]/25 transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Hero Slide</span>
@@ -194,7 +212,7 @@ export const AdminBanners = () => {
         <div className="py-16 text-center bg-white rounded-2xl border border-stone-200">
           <ImageIcon className="w-10 h-10 text-stone-300 mx-auto mb-2" />
           <p className="font-display text-lg font-bold text-stone-800">No Hero Banners Configured</p>
-          <button onClick={handleOpenAdd} className="mt-3 px-4 py-2 bg-crimson-700 text-white rounded-lg text-xs font-semibold">
+          <button onClick={handleOpenAdd} className="mt-3 px-4 py-2 bg-[#930303] text-white rounded-lg text-xs font-semibold">
             Create First Slide
           </button>
         </div>
@@ -225,7 +243,7 @@ export const AdminBanners = () => {
                   </span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-body ${
                     banner.isImageOnly
-                      ? 'bg-amber-100 text-[#8B1A1A] border border-[#C9A44A]/60'
+                      ? 'bg-amber-100 text-[#930303] border border-[#C9A44A]/60'
                       : 'bg-black/60 text-gold-300'
                   }`}>
                     {banner.isImageOnly ? '🖼️ Only Banner (Clickable)' : '✍️ Text Overlay'}
@@ -265,7 +283,7 @@ export const AdminBanners = () => {
 
                 <div className="flex items-center gap-4 text-[11px] text-stone-500 pt-2 border-t border-stone-100">
                   {banner.isImageOnly ? (
-                    <span className="flex items-center gap-1.5 text-[#8B1A1A] font-semibold">
+                    <span className="flex items-center gap-1.5 text-[#930303] font-semibold">
                       <span>🔗 Click Link:</span>
                       <span className="text-stone-700 font-mono font-normal">{banner.ctaLink || '/collections'}</span>
                     </span>
@@ -314,7 +332,7 @@ export const AdminBanners = () => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-gold-300 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
-              <h3 className="font-display text-xl font-bold text-crimson-900">
+              <h3 className="font-display text-xl font-bold text-[#930303]">
                 {editingBanner ? 'Edit Hero Slide' : 'Add New Hero Banner'}
               </h3>
               <button onClick={() => setShowModal(false)} className="text-stone-400 hover:text-charcoal text-sm">
@@ -335,12 +353,12 @@ export const AdminBanners = () => {
                     onClick={() => setFormData({ ...formData, isImageOnly: true })}
                     className={`p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
                       formData.isImageOnly
-                        ? 'bg-[#8B1A1A]/10 border-[#8B1A1A] text-[#8B1A1A] ring-1 ring-[#8B1A1A]'
+                        ? 'bg-[#930303]/10 border-[#930303] text-[#930303] ring-1 ring-[#930303]'
                         : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      formData.isImageOnly ? 'bg-[#8B1A1A] text-white' : 'bg-stone-100 text-stone-500'
+                      formData.isImageOnly ? 'bg-[#930303] text-white' : 'bg-stone-100 text-stone-500'
                     }`}>
                       <ImageIcon className="w-4 h-4" />
                     </div>
@@ -359,12 +377,12 @@ export const AdminBanners = () => {
                     onClick={() => setFormData({ ...formData, isImageOnly: false })}
                     className={`p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
                       !formData.isImageOnly
-                        ? 'bg-[#8B1A1A]/10 border-[#8B1A1A] text-[#8B1A1A] ring-1 ring-[#8B1A1A]'
+                        ? 'bg-[#930303]/10 border-[#930303] text-[#930303] ring-1 ring-[#930303]'
                         : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
                     }`}
                   >
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      !formData.isImageOnly ? 'bg-[#8B1A1A] text-white' : 'bg-stone-100 text-stone-500'
+                      !formData.isImageOnly ? 'bg-[#930303] text-white' : 'bg-stone-100 text-stone-500'
                     }`}>
                       <Edit className="w-4 h-4" />
                     </div>
@@ -388,7 +406,7 @@ export const AdminBanners = () => {
 
                 {/* File picker button / dropzone */}
                 <div className="flex flex-col gap-2">
-                  <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-[#C9A44A]/50 hover:border-[#8B1A1A] rounded-2xl bg-amber-50/30 hover:bg-amber-50/60 cursor-pointer transition-colors group">
+                  <label className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-[#C9A44A]/50 hover:border-[#930303] rounded-2xl bg-amber-50/30 hover:bg-amber-50/60 cursor-pointer transition-colors group">
                     <input
                       type="file"
                       accept="image/*"
@@ -397,7 +415,7 @@ export const AdminBanners = () => {
                       className="hidden"
                     />
                     {uploadingImage ? (
-                      <div className="flex items-center gap-2 text-xs font-semibold text-[#8B1A1A]">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-[#930303]">
                         <Loader2 className="w-5 h-5 animate-spin" />
                         <span>Uploading directly to Cloudinary (preserving filename)...</span>
                       </div>
@@ -440,7 +458,7 @@ export const AdminBanners = () => {
                           href={formData.image}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[10px] text-[#8B1A1A] hover:underline flex items-center gap-1 mt-0.5"
+                          className="text-[10px] text-[#930303] hover:underline flex items-center gap-1 mt-0.5"
                         >
                           <span>View on Cloudinary CDN</span>
                           <ExternalLink className="w-3 h-3" />
@@ -466,7 +484,7 @@ export const AdminBanners = () => {
               {/* 3. Fields for IMAGE ONLY Banner */}
               {formData.isImageOnly ? (
                 <div className="space-y-3.5 p-4 bg-amber-50/40 rounded-2xl border border-[#C9A44A]/40 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2 text-xs font-bold text-[#8B1A1A]">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#930303]">
                     <i className="ri-cursor-line text-sm"></i>
                     <span>Banner Click Destination & Navigation</span>
                   </div>
@@ -501,7 +519,7 @@ export const AdminBanners = () => {
                           onClick={() => setFormData({ ...formData, ctaLink: link.path })}
                           className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors ${
                             formData.ctaLink === link.path
-                              ? 'bg-[#8B1A1A] text-white border-[#8B1A1A]'
+                              ? 'bg-[#930303] text-white border-[#930303]'
                               : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50'
                           }`}
                         >
@@ -622,7 +640,7 @@ export const AdminBanners = () => {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="text-crimson-700 rounded"
+                    className="accent-[#930303] rounded"
                   />
                   <span>Publish & Show in Live Customer Hero Slider</span>
                 </label>
@@ -638,7 +656,7 @@ export const AdminBanners = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-crimson-700 text-white rounded-xl text-xs font-semibold"
+                  className="px-6 py-2 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold"
                 >
                   {editingBanner ? 'Save Changes' : 'Add Hero Slide'}
                 </button>

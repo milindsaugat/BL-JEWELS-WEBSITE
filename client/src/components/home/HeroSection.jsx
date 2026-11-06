@@ -151,7 +151,7 @@ export const HeroSection = ({ initialBanners = [] }) => {
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
               <Link
                 to={activeBanner.ctaLink || '/collections'}
-                className="px-8 py-4 bg-gradient-to-r from-crimson-700 via-crimson-600 to-crimson-700 hover:from-crimson-600 hover:to-crimson-500 text-white rounded-xl text-xs sm:text-sm font-semibold tracking-wider font-body shadow-crimson transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border border-gold-400/30"
+                className="px-8 py-4 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-xl text-xs sm:text-sm font-semibold tracking-wider font-body shadow-lg shadow-[#930303]/25 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 border border-gold-400/30"
               >
                 <span>{activeBanner.ctaText || 'Explore Collection'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -189,7 +189,7 @@ export const HeroSection = ({ initialBanners = [] }) => {
           <button
             onClick={prevSlide}
             aria-label="Previous Slide"
-            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-crimson-700/90 backdrop-blur-md border border-gold-400/40 text-white hidden md:flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
+            className="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-[#930303]/90 backdrop-blur-md border border-gold-400/40 text-white hidden md:flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
           >
             <ChevronLeft className="w-6 h-6 hover:-translate-x-0.5 transition-transform" />
           </button>
@@ -197,7 +197,7 @@ export const HeroSection = ({ initialBanners = [] }) => {
           <button
             onClick={nextSlide}
             aria-label="Next Slide"
-            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-crimson-700/90 backdrop-blur-md border border-gold-400/40 text-white hidden md:flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
+            className="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/40 hover:bg-[#930303]/90 backdrop-blur-md border border-gold-400/40 text-white hidden md:flex items-center justify-center transition-all duration-200 shadow-lg cursor-pointer"
           >
             <ChevronRight className="w-6 h-6 hover:translate-x-0.5 transition-transform" />
           </button>

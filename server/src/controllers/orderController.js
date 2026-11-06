@@ -1,87 +1,12 @@
+import { createInventoryOrder, cancelInventoryOrder } from '../services/orderInventory.js';
 import { getDbStatus } from '../config/db.js';
 import Order from '../models/Order.js';
 import { memoryStore } from '../config/memoryStore.js';
 
 export const createOrder = async (req, res) => {
-  try {
-    const { items, shippingAddress, paymentMethod, couponCode, notes, isGift, giftNote } = req.body;
-
-    if (!items || !items.length) {
-      return res.status(400).json({ success: false, message: 'Cart items are required to place an order.' });
-    }
-    if (!shippingAddress || !shippingAddress.name || !shippingAddress.line1 || !shippingAddress.city) {
-      return res.status(400).json({ success: false, message: 'Complete shipping address is required.' });
-    }
-
-    // Calculate subtotal
-    const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    
-    // Check coupon discount
-    let discount = 0;
-    if (couponCode) {
-      const coupon = memoryStore.coupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase() && c.isActive);
-      if (coupon && subtotal >= coupon.minOrderValue) {
-        if (coupon.discountType === 'percentage') {
-          discount = Math.min((subtotal * coupon.value) / 100, coupon.maxDiscount);
-        } else {
-          discount = Math.min(coupon.value, coupon.maxDiscount);
-        }
-      }
-    }
-
-    const shipping = subtotal >= 5000 ? 0 : 500;
-    const taxableAmount = Math.max(0, subtotal - discount);
-    const gst = Math.round(taxableAmount * 0.03); // 3% GST on jewelry
-    const total = taxableAmount + shipping + gst;
-
-    const orderData = {
-      user: req.user?._id || req.user?.id || 'usr_customer',
-      orderNumber: `BLJ-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`,
-      items,
-      shippingAddress,
-      pricing: {
-        subtotal,
-        discount,
-        coupon: couponCode || null,
-        shipping,
-        gst,
-        total,
-      },
-      payment: {
-        method: paymentMethod || 'razorpay',
-        status: 'paid', // for demo ease
-        paidAt: new Date(),
-      },
-      status: 'confirmed',
-      statusHistory: [
-        { status: 'placed', note: 'Order placed successfully', updatedAt: new Date() },
-        { status: 'confirmed', note: 'Payment verified & order confirmed', updatedAt: new Date() }
-      ],
-      tracking: {
-        carrier: 'Blue Dart Luxury Express',
-        trackingId: `BLJ-TRK-${Math.floor(100000 + Math.random() * 900000)}`,
-        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-      },
-      notes,
-      isGift: Boolean(isGift),
-      giftNote: giftNote || '',
-    };
-
-    if (getDbStatus()) {
-      const order = await Order.create(orderData);
-      return res.status(201).json({ success: true, order });
-    } else {
-      const order = {
-        _id: `ord_${Date.now()}`,
-        ...orderData,
-        createdAt: new Date().toISOString(),
-      };
-      memoryStore.orders.unshift(order);
-      return res.status(201).json({ success: true, order });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+  if (!getDbStatus()) return res.status(503).json({ message: 'Ordering is temporarily unavailable. Please try again.' });
+  try { const order = await createInventoryOrder(req.user._id, req.body); res.status(201).json({ success: true, order }); }
+  catch (error) { res.status(400).json({ success: false, message: error.message }); }
 };
 
 export const getMyOrders = async (req, res) => {
@@ -106,6 +31,7 @@ export const getOrderById = async (req, res) => {
 
     if (getDbStatus()) {
       const order = await Order.findOne({
+        ...(req.user.role === 'admin' ? {} : { user: req.user._id }),
         $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { orderNumber: id }]
       });
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
@@ -139,9 +65,14 @@ export const updateOrderStatus = async (req, res) => {
     const { status, note } = req.body;
 
     if (getDbStatus()) {
+      if (status === 'cancelled') {
+        const order = await cancelInventoryOrder({ _id: id }, note);
+        return res.json({ success: true, order });
+      }
       const order = await Order.findById(id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
+      if (order.status === 'cancelled') return res.status(400).json({ message: 'A cancelled order cannot be reopened. Create a new order.' });
       order.status = status;
       order.statusHistory.push({
         status,

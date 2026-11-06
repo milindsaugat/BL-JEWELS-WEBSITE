@@ -24,13 +24,13 @@ export const ContactPage = () => {
         {/* Header */}
         <div className="text-center space-y-3 max-w-xl mx-auto">
           <span className="font-accent text-xs font-bold text-gold-700 tracking-[0.2em] uppercase">
-            Personal Concierge & Boutique Appointments
+            Showroom Visit & Contact Us
           </span>
-          <h1 className="font-display text-4xl sm:text-5xl font-bold text-crimson-900">
+          <h1 className="font-display text-4xl sm:text-5xl font-bold text-[#930303]">
             Connect with BL Jewels
           </h1>
           <p className="font-body text-xs sm:text-sm text-stone-600">
-            Schedule a private salon viewing at our flagship boutique or speak with our master jewelry stylists.
+            Schedule a private viewing at our flagship showroom or speak directly with our master jewelry specialists.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export const ContactPage = () => {
           <div className="lg:col-span-5 bg-white rounded-3xl p-8 border border-gold-300/60 shadow-sm space-y-8">
             <div>
               <h3 className="font-display text-xl font-bold text-charcoal">
-                Flagship Boutique
+                Flagship Showroom
               </h3>
               <p className="text-xs text-stone-500 font-body mt-1">
                 Located in the historic heart of India's jewelry capital.
@@ -49,23 +49,23 @@ export const ContactPage = () => {
 
             <div className="space-y-4 font-body text-xs text-stone-700">
               <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-crimson-700 shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
                 <div>
-                  <strong className="block text-stone-900">Boutique Address</strong>
+                  <strong className="block text-stone-900">Showroom Address</strong>
                   <span>Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002</span>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Phone className="w-4 h-4 text-crimson-700 shrink-0 mt-0.5" />
+                <Phone className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
                 <div>
-                  <strong className="block text-stone-900">Direct Concierge</strong>
-                  <a href="tel:07454986610" className="hover:text-crimson-700 transition-colors">074549 86610</a>
+                  <strong className="block text-stone-900">Showroom Contact</strong>
+                  <a href="tel:07454986610" className="hover:text-[#930303] transition-colors">074549 86610</a>
                 </div>
               </div>
 
               <div className="flex items-start gap-3">
-                <Mail className="w-4 h-4 text-crimson-700 shrink-0 mt-0.5" />
+                <Mail className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-stone-900">Email Inquiries</strong>
                   <span>concierge@bljewels.com</span>
@@ -73,7 +73,7 @@ export const ContactPage = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <Clock className="w-4 h-4 text-crimson-700 shrink-0 mt-0.5" />
+                <Clock className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
                 <div>
                   <strong className="block text-stone-900">Visiting Hours</strong>
                   <span>Monday to Saturday: 10:30 AM – 8:30 PM (Closed on Sundays)</span>
@@ -101,7 +101,7 @@ export const ContactPage = () => {
                 <Sparkles className="w-10 h-10 text-gold-600 mx-auto" />
                 <h3 className="font-display text-xl font-bold text-charcoal">Appointment Request Received</h3>
                 <p className="text-xs text-stone-600 font-body max-w-sm mx-auto">
-                  Namaste! Our concierge will call you within 2 business hours to confirm your private salon appointment.
+                  Namaste! Our showroom team will call you within 2 business hours to confirm your appointment.
                 </p>
               </div>
             ) : (
@@ -169,7 +169,7 @@ export const ContactPage = () => {
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-gradient-to-r from-crimson-700 to-crimson-600 hover:from-crimson-800 hover:to-crimson-700 text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-crimson flex items-center justify-center gap-1.5"
+                  className="w-full py-3.5 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   <span>Request Private Appointment</span>

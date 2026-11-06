@@ -42,7 +42,7 @@ export const SearchPage = () => {
             <Sparkles className="w-3.5 h-3.5 text-gold-600" />
             AI Search Results
           </span>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-crimson-900">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#930303]">
             Search Results for "{query}"
           </h1>
           <p className="text-xs text-stone-500 font-body">
@@ -70,7 +70,7 @@ export const SearchPage = () => {
             </p>
             <Link
               to="/collections"
-              className="inline-block px-6 py-2.5 bg-crimson-700 text-white rounded-xl text-xs font-semibold font-body"
+              className="inline-block px-6 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body transition-colors"
             >
               Browse All Collections
             </Link>

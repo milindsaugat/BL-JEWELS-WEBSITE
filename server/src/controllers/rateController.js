@@ -26,6 +26,13 @@ export const getLiveRates = async (req, res) => {
         { type: 'rate', label: '999 SILVER', rate: money(silverRate * 1000), unit: '/Kg', icon: 'uil uil-coins' }],
     });
   } catch (error) {
-    res.status(error.status || 503).json({ success: false, liveAvailable: false, code: error.code, message: error.message });
+    // Return 200 with success: false so storefront doesn't trigger console 503 red errors
+    // while gracefully notifying UI and timers to enter cooldown.
+    res.json({
+      success: false,
+      liveAvailable: false,
+      code: error.code || 'RATE_PROVIDER_UNAVAILABLE',
+      message: error.message || 'Live bullion rates are temporarily offline.',
+    });
   }
 };

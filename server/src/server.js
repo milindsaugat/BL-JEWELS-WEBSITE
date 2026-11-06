@@ -29,6 +29,7 @@ import goldRateRoutes from './routes/goldRate.routes.js';
 import settingRoutes from './routes/setting.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import occasionRoutes from './routes/occasion.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -147,6 +148,7 @@ app.use('/api/v1/gold-rates', goldRateRoutes);
 app.use('/api/v1/settings', settingRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/occasions', occasionRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Error Handling
 app.use(errorHandler);

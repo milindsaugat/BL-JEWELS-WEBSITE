@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Tag, Plus, Trash2, CheckCircle2, XCircle, Percent, Sparkles, Copy, Check } from 'lucide-react';
+import { Tag, Plus, Trash2, CheckCircle2, XCircle, Percent, Sparkles, Copy, Check, Edit } from 'lucide-react';
 import { couponService } from '../services/api';
+import { toast } from 'sonner';
 
 export const AdminCoupons = () => {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingCoupon, setEditingCoupon] = useState(null);
   const [copiedCode, setCopiedCode] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -55,22 +57,50 @@ export const AdminCoupons = () => {
     }
   };
 
+  const handleOpenAdd = () => {
+    setEditingCoupon(null);
+    setFormData({
+      code: '',
+      discountType: 'percentage',
+      value: 10,
+      minOrderValue: 25000,
+      maxDiscount: 10000,
+      isActive: true,
+    });
+    setShowModal(true);
+  };
+
+  const handleOpenEdit = (c) => {
+    setEditingCoupon(c);
+    setFormData({
+      code: c.code || '',
+      discountType: c.discountType || 'percentage',
+      value: c.value || 0,
+      minOrderValue: c.minOrderValue || 0,
+      maxDiscount: c.maxDiscount || 0,
+      isActive: c.isActive !== false,
+    });
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await couponService.createCoupon(formData);
-      setShowModal(false);
-      setFormData({
-        code: '',
-        discountType: 'percentage',
-        value: 10,
-        minOrderValue: 25000,
-        maxDiscount: 10000,
-        isActive: true,
-      });
+      if (editingCoupon) {
+        await couponService.updateCoupon(editingCoupon._id || editingCoupon.code, formData);
+        toast.success(`Coupon code "${formData.code}" updated successfully!`);
+        setEditingCoupon((prev) => ({ ...prev, ...formData }));
+      } else {
+        const res = await couponService.createCoupon(formData);
+        toast.success(`Coupon code "${formData.code}" created successfully!`);
+        const created = res?.coupon || res;
+        if (created && (created._id || created.code)) {
+          setEditingCoupon(created);
+        }
+      }
       fetchCoupons();
-    } catch {
-      alert('Failed to create coupon code');
+    } catch (err) {
+      toast.error('Failed to save coupon: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -95,8 +125,8 @@ export const AdminCoupons = () => {
         </div>
 
         <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2.5 bg-crimson-800 hover:bg-crimson-700 text-white rounded-xl text-xs font-semibold shadow-gold flex items-center gap-2 border border-gold-400/50 transition-all self-start sm:self-auto"
+          onClick={handleOpenAdd}
+          className="px-4 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold shadow-gold flex items-center gap-2 border border-gold-400/50 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 text-gold-300" />
           <span>Create New Promo Code</span>
@@ -119,8 +149,8 @@ export const AdminCoupons = () => {
               {/* Header inside card */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-xl bg-gold-50 border border-gold-300 flex items-center justify-center text-crimson-800">
-                    <Tag className="w-5 h-5 text-crimson-800" />
+                  <div className="w-10 h-10 rounded-xl bg-gold-50 border border-gold-300 flex items-center justify-center text-[#930303]">
+                    <Tag className="w-5 h-5 text-[#930303]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
@@ -167,7 +197,7 @@ export const AdminCoupons = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Maximum Discount Cap:</span>
-                  <span className="font-semibold text-crimson-800">
+                  <span className="font-semibold text-[#930303]">
                     ₹{(coupon.maxDiscount || 0).toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -178,13 +208,22 @@ export const AdminCoupons = () => {
                 <span className="text-[11px] text-stone-400 font-medium">
                   {coupon.isActive ? '✦ Live in Store Checkout' : 'Paused'}
                 </span>
-                <button
-                  onClick={() => handleDelete(coupon)}
-                  className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Delete Coupon"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenEdit(coupon)}
+                    className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
+                    title="Edit Coupon"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(coupon)}
+                    className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete Coupon"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -192,7 +231,7 @@ export const AdminCoupons = () => {
         </div>
       )}
 
-      {/* Create Coupon Modal */}
+      {/* Create / Edit Coupon Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl border border-stone-200">
@@ -202,7 +241,7 @@ export const AdminCoupons = () => {
                   BL Jewels • Promotion Engine
                 </span>
                 <h3 className="font-heading text-lg font-bold text-stone-900">
-                  Create Promotional Code
+                  {editingCoupon ? 'Edit Promotional Code' : 'Create Promotional Code'}
                 </h3>
               </div>
               <button
@@ -288,7 +327,7 @@ export const AdminCoupons = () => {
                   id="isActiveCoupon"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="rounded text-crimson-800 focus:ring-crimson-800"
+                  className="rounded text-[#930303] focus:ring-[#930303]"
                 />
                 <label htmlFor="isActiveCoupon" className="text-stone-700 font-semibold text-xs">
                   Activate coupon immediately for online shoppers
@@ -305,9 +344,9 @@ export const AdminCoupons = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-crimson-800 hover:bg-crimson-700 text-white rounded-xl font-semibold shadow-gold border border-gold-400/50"
+                  className="px-5 py-2 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl font-semibold shadow-gold border border-gold-400/50"
                 >
-                  Save & Publish Code
+                  {editingCoupon ? 'Update Promo Code' : 'Save & Publish Code'}
                 </button>
               </div>
             </form>

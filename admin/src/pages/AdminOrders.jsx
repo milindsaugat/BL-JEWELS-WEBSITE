@@ -13,6 +13,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { orderService } from '../services/api';
+import { toast } from 'sonner';
 
 export const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -50,12 +51,13 @@ export const AdminOrders = () => {
         trackingNumber: trackingId || undefined,
         carrier: 'Blue Dart Armored Security Logistics'
       });
+      toast.success('Order status updated successfully!');
       await fetchOrders();
       if (selectedOrder && selectedOrder._id === orderId) {
         setSelectedOrder(prev => ({ ...prev, orderStatus: newStatus, trackingNumber: trackingId || prev.trackingNumber }));
       }
     } catch (err) {
-      alert('Failed to update order status');
+      toast.error('Failed to update order status');
     } finally {
       setUpdatingStatus(false);
     }
@@ -127,7 +129,7 @@ export const AdminOrders = () => {
 
         <div className="flex items-center gap-2">
           <div className="px-4 py-2 bg-white rounded-xl border border-stone-200 shadow-sm text-xs font-semibold text-stone-700">
-            Total Orders: <span className="text-crimson-800 font-bold">{orders.length}</span>
+            Total Orders: <span className="text-[#930303] font-bold">{orders.length}</span>
           </div>
         </div>
       </div>
@@ -155,7 +157,7 @@ export const AdminOrders = () => {
               onClick={() => setStatusFilter(st)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap capitalize ${
                 statusFilter === st
-                  ? 'bg-crimson-800 text-white shadow-sm'
+                  ? 'bg-[#930303] text-white shadow-sm'
                   : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
               }`}
             >
@@ -225,7 +227,7 @@ export const AdminOrders = () => {
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 font-semibold text-crimson-800">
+                    <td className="py-3.5 px-4 font-semibold text-[#930303]">
                       ₹{(order.totalAmount || 0).toLocaleString('en-IN')}
                     </td>
 
@@ -290,7 +292,7 @@ export const AdminOrders = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#FAF7F2] p-4 rounded-2xl border border-stone-200 text-xs">
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-semibold">Total Price</span>
-                <span className="font-bold text-crimson-800 text-sm">
+                <span className="font-bold text-[#930303] text-sm">
                   ₹{(selectedOrder.totalAmount || 0).toLocaleString('en-IN')}
                 </span>
               </div>
@@ -354,7 +356,7 @@ export const AdminOrders = () => {
                   type="button"
                   disabled={updatingStatus}
                   onClick={() => handleUpdateStatus(selectedOrder._id)}
-                  className="px-4 py-2 bg-crimson-800 hover:bg-crimson-700 disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
+                  className="px-4 py-2 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
                 >
                   {updatingStatus ? 'Updating Vault Records...' : 'Save & Notify Patron'}
                 </button>

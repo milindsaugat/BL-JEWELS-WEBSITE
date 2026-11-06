@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -23,6 +23,10 @@ export const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
+
   const handleLogout = () => {
     logout();
     navigate('/admin/login');
@@ -33,6 +37,7 @@ export const AdminLayout = () => {
     { label: 'Hero Banners & CMS', path: '/admin/banners', icon: BannerIcon },
     { label: 'Jewelry Products', path: '/admin/products', icon: ShoppingBag },
     { label: 'Orders & Dispatch', path: '/admin/orders', icon: Package },
+    { label: 'Customers & Users', path: '/admin/users', icon: Users },
     { label: 'Coupons & Offers', path: '/admin/coupons', icon: Tag },
   ];
 
@@ -86,7 +91,7 @@ export const AdminLayout = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-3.5 py-3 rounded-xl transition-all ${
                     isActive
-                      ? 'bg-crimson-700 text-white font-semibold shadow-crimson border border-gold-400/40'
+                      ? 'bg-[#930303] text-white font-semibold shadow-md shadow-[#930303]/25 border border-gold-400/40'
                       : 'text-stone-300 hover:bg-white/10 hover:text-white'
                   }`}
                 >
@@ -115,7 +120,7 @@ export const AdminLayout = () => {
 
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-crimson-700 text-white text-xs font-bold flex items-center justify-center border border-gold-400">
+              <div className="w-8 h-8 rounded-full bg-[#930303] text-white text-xs font-bold flex items-center justify-center border border-gold-400">
                 {user?.name?.[0]?.toUpperCase() || 'A'}
               </div>
               <div className="min-w-0">

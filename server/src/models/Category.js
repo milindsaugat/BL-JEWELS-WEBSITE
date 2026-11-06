@@ -34,6 +34,10 @@ const categorySchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  showDropdown: {
+    type: Boolean,
+    default: true,
+  },
   order: {
     type: Number,
     default: 0,

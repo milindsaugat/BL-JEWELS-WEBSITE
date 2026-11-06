@@ -12,7 +12,7 @@ export const AboutPage = () => {
           <span className="font-accent text-xs font-bold text-gold-700 tracking-[0.2em] uppercase">
             Founded 1984 • Zaveri Bazaar, Mumbai
           </span>
-          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-crimson-900 leading-tight">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-[#930303] leading-tight">
             Purity with Auspiciousness
           </h1>
           <div className="w-20 h-0.5 bg-gold-400 mx-auto mt-2" />
@@ -32,7 +32,7 @@ export const AboutPage = () => {
 
         {/* Story Section */}
         <div className="space-y-6 font-body text-sm sm:text-base text-stone-700 leading-relaxed bg-white rounded-3xl p-8 sm:p-12 border border-border-light shadow-sm">
-          <h2 className="font-display text-2xl sm:text-3xl font-bold text-crimson-900">
+          <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#930303]">
             Four Decades of Royal Goldsmith Heritage
           </h2>
           <p>
@@ -50,7 +50,7 @@ export const AboutPage = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-ivory rounded-2xl p-6 border border-gold-200 shadow-sm space-y-3">
-              <ShieldCheck className="w-8 h-8 text-crimson-700" />
+              <ShieldCheck className="w-8 h-8 text-[#930303]" />
               <h4 className="font-accent text-sm font-bold text-charcoal uppercase tracking-wider">
                 100% BIS 916 Hallmark
               </h4>
@@ -60,7 +60,7 @@ export const AboutPage = () => {
             </div>
 
             <div className="bg-ivory rounded-2xl p-6 border border-gold-200 shadow-sm space-y-3">
-              <Gem className="w-8 h-8 text-crimson-700" />
+              <Gem className="w-8 h-8 text-[#930303]" />
               <h4 className="font-accent text-sm font-bold text-charcoal uppercase tracking-wider">
                 Natural Syndicate Polki
               </h4>
@@ -70,7 +70,7 @@ export const AboutPage = () => {
             </div>
 
             <div className="bg-ivory rounded-2xl p-6 border border-gold-200 shadow-sm space-y-3">
-              <HeartHandshake className="w-8 h-8 text-crimson-700" />
+              <HeartHandshake className="w-8 h-8 text-[#930303]" />
               <h4 className="font-accent text-sm font-bold text-charcoal uppercase tracking-wider">
                 Lifetime Buyback Assurance
               </h4>
@@ -82,12 +82,12 @@ export const AboutPage = () => {
         </div>
 
         {/* CTA */}
-        <div className="bg-gradient-to-r from-crimson-900 to-crimson-800 text-white rounded-3xl p-8 sm:p-12 text-center space-y-4">
+        <div className="bg-gradient-to-r from-[#930303] to-[#7A0303] text-white rounded-3xl p-8 sm:p-12 text-center space-y-4 shadow-lg shadow-[#930303]/20">
           <h3 className="font-display text-2xl sm:text-3xl font-bold text-pearl">
             Begin Your Auspicious Heirlooms
           </h3>
           <p className="text-xs sm:text-sm text-stone-300 font-body max-w-lg mx-auto">
-            Experience the warmth of our Zaveri Bazaar flagship boutique or discover our bridal trousseau collections online.
+            Experience the warmth of our flagship showroom or discover our bridal trousseau collections online.
           </p>
           <div className="pt-2 flex justify-center gap-4">
             <Link

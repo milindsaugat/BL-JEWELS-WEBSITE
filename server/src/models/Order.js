@@ -7,6 +7,7 @@ const orderSchema = new mongoose.Schema({
     required: false, // can allow guest order tracking
   },
   guestEmail: String,
+  inventoryReserved: { type: Boolean, default: false },
   orderNumber: {
     type: String,
     unique: true,
@@ -59,7 +60,7 @@ const orderSchema = new mongoose.Schema({
     status: {
       type: String,
       enum: ['pending', 'paid', 'failed', 'refunded'],
-      default: 'paid', // for demo purchases
+      default: 'pending',
     },
     razorpayOrderId: String,
     razorpayPaymentId: String,
@@ -87,7 +88,7 @@ const orderSchema = new mongoose.Schema({
     updatedAt: { type: Date, default: Date.now },
   }],
   tracking: {
-    carrier: { type: String, default: 'Blue Dart Luxury Express' },
+    carrier: { type: String },
     trackingId: String,
     url: String,
     estimatedDelivery: Date,

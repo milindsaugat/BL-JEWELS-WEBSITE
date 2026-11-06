@@ -12,10 +12,12 @@ const loadUserFromStorage = () => {
 
 const loadWishlistFromStorage = () => {
   try {
+    const token = localStorage.getItem('bl_access_token');
+    if (!token) return [];
     const saved = localStorage.getItem('bl_wishlist');
-    return saved ? JSON.parse(saved) : ['prod_1', 'prod_3'];
+    return saved ? JSON.parse(saved) : [];
   } catch {
-    return ['prod_1', 'prod_3'];
+    return [];
   }
 };
 
@@ -26,6 +28,13 @@ export const useAuthStore = create((set, get) => ({
   wishlist: loadWishlistFromStorage(),
   isLoading: false,
 
+  setSession: (data) => {
+    localStorage.setItem('bl_access_token', data.accessToken);
+    localStorage.setItem('bl_user', JSON.stringify(data.user));
+    localStorage.setItem('bl_wishlist', JSON.stringify(data.user.wishlist || []));
+    set({ user: data.user, token: data.accessToken, isAuthenticated: true, wishlist: data.user.wishlist || [] });
+  },
+  updateUser: (user) => { localStorage.setItem('bl_user', JSON.stringify(user)); set({ user }); },
   login: async (email, password) => {
     set({ isLoading: true });
     try {
@@ -81,11 +90,14 @@ export const useAuthStore = create((set, get) => ({
     }
     localStorage.removeItem('bl_access_token');
     localStorage.removeItem('bl_user');
-    set({ user: null, token: null, isAuthenticated: false });
+    localStorage.removeItem('bl_wishlist');
+    set({ user: null, token: null, isAuthenticated: false, wishlist: [] });
   },
 
   toggleWishlist: async (productId) => {
-    const { wishlist } = get();
+    const { isAuthenticated, wishlist } = get();
+    if (!isAuthenticated) return false;
+
     const isPresent = wishlist.includes(productId);
     const updated = isPresent
       ? wishlist.filter((id) => id !== productId)
@@ -99,10 +111,13 @@ export const useAuthStore = create((set, get) => ({
     } catch {
       // Local state kept
     }
+    return true;
   },
 
   isWishlisted: (productId) => {
-    return get().wishlist.includes(productId);
+    const { isAuthenticated, wishlist } = get();
+    if (!isAuthenticated) return false;
+    return wishlist.includes(productId);
   },
 }));
 

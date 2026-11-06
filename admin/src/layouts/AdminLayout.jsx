@@ -1,232 +1,36 @@
-import React, { useState } from 'react';
-import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import {
-  Menu,
-  X,
-  ExternalLink,
-  ShieldCheck,
-  ChevronRight,
-  LogOut,
-  Bell
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Shapes, Sparkles, Package, ShoppingBag, Image, Coins, Megaphone, Tag, MessageSquare, PanelLeftClose, PanelLeftOpen, Menu, X, LogOut, LogIn, ExternalLink, Users, ChevronDown, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
-
-export const AdminLayout = () => {
-  const { user, logout } = useAuthStore();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  // Simple, standard, clean keywords (No bloated "Executive" buzzwords)
-  const navItems = [
-    { label: 'Dashboard', path: '/', iconClass: 'ri-dashboard-3-line', exact: true },
-    { label: 'Categories', path: '/categories', iconClass: 'ri-shapes-line' },
-    { label: 'Occasions', path: '/occasions', iconClass: 'ri-sparkling-line' },
-    { label: 'Products', path: '/products', iconClass: 'uil uil-gold' },
-    { label: 'Orders', path: '/orders', iconClass: 'fa-solid fa-truck-fast' },
-    { label: 'Banners', path: '/banners', iconClass: 'ri-image-edit-line' },
-    { label: 'Gold API & Rates', path: '/gold-rates', iconClass: 'uil uil-gold' },
-    { label: 'Announcement Bar', path: '/announcements', iconClass: 'ri-megaphone-line' },
-    { label: 'Coupons', path: '/coupons', iconClass: 'uil uil-tag-alt' },
-    { label: 'Testimonials', path: '/testimonials', iconClass: 'ri-chat-quote-line' },
-  ];
-
-  const getCurrentTitle = () => {
-    const item = navItems.find(i => i.exact ? location.pathname === i.path : location.pathname.startsWith(i.path));
-    return item?.label || 'Dashboard';
-  };
-
-  return (
-    <div className="min-h-screen bg-[#F8F9FA] flex text-[#1C1410] font-body antialiased">
-      
-      {/* ── Desktop Sidebar: Fixed/Sticky pinned, scrollable menu internally ── */}
-      <aside className="hidden lg:flex w-64 bg-[#140D0F] text-white flex-col h-screen sticky top-0 border-r border-[#C9A44A]/25 shrink-0 z-40 overflow-hidden">
-        
-        {/* Brand Header (Fixed) */}
-        <div className="p-5 border-b border-white/10 shrink-0">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-white p-1 border border-[#C9A44A]/60 flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-              <img
-                src="/images/bl-jewels-icon.png"
-                alt="BL Jewels Emblem"
-                className="w-full h-full object-contain"
-              />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-bold text-[#F3E5AB] tracking-wide">
-                BL JEWELS
-              </h2>
-              <span className="text-[11px] text-stone-400 block -mt-0.5">
-                Admin Panel
-              </span>
-            </div>
-          </Link>
-        </div>
-
-        {/* Scrollable Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto p-3.5 space-y-1 text-xs">
-          <div className="px-3 py-2 text-[10px] uppercase tracking-wider text-stone-400 font-semibold">
-            Store Management
-          </div>
-
-          {navItems.map((item) => {
-            const isActive = item.exact
-              ? location.pathname === item.path
-              : location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
-
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition-all duration-150 ${
-                  isActive
-                    ? 'bg-[#8B1A1A] text-white font-semibold shadow-sm border border-[#C9A44A]/40'
-                    : 'text-stone-300 hover:bg-white/10 hover:text-white font-medium'
-                }`}
-              >
-                <i className={`${item.iconClass} text-base ${isActive ? 'text-[#F3E5AB]' : 'text-stone-400'}`}></i>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Sidebar Footer & User Profile (Fixed bottom) */}
-        <div className="p-4 border-t border-white/10 space-y-3 shrink-0">
-          <a
-            href="http://localhost:5173"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#F3E5AB] text-xs transition-colors border border-white/10 group"
-          >
-            <div className="flex items-center gap-2">
-              <i className="ri-external-link-line text-sm text-[#C9A44A]"></i>
-              <span>Customer Website</span>
-            </div>
-            <span className="text-[10px] text-stone-400 group-hover:text-white">Live ↗</span>
-          </a>
-
-          <div className="flex items-center justify-between pt-1 px-1">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-[#8B1A1A] text-white text-xs font-bold flex items-center justify-center border border-[#C9A44A]/50 shrink-0">
-                {user?.name?.[0]?.toUpperCase() || 'A'}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-white truncate">
-                  {user?.name || 'Store Admin'}
-                </p>
-                <p className="text-[10px] text-emerald-400 truncate">
-                  ● Online
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-rose-400 hover:bg-white/10 transition-colors shrink-0"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-      </aside>
-
-      {/* ── Main Content Container ── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        
-        {/* Top Header Bar */}
-        <header className="h-16 bg-white border-b border-stone-200 px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-          
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-stone-700 hover:bg-stone-100 transition-colors"
-              aria-label="Toggle Navigation Menu"
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-
-            {/* Breadcrumb Navigation */}
-            <div className="flex items-center gap-2 text-xs text-stone-500">
-              <span className="text-stone-400 hidden sm:inline">Admin</span>
-              <ChevronRight className="w-3.5 h-3.5 text-stone-300 hidden sm:inline" />
-              <h1 className="font-semibold text-sm sm:text-base text-stone-900 tracking-tight">
-                {getCurrentTitle()}
-              </h1>
-            </div>
-          </div>
-
-          {/* Right Header Status & Store Link */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 rounded-full text-xs text-emerald-800 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Store Live & Cloud DB Connected</span>
-            </div>
-
-            <a
-              href="http://localhost:5173"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3.5 py-1.5 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl text-xs font-semibold text-stone-800 transition-colors flex items-center gap-1.5 shadow-xs"
-            >
-              <span>View Storefront</span>
-              <ExternalLink className="w-3.5 h-3.5 text-stone-400" />
-            </a>
-          </div>
-
-        </header>
-
-        {/* Mobile Navigation Drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#140D0F] text-white p-4 space-y-1.5 border-b border-[#C9A44A]/30 animate-in slide-in-from-top-2 duration-200">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs text-stone-200 hover:bg-white/10"
-              >
-                <i className={`${item.iconClass} text-sm text-[#F3E5AB]`}></i>
-                <span>{item.label}</span>
-              </Link>
-            ))}
-            <div className="pt-2 border-t border-white/10 mt-2 flex items-center justify-between">
-              <a
-                href="http://localhost:5173"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-[#F3E5AB] font-medium"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Open Storefront</span>
-              </a>
-              <button
-                onClick={handleLogout}
-                className="text-xs text-rose-400 font-medium hover:underline"
-              >
-                Sign Out
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Main View Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-[1600px] w-full mx-auto">
-          <Outlet />
-        </main>
-
-      </div>
-
-    </div>
-  );
+const items=[['Dashboard','/',LayoutDashboard],['Products','/products',Package],['Orders','/orders',ShoppingBag],['Customers','/users',Users],['Categories','/categories',Shapes],['Occasions','/occasions',Sparkles],['Banners','/banners',Image],['Gold API & Rates','/gold-rates',Coins],['Announcements','/announcements',Megaphone],['Coupons','/coupons',Tag],['Testimonials','/testimonials',MessageSquare]];
+export const AdminLayout=()=>{
+ const [collapsed,setCollapsed]=useState(()=>localStorage.getItem('bl_sidebar_collapsed')==='true');
+ const [mobile,setMobile]=useState(false),[profile,setProfile]=useState(false);
+ const {user,logout,isAuthenticated}=useAuthStore(),location=useLocation(),profileRef=useRef(null);
+ useEffect(()=>{window.scrollTo({top:0,behavior:'instant'});setProfile(false);setMobile(false);},[location.pathname]);
+ useEffect(()=>{const close=e=>{if(!profileRef.current?.contains(e.target))setProfile(false);};const escape=e=>{if(e.key==='Escape'){setProfile(false);setMobile(false);}};document.addEventListener('pointerdown',close);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('pointerdown',close);document.removeEventListener('keydown',escape);};},[]);
+ useEffect(()=>{if(!mobile)return;const old=document.documentElement.style.overflow;document.documentElement.style.overflow='hidden';return()=>{document.documentElement.style.overflow=old;};},[mobile]);
+ const toggle=()=>setCollapsed(v=>{localStorage.setItem('bl_sidebar_collapsed',String(!v));return !v;});
+ const storefront=import.meta.env.VITE_STOREFRONT_URL||'http://localhost:5173';
+ const initials=(user?.name||'Admin').split(' ').slice(0,2).map(s=>s[0]).join('').toUpperCase();
+ return <div className="admin-shell min-h-screen bg-[#F5F6F8] text-stone-900 font-body">
+ {mobile&&<button aria-label="Close navigation" className="fixed inset-0 bg-stone-950/30 backdrop-blur-sm z-40 lg:hidden" onClick={()=>setMobile(false)}/>}
+ <aside aria-label="Admin navigation" className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-stone-200/80 flex flex-col transition-[width,transform] duration-200 ${collapsed?'lg:w-[76px]':'lg:w-[232px]'} w-[248px] ${mobile?'translate-x-0':'-translate-x-full lg:translate-x-0'}`}>
+   <Link to="/" className="h-16 shrink-0 flex items-center gap-2.5 px-5 border-b border-stone-100"><img src="/images/bl-jewels-icon.png" alt="BL Jewels" className="h-9 w-9 object-contain shrink-0"/><div className={collapsed?'lg:hidden':''}><p className="font-bold text-sm tracking-wide text-[#930303]">BL JEWELS</p><p className="text-[10px] text-stone-400 mt-0.5">Store workspace</p></div></Link>
+   <div className={`px-6 pt-5 pb-2 text-[9px] uppercase tracking-[.18em] text-stone-400 ${collapsed?'lg:invisible':''}`}>Manage your store</div>
+   <nav className="admin-sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-4 space-y-1">{items.map(([label,path,Icon])=><NavLink key={path} to={path} end={path==='/'} title={label} onClick={()=>setMobile(false)} className={({isActive})=>`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] transition-colors ${isActive?'bg-[#930303] text-white shadow-sm shadow-red-900/10 font-semibold':'text-stone-500 hover:bg-[#FBF3F0] hover:text-[#930303]'}`}><Icon size={18} strokeWidth={1.7} className="shrink-0"/><span className={collapsed?'lg:hidden':''}>{label}</span></NavLink>)}</nav>
+   <div className="shrink-0 p-3 border-t border-stone-100"><a href={storefront} target="_blank" rel="noreferrer" title="Open storefront" className="flex items-center gap-3 rounded-xl bg-stone-50 border border-stone-100 px-3 py-3 text-xs text-stone-600"><ExternalLink size={17} className="shrink-0"/><span className={collapsed?'lg:hidden':''}>Open storefront</span></a></div>
+ </aside>
+ <div className={`min-w-0 transition-[padding] duration-200 ${collapsed?'lg:pl-[76px]':'lg:pl-[232px]'}`}>
+   <header className={`fixed top-0 right-0 left-0 ${collapsed?'lg:left-[76px]':'lg:left-[232px]'} h-16 z-30 bg-white border-b border-stone-200/80 px-4 sm:px-6 flex items-center justify-between gap-3 transition-[left] duration-200`}>
+     <div className="flex items-center gap-3 min-w-0"><button aria-label="Toggle sidebar" aria-expanded={!collapsed} onClick={toggle} className="hidden lg:flex p-2 rounded-lg text-stone-500 hover:bg-stone-100">{collapsed?<PanelLeftOpen size={19}/>:<PanelLeftClose size={19}/>}</button><button aria-label="Open navigation" aria-expanded={mobile} onClick={()=>setMobile(true)} className="lg:hidden p-2"><Menu size={20}/></button><div className="min-w-0"><p className="text-[9px] uppercase tracking-[.15em] text-stone-400">Workspace</p><h1 className="font-semibold text-sm truncate">{items.find(i=>i[1]===location.pathname)?.[0]||'Store management'}</h1></div></div>
+     <div className="flex items-center gap-3"><a href={storefront} target="_blank" rel="noreferrer" className="hidden sm:flex items-center gap-2 px-3 py-2 border rounded-lg text-xs text-stone-600 hover:bg-stone-50">View store<ExternalLink size={13}/></a><span className="hidden sm:block h-7 w-px bg-stone-200"/>
+       <div ref={profileRef} className="relative"><button aria-label="Account menu" aria-expanded={profile} aria-controls="admin-account-menu" onClick={()=>setProfile(v=>!v)} className="flex items-center gap-2 rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#930303]"><span className="h-9 w-9 rounded-full bg-[#930303] text-white flex items-center justify-center text-xs font-semibold ring-4 ring-[#FAF0ED]">{initials}</span><ChevronDown size={13} className="text-stone-400"/></button>
+       {profile&&<div id="admin-account-menu" className="absolute right-0 top-12 w-64 bg-white rounded-2xl shadow-xl border border-stone-200 p-2"><div className="px-3 py-3 border-b border-stone-100"><p className="text-sm font-semibold truncate">{user?.name||'Your account'}</p><p className="text-xs text-stone-500 truncate mt-1">{user?.email}</p><p className="mt-2 text-[10px] text-[#930303] flex items-center gap-1"><ShieldCheck size={12}/>Administrator</p></div>{isAuthenticated?<button onClick={()=>{setProfile(false);logout();}} className="flex items-center gap-2 text-sm text-red-800 hover:bg-red-50 rounded-xl p-3 w-full"><LogOut size={16}/>Sign out</button>:<Link to="/login" className="flex gap-2 p-3 text-sm"><LogIn size={16}/>Sign in</Link>}</div>}
+       </div>
+     </div>
+   </header>
+   <main className="min-w-0 w-full px-4 sm:px-6 pt-[84px] pb-6"><Outlet/></main>
+ </div></div>;
 };
-
 export default AdminLayout;

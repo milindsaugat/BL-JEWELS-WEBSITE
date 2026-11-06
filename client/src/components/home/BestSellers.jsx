@@ -30,12 +30,12 @@ export const BestSellers = ({ products = [] }) => {
             <span className="w-6 h-px bg-gold-400" />
           </div>
 
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-[#5B101D] tracking-tight leading-tight">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-[#930303] tracking-tight leading-tight">
             Most Cherished Bestsellers
           </h2>
 
           <p className="font-body text-xs sm:text-sm text-stone-500 max-w-xl mx-auto font-normal leading-relaxed pt-1">
-            Adored across generations for uncompromised gold purity, master karigar detailing, and eternal heirloom elegance. Handcrafted for patrons of fine luxury.
+            Adored across generations for uncompromised gold purity, master karigar detailing, and eternal heirloom elegance. Handcrafted for lovers of fine luxury.
           </p>
         </div>
 
@@ -48,7 +48,7 @@ export const BestSellers = ({ products = [] }) => {
             disabled={!canScrollLeft}
             className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollLeft
-                ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
+                ? 'opacity-95 hover:opacity-100 hover:bg-[#930303] hover:text-white hover:border-[#930303] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
             }`}
             aria-label="Previous Bestsellers"
@@ -62,7 +62,7 @@ export const BestSellers = ({ products = [] }) => {
             disabled={!canScrollRight}
             className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollRight
-                ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
+                ? 'opacity-95 hover:opacity-100 hover:bg-[#930303] hover:text-white hover:border-[#930303] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
             }`}
             aria-label="Next Bestsellers"
@@ -114,7 +114,7 @@ export const BestSellers = ({ products = [] }) => {
         <div className="text-center mt-10">
           <Link
             to="/collections"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-[#7A1D28] hover:text-white hover:bg-[#7A1D28] font-body tracking-wider uppercase group px-6 py-3 rounded-full border border-[#7A1D28]/40 transition-all duration-200 shadow-xs"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-[#930303] hover:text-white hover:bg-[#930303] font-body tracking-wider uppercase group px-6 py-3 rounded-full border border-[#930303]/40 transition-all duration-200 shadow-xs"
           >
             <span>Explore All Royal Masterpieces</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

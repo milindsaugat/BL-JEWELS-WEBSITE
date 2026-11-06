@@ -8,12 +8,12 @@ import { formatCurrency } from '../../lib/utils';
 import { PriceDisplay } from '../common/PriceDisplay';
 
 export const ProductCard = ({ product }) => {
-  const { wishlist, toggleWishlist } = useAuthStore();
+  const { wishlist, toggleWishlist, isAuthenticated } = useAuthStore();
   const { addToCart } = useCartStore();
-  const { openQuickView } = useUIStore();
+  const { openQuickView, openAuthModal } = useUIStore();
 
-  const isFav = wishlist.includes(product._id);
-  const primaryVariant = product.variants?.[0] || {};
+  const isFav = isAuthenticated && wishlist.includes(product._id);
+  const primaryVariant = product.variants?.find(v => v.isDefault && v.stock > 0) || product.variants?.find(v => v.stock > 0) || product.variants?.[0] || {};
   const primaryImage = product.images?.[0]?.url || product.image;
 
   const handleQuickAdd = (e) => {
@@ -31,6 +31,10 @@ export const ProductCard = ({ product }) => {
   const handleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isAuthenticated) {
+      openAuthModal('wishlist', product._id);
+      return;
+    }
     toggleWishlist(product._id);
   };
 
@@ -56,7 +60,7 @@ export const ProductCard = ({ product }) => {
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10 pointer-events-none">
           {product.isNewArrival && (
-            <span className="bg-crimson-700 text-white font-body text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-pill shadow-sm">
+            <span className="bg-[#930303] text-white font-body text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-pill shadow-sm">
               New
             </span>
           )}
@@ -72,8 +76,8 @@ export const ProductCard = ({ product }) => {
           onClick={handleWishlist}
           className={`absolute top-3 right-3 z-10 p-2 rounded-full backdrop-blur-md transition-all shadow-sm ${
             isFav
-              ? 'bg-crimson-700 text-white shadow-crimson'
-              : 'bg-white/85 text-stone-700 hover:bg-white hover:text-crimson-700'
+              ? 'bg-[#930303] text-white shadow-md shadow-[#930303]/25'
+              : 'bg-white/85 text-stone-700 hover:bg-white hover:text-[#930303]'
           }`}
           title={isFav ? 'Remove from wishlist' : 'Add to wishlist'}
         >
@@ -88,13 +92,14 @@ export const ProductCard = ({ product }) => {
             className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-white/95 hover:bg-charcoal text-charcoal hover:text-white transition-colors text-[11px] sm:text-xs font-semibold font-body shadow-md active:scale-95 cursor-pointer"
             aria-label="Quick View"
           >
-            <Eye className="w-3.5 h-3.5 text-crimson-800" />
+            <Eye className="w-3.5 h-3.5 text-[#930303]" />
             <span>Quick View</span>
           </button>
           <button
             type="button"
+            disabled={!primaryVariant.stock}
             onClick={handleQuickAdd}
-            className="pointer-events-auto p-1.5 sm:p-2 rounded-full bg-crimson-700 text-white hover:bg-crimson-800 transition-colors shadow-md active:scale-95 cursor-pointer"
+            className="pointer-events-auto p-1.5 sm:p-2 rounded-full bg-[#930303] text-white hover:bg-[#7A0303] transition-colors shadow-md shadow-[#930303]/20 active:scale-95 cursor-pointer"
             title="Quick add to bag"
             aria-label="Add to bag"
           >
@@ -118,7 +123,7 @@ export const ProductCard = ({ product }) => {
           </div>
 
           <Link to={`/products/${product.slug}`}>
-            <h3 className="font-display text-base font-semibold text-charcoal leading-snug line-clamp-2 mt-0.5 hover:text-crimson-700 transition-colors">
+            <h3 className="font-display text-base font-semibold text-charcoal leading-snug line-clamp-2 mt-0.5 hover:text-[#930303] transition-colors">
               {product.name}
             </h3>
           </Link>

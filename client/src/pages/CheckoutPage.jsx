@@ -1,31 +1,32 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { ShieldCheck, Lock, CreditCard, Truck, Check, ArrowRight, Sparkles } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
+import { useUIStore } from '../store/uiStore';
 import { orderService, paymentService } from '../services/api';
 import { formatCurrency } from '../lib/utils';
 
 export const CheckoutPage = () => {
   const { items, getSubtotal, getShipping, getTax, getTotal, coupon, discount, clearCart } = useCartStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const { openAuthModal } = useUIStore();
   const navigate = useNavigate();
 
-  const [address, setAddress] = useState({
-    name: user?.name || 'Ananya Sharma',
-    phone: user?.phone || '+91 98200 12345',
-    line1: 'Flat 402, Royale Meadows, Juhu Tara Road',
-    line2: 'Near JW Marriott',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    pincode: '400049',
-    country: 'India',
-  });
+  const [address, setAddress] = useState(user?.addresses?.find(a=>a.isDefault) || user?.addresses?.[0] || {name:user?.name||'', phone:user?.phone||'',line1:'',line2:'',city:'',state:'',pincode:'',country:'India'});
 
   const [paymentMethod, setPaymentMethod] = useState('razorpay');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGift, setIsGift] = useState(false);
   const [giftNote, setGiftNote] = useState('');
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      openAuthModal('checkout');
+    }
+  }, [isAuthenticated, openAuthModal]);
+
+  if (!isAuthenticated) return <Navigate to="/cart" replace />;
 
   if (items.length === 0) {
     navigate('/cart');
@@ -89,12 +90,13 @@ export const CheckoutPage = () => {
             <Lock className="w-3.5 h-3.5" />
             256-Bit Encrypted Auspicious Checkout
           </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold text-crimson-900">
+          <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#930303]">
             Secure Order Finalization
           </h1>
         </div>
 
-        <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {user?.addresses?.length > 0 && <label className="block mb-4 text-sm">Use a saved address<select defaultValue="" onChange={e=>{if(e.target.value!=='')setAddress(user.addresses[Number(e.target.value)]);}} className="block border rounded-xl p-3 mt-2 w-full"><option value="">Choose address</option>{user.addresses.map((a,i)=><option key={a._id||i} value={i}>{a.label}: {a.line1}, {a.city}</option>)}</select></label>}
+            <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
           {/* Left Form (Shipping & Payment) */}
           <div className="lg:col-span-7 space-y-8">
@@ -103,7 +105,7 @@ export const CheckoutPage = () => {
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-border-light shadow-sm space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-border-light">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-crimson-700 text-white text-xs font-bold flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-[#930303] text-white text-xs font-bold flex items-center justify-center">
                     1
                   </div>
                   <h2 className="font-display text-xl font-bold text-charcoal">
@@ -195,7 +197,7 @@ export const CheckoutPage = () => {
                     type="checkbox"
                     checked={isGift}
                     onChange={(e) => setIsGift(e.target.checked)}
-                    className="text-crimson-700 rounded"
+                    className="accent-[#930303] rounded"
                   />
                   <span>This order is an auspicious gift (Include velvet box & message card)</span>
                 </label>
@@ -214,7 +216,7 @@ export const CheckoutPage = () => {
             {/* Step 2: Payment Method */}
             <div className="bg-white rounded-2xl p-6 md:p-8 border border-border-light shadow-sm space-y-4">
               <div className="flex items-center gap-2 pb-3 border-b border-border-light">
-                <div className="w-6 h-6 rounded-full bg-crimson-700 text-white text-xs font-bold flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-[#930303] text-white text-xs font-bold flex items-center justify-center">
                   2
                 </div>
                 <h2 className="font-display text-xl font-bold text-charcoal">
@@ -227,7 +229,7 @@ export const CheckoutPage = () => {
                 <label
                   className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                     paymentMethod === 'razorpay'
-                      ? 'border-crimson-700 bg-crimson-50/40 shadow-sm'
+                      ? 'border-[#930303] bg-[#930303]/5 shadow-sm ring-1 ring-[#930303]/25'
                       : 'border-border-light bg-pearl hover:border-gold-300'
                   }`}
                 >
@@ -237,7 +239,7 @@ export const CheckoutPage = () => {
                     value="razorpay"
                     checked={paymentMethod === 'razorpay'}
                     onChange={() => setPaymentMethod('razorpay')}
-                    className="mt-0.5 text-crimson-700"
+                    className="mt-0.5 accent-[#930303]"
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -258,7 +260,7 @@ export const CheckoutPage = () => {
                 <label
                   className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
                     paymentMethod === 'cod'
-                      ? 'border-crimson-700 bg-crimson-50/40 shadow-sm'
+                      ? 'border-[#930303] bg-[#930303]/5 shadow-sm ring-1 ring-[#930303]/25'
                       : 'border-border-light bg-pearl hover:border-gold-300'
                   }`}
                 >
@@ -268,11 +270,11 @@ export const CheckoutPage = () => {
                     value="cod"
                     checked={paymentMethod === 'cod'}
                     onChange={() => setPaymentMethod('cod')}
-                    className="mt-0.5 text-crimson-700"
+                    className="mt-0.5 accent-[#930303]"
                   />
                   <div className="flex-1">
                     <span className="font-semibold text-sm text-charcoal">
-                      Pay on Delivery / Boutique Collection
+                      Pay on Delivery / Showroom Collection
                     </span>
                     <p className="text-stone-500 mt-1">
                       Available for orders up to ₹2,00,000. Verified with one-time OTP upon dispatch.
@@ -304,7 +306,7 @@ export const CheckoutPage = () => {
                       <h4 className="font-semibold text-stone-900 truncate">{item.product.name}</h4>
                       <p className="text-stone-500 text-[11px]">Qty: {item.quantity} • {item.variant?.label}</p>
                     </div>
-                    <span className="font-accent font-bold text-crimson-700 shrink-0">
+                    <span className="font-accent font-bold text-[#930303] shrink-0">
                       ₹{formatCurrency(item.price * item.quantity)}
                     </span>
                   </div>
@@ -333,7 +335,7 @@ export const CheckoutPage = () => {
                 </div>
                 <div className="flex justify-between text-base font-bold text-charcoal border-t border-border-light pt-3">
                   <span>Total Payable Amount</span>
-                  <span className="font-accent text-xl text-crimson-700">
+                  <span className="font-accent text-xl text-[#930303]">
                     ₹{formatCurrency(total)}
                   </span>
                 </div>
@@ -343,7 +345,7 @@ export const CheckoutPage = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-4 bg-gradient-to-r from-crimson-700 to-crimson-600 hover:from-crimson-800 hover:to-crimson-700 disabled:opacity-60 text-white rounded-xl text-xs sm:text-sm font-semibold tracking-wider font-body shadow-crimson transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] disabled:opacity-60 text-white rounded-xl text-xs sm:text-sm font-semibold tracking-wider font-body shadow-md shadow-[#930303]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <span>Authorizing Auspicious Order...</span>

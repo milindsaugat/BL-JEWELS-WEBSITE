@@ -25,6 +25,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(mo
 const AdminBanners = lazy(() => import('./pages/admin/AdminBanners').then(module => ({ default: module.AdminBanners })));
 const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(module => ({ default: module.AdminProducts })));
 const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(module => ({ default: module.AdminOrders })));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(module => ({ default: module.AdminUsers })));
 const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons').then(module => ({ default: module.AdminCoupons })));
 
 export const AppRoutes = () => {
@@ -59,6 +60,7 @@ export const AppRoutes = () => {
         <Route path="banners" element={<AdminBanners />} />
         <Route path="products" element={<AdminProducts />} />
         <Route path="orders" element={<AdminOrders />} />
+        <Route path="users" element={<AdminUsers />} />
         <Route path="coupons" element={<AdminCoupons />} />
       </Route>
 

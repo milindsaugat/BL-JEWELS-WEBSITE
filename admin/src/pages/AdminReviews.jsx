@@ -14,6 +14,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { reviewService, uploadService } from '../services/api';
+import { toast } from 'sonner';
 
 export const AdminReviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -159,13 +160,19 @@ export const AdminReviews = () => {
     try {
       if (editingReview) {
         await reviewService.updateReview(editingReview._id, cleanData);
+        toast.success('Patron reflection updated successfully!');
+        setEditingReview((prev) => ({ ...prev, ...cleanData }));
       } else {
-        await reviewService.createReview(cleanData);
+        const res = await reviewService.createReview(cleanData);
+        toast.success('Patron reflection created successfully!');
+        const created = res?.review || res;
+        if (created && created._id) {
+          setEditingReview(created);
+        }
       }
-      setShowModal(false);
       fetchReviews();
     } catch (err) {
-      alert('Failed to save reflection: ' + (err.response?.data?.message || err.message));
+      toast.error('Failed to save reflection: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -193,7 +200,7 @@ export const AdminReviews = () => {
 
         <button
           onClick={handleOpenAdd}
-          className="px-4 py-2.5 bg-[#7A1D28] hover:bg-[#5B101D] text-white rounded-xl text-xs font-semibold font-body flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+          className="px-4 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body flex items-center gap-2 shadow-sm transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Reflection</span>
@@ -240,7 +247,7 @@ export const AdminReviews = () => {
                           className="w-10 h-10 rounded-full object-cover border border-gold-300 shrink-0"
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-amber-100 border border-gold-300 flex items-center justify-center font-bold text-[#5B101D] text-xs shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 border border-gold-300 flex items-center justify-center font-bold text-[#930303] text-xs shrink-0">
                           {(rev.userName || 'P').charAt(0)}
                         </div>
                       )}
@@ -342,7 +349,7 @@ export const AdminReviews = () => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-gold-300 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
-              <h3 className="font-display text-xl font-bold text-[#5B101D]">
+              <h3 className="font-display text-xl font-bold text-[#930303]">
                 {editingReview ? 'Edit Patron Reflection' : 'Publish New Patron Reflection'}
               </h3>
               <button
@@ -444,7 +451,7 @@ export const AdminReviews = () => {
                     1. Patron Portrait / Avatar
                   </span>
 
-                  <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gold-400/50 hover:border-[#7A1D28] rounded-xl bg-white cursor-pointer transition-colors text-center">
+                  <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gold-400/50 hover:border-[#930303] rounded-xl bg-white cursor-pointer transition-colors text-center">
                     <input
                       type="file"
                       accept="image/*"
@@ -453,7 +460,7 @@ export const AdminReviews = () => {
                       className="hidden"
                     />
                     {uploadingPatronImg ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-[#7A1D28]" />
+                      <Loader2 className="w-5 h-5 animate-spin text-[#930303]" />
                     ) : (
                       <>
                         <UploadCloud className="w-6 h-6 text-gold-600 mb-1" />
@@ -488,7 +495,7 @@ export const AdminReviews = () => {
                     2. Worn Jewelry / Piece Photo
                   </span>
 
-                  <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gold-400/50 hover:border-[#7A1D28] rounded-xl bg-white cursor-pointer transition-colors text-center">
+                  <label className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-gold-400/50 hover:border-[#930303] rounded-xl bg-white cursor-pointer transition-colors text-center">
                     <input
                       type="file"
                       accept="image/*"
@@ -497,7 +504,7 @@ export const AdminReviews = () => {
                       className="hidden"
                     />
                     {uploadingJewelryImg ? (
-                      <Loader2 className="w-5 h-5 animate-spin text-[#7A1D28]" />
+                      <Loader2 className="w-5 h-5 animate-spin text-[#930303]" />
                     ) : (
                       <>
                         <UploadCloud className="w-6 h-6 text-gold-600 mb-1" />
@@ -559,7 +566,7 @@ export const AdminReviews = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[#7A1D28] hover:bg-[#5B101D] text-white rounded-xl text-xs font-semibold cursor-pointer shadow-sm transition-colors"
+                  className="px-6 py-2 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold cursor-pointer shadow-sm transition-colors"
                 >
                   {editingReview ? 'Save Changes' : 'Publish Reflection'}
                 </button>

@@ -13,10 +13,10 @@ export default {
           200: '#F9D8D8',
           500: '#B02828',
           600: '#9B2020',
-          700: '#8B1A1A',   // Primary brand red
-          800: '#7A0F0F',
-          900: '#5C0A0A',
-          950: '#3D0505',
+          700: '#930303',   // Primary brand Royal Crimson
+          800: '#7A0303',
+          900: '#5C0202',
+          950: '#5C0202',
         },
         gold: {
           50:  '#FFFBEE',
@@ -35,6 +35,7 @@ export default {
         ivory:     '#FFFFFF',
         parchment: '#F8F6F2',
         charcoal:  '#1C1410',
+        royalCrimson: '#930303',
       },
       fontFamily: {
         display: ['"Bodoni Moda"', 'Georgia', 'serif'],

@@ -55,7 +55,7 @@ export const AdminDashboard = () => {
     <div className="space-y-8">
       
       {/* Top Banner / Welcome */}
-      <div className="bg-gradient-to-r from-crimson-900 via-crimson-800 to-crimson-900 rounded-3xl p-6 sm:p-8 text-white border border-gold-400/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#7A0303] via-[#930303] to-[#7A0303] rounded-3xl p-6 sm:p-8 text-white border border-gold-400/40 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="flex items-center gap-5 relative z-10">
           <div className="hidden sm:flex w-16 h-16 rounded-2xl bg-white p-2 border-2 border-gold-400/80 items-center justify-center shadow-gold shrink-0">
             <img
@@ -103,7 +103,7 @@ export const AdminDashboard = () => {
             <span>Gross Order Revenue</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="font-accent text-2xl font-bold text-crimson-700">
+          <p className="font-accent text-2xl font-bold text-[#930303]">
             ₹{formatCurrency(totalRevenue || 435000)}
           </p>
           <p className="text-[11px] text-emerald-700 font-body">↑ 18.4% this month</p>
@@ -157,7 +157,7 @@ export const AdminDashboard = () => {
               </h3>
               <p className="text-xs text-stone-500 font-body">Latest orders awaiting shipping or fulfilled</p>
             </div>
-            <Link to="/admin/orders" className="text-xs font-semibold text-crimson-700 hover:underline flex items-center gap-1">
+            <Link to="/admin/orders" className="text-xs font-semibold text-[#930303] hover:underline flex items-center gap-1">
               <span>View All</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -176,7 +176,7 @@ export const AdminDashboard = () => {
               <tbody className="divide-y divide-stone-100">
                 {orders.slice(0, 5).map((ord) => (
                   <tr key={ord._id} className="hover:bg-stone-50">
-                    <td className="p-3 font-accent font-bold text-crimson-700">{ord.orderNumber}</td>
+                    <td className="p-3 font-accent font-bold text-[#930303]">{ord.orderNumber}</td>
                     <td className="p-3 font-semibold text-stone-900">{ord.shippingAddress?.name || 'Customer'}</td>
                     <td className="p-3 font-accent font-bold">₹{formatCurrency(ord.pricing?.total)}</td>
                     <td className="p-3">
@@ -202,7 +202,7 @@ export const AdminDashboard = () => {
               </h3>
               <p className="text-xs text-stone-500 font-body">Active slides on homepage</p>
             </div>
-            <Link to="/admin/banners" className="text-xs font-semibold text-crimson-700 hover:underline">
+            <Link to="/admin/banners" className="text-xs font-semibold text-[#930303] hover:underline">
               Edit Slider →
             </Link>
           </div>

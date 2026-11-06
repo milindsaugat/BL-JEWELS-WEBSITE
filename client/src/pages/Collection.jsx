@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Filter, SlidersHorizontal, ChevronRight, X, RotateCcw, ShieldCheck } from 'lucide-react';
 import { productService, categoryService } from '../services/api';
 import { ProductCard } from '../components/product/ProductCard';
@@ -8,18 +8,35 @@ import { METALS, KARATS, OCCASIONS, SORT_OPTIONS } from '../lib/constants';
 
 export const Collection = () => {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [currentCategory, setCurrentCategory] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Filters state
-  const [selectedMetal, setSelectedMetal] = useState('');
-  const [selectedKarat, setSelectedKarat] = useState('');
-  const [selectedOccasion, setSelectedOccasion] = useState('');
+  // Filters state with URL search param initialization
+  const [selectedMetal, setSelectedMetal] = useState(() => searchParams.get('metal') || '');
+  const [selectedKarat, setSelectedKarat] = useState(() => searchParams.get('karat') || '');
+  const [selectedOccasion, setSelectedOccasion] = useState(() => searchParams.get('occasion') || '');
   const [sortBy, setSortBy] = useState('newest');
   const [priceMax, setPriceMax] = useState(500000);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
+
+  // Sync with searchParams on URL change
+  useEffect(() => {
+    const m = searchParams.get('metal');
+    if (m !== null) {
+      setSelectedMetal(m.toLowerCase());
+    }
+    const k = searchParams.get('karat');
+    if (k !== null) {
+      setSelectedKarat(k);
+    }
+    const occ = searchParams.get('occasion');
+    if (occ !== null) {
+      setSelectedOccasion(occ);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     categoryService.getCategories().then((res) => {
@@ -77,9 +94,9 @@ export const Collection = () => {
         
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-xs text-stone-500 font-body mb-6">
-          <Link to="/" className="hover:text-crimson-700">Home</Link>
+          <Link to="/" className="hover:text-[#930303]">Home</Link>
           <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
-          <Link to="/collections" className="hover:text-crimson-700">Collections</Link>
+          <Link to="/collections" className="hover:text-[#930303]">Collections</Link>
           {slug && (
             <>
               <ChevronRight className="w-3.5 h-3.5 text-stone-400" />
@@ -96,7 +113,7 @@ export const Collection = () => {
             <span className="text-xs font-accent tracking-wider text-gold-800 uppercase font-bold">
               BL Jewels Fine Jewelry
             </span>
-            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-crimson-900 capitalize">
+            <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-[#930303] capitalize">
               {currentCategory?.name || 'All Jewelry Collections'}
             </h1>
             <p className="font-body text-xs sm:text-sm text-stone-600 leading-relaxed">
@@ -106,7 +123,7 @@ export const Collection = () => {
           </div>
 
           <div className="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-gold-300 text-center shrink-0 shadow-gold-sm">
-            <span className="font-accent text-2xl font-bold text-crimson-700 block">
+            <span className="font-accent text-2xl font-bold text-[#930303] block">
               {products.length}
             </span>
             <span className="text-[11px] text-stone-500 font-body uppercase tracking-wider">
@@ -121,7 +138,7 @@ export const Collection = () => {
             to="/collections"
             className={`px-4 py-2 rounded-full text-xs font-medium font-body whitespace-nowrap transition-all ${
               !slug
-                ? 'bg-crimson-700 text-white shadow-crimson'
+                ? 'bg-[#930303] text-white shadow-md shadow-[#930303]/25'
                 : 'bg-ivory hover:bg-parchment/70 text-stone-700 border border-border-light'
             }`}
           >
@@ -133,7 +150,7 @@ export const Collection = () => {
               to={`/collections/${cat.slug}`}
               className={`px-4 py-2 rounded-full text-xs font-medium font-body whitespace-nowrap transition-all ${
                 slug === cat.slug
-                  ? 'bg-crimson-700 text-white shadow-crimson'
+                  ? 'bg-[#930303] text-white shadow-md shadow-[#930303]/25'
                   : 'bg-ivory hover:bg-parchment/70 text-stone-700 border border-border-light'
               }`}
             >
@@ -151,7 +168,7 @@ export const Collection = () => {
               
               <div className="flex items-center justify-between pb-3 border-b border-border-light">
                 <div className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4 text-crimson-700" />
+                  <SlidersHorizontal className="w-4 h-4 text-[#930303]" />
                   <h3 className="font-accent text-xs font-bold text-charcoal tracking-wider uppercase">
                     Refine Jewels
                   </h3>
@@ -159,7 +176,7 @@ export const Collection = () => {
                 {hasActiveFilters && (
                   <button
                     onClick={resetFilters}
-                    className="text-[11px] text-crimson-700 hover:underline flex items-center gap-1 font-body"
+                    className="text-[11px] text-[#930303] hover:underline flex items-center gap-1 font-body cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Reset
@@ -176,14 +193,14 @@ export const Collection = () => {
                   {METALS.map((m) => (
                     <label
                       key={m.value}
-                      className="flex items-center gap-2 text-xs text-stone-700 font-body cursor-pointer hover:text-crimson-700"
+                      className="flex items-center gap-2 text-xs text-stone-700 font-body cursor-pointer hover:text-[#930303]"
                     >
                       <input
                         type="radio"
                         name="metal"
                         checked={selectedMetal === m.value}
                         onChange={() => setSelectedMetal(m.value)}
-                        className="text-crimson-700 focus:ring-gold-400"
+                        className="accent-[#930303]"
                       />
                       <span>{m.label}</span>
                     </label>
@@ -200,14 +217,14 @@ export const Collection = () => {
                   {KARATS.map((k) => (
                     <label
                       key={k.value}
-                      className="flex items-center gap-2 text-xs text-stone-700 font-body cursor-pointer hover:text-crimson-700"
+                      className="flex items-center gap-2 text-xs text-stone-700 font-body cursor-pointer hover:text-[#930303]"
                     >
                       <input
                         type="radio"
                         name="karat"
                         checked={selectedKarat === k.value}
                         onChange={() => setSelectedKarat(k.value)}
-                        className="text-crimson-700 focus:ring-gold-400"
+                        className="accent-[#930303]"
                       />
                       <span>{k.label}</span>
                     </label>
@@ -224,14 +241,14 @@ export const Collection = () => {
                   {OCCASIONS.map((o) => (
                     <label
                       key={o.value}
-                      className="flex items-center gap-2 text-xs text-stone-700 font-body cursor-pointer hover:text-crimson-700"
+                      className="flex items-center gap-2 text-xs text-stone-700 font-body cursor-pointer hover:text-[#930303]"
                     >
                       <input
                         type="radio"
                         name="occasion"
                         checked={selectedOccasion === o.value}
                         onChange={() => setSelectedOccasion(o.value)}
-                        className="text-crimson-700 focus:ring-gold-400"
+                        className="accent-[#930303]"
                       />
                       <span>{o.label}</span>
                     </label>
@@ -243,7 +260,7 @@ export const Collection = () => {
               <div className="space-y-2 pt-3 border-t border-border-light">
                 <div className="flex items-center justify-between text-xs font-semibold text-stone-800 font-body">
                   <span>Max Budget</span>
-                  <span className="font-accent text-crimson-700 font-bold">
+                  <span className="font-accent text-[#930303] font-bold">
                     ₹{Number(priceMax).toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -254,7 +271,7 @@ export const Collection = () => {
                   step="10000"
                   value={priceMax}
                   onChange={(e) => setPriceMax(Number(e.target.value))}
-                  className="w-full accent-crimson-700"
+                  className="w-full accent-[#930303] cursor-pointer"
                 />
               </div>
 
@@ -272,7 +289,7 @@ export const Collection = () => {
                 onClick={() => setMobileFilterOpen(!mobileFilterOpen)}
                 className="lg:hidden flex items-center gap-2 px-3 py-1.5 bg-white border border-gold-300 rounded-lg text-xs font-medium text-stone-800"
               >
-                <Filter className="w-3.5 h-3.5 text-crimson-700" />
+                <Filter className="w-3.5 h-3.5 text-[#930303]" />
                 <span>Filters {hasActiveFilters && '•'}</span>
               </button>
 
@@ -315,7 +332,7 @@ export const Collection = () => {
                       <button
                         key={m.value}
                         onClick={() => setSelectedMetal(selectedMetal === m.value ? '' : m.value)}
-                        className={`block w-full text-left py-1 ${selectedMetal === m.value ? 'text-crimson-700 font-bold' : 'text-stone-600'}`}
+                        className={`block w-full text-left py-1 ${selectedMetal === m.value ? 'text-[#930303] font-bold' : 'text-stone-600'}`}
                       >
                         {m.label}
                       </button>
@@ -327,7 +344,7 @@ export const Collection = () => {
                       <button
                         key={k.value}
                         onClick={() => setSelectedKarat(selectedKarat === k.value ? '' : k.value)}
-                        className={`block w-full text-left py-1 ${selectedKarat === k.value ? 'text-crimson-700 font-bold' : 'text-stone-600'}`}
+                        className={`block w-full text-left py-1 ${selectedKarat === k.value ? 'text-[#930303] font-bold' : 'text-stone-600'}`}
                       >
                         {k.label}
                       </button>
@@ -336,7 +353,7 @@ export const Collection = () => {
                 </div>
                 <button
                   onClick={() => setMobileFilterOpen(false)}
-                  className="w-full py-2 bg-crimson-700 text-white rounded-lg text-xs font-semibold font-body"
+                  className="w-full py-2 bg-[#930303] hover:bg-[#7A0303] text-white rounded-lg text-xs font-semibold font-body shadow-md shadow-[#930303]/20 transition-colors"
                 >
                   Apply Filters
                 </button>
@@ -366,7 +383,7 @@ export const Collection = () => {
                 </p>
                 <button
                   onClick={resetFilters}
-                  className="px-6 py-2.5 bg-crimson-700 text-white rounded-lg text-xs font-semibold font-body"
+                  className="px-6 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-lg text-xs font-semibold font-body shadow-md shadow-[#930303]/20 transition-colors"
                 >
                   Reset All Filters
                 </button>

@@ -1,6 +1,8 @@
 import express from 'express';
 import {
   getProducts,
+  getAdminProducts,
+  getProductsByIds,
   getFeaturedProducts,
   getNewArrivals,
   getProductBySlug,
@@ -15,6 +17,8 @@ const router = express.Router();
 router.get('/', getProducts);
 router.get('/featured', getFeaturedProducts);
 router.get('/new-arrivals', getNewArrivals);
+router.get('/admin/all', protect, adminOnly, getAdminProducts);
+router.get('/by-ids', getProductsByIds);
 router.get('/:slug', getProductBySlug);
 
 // Admin product endpoints

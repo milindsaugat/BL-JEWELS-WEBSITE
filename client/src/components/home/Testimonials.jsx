@@ -30,8 +30,8 @@ export const Testimonials = ({ initialReviews = [] }) => {
             <span className="w-6 h-px bg-gold-400" />
           </div>
 
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-[#5B101D] tracking-tight leading-tight">
-            Patron Reflections
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold text-[#930303] tracking-tight leading-tight">
+            Customer Stories
           </h2>
 
           <div className="flex items-center justify-center gap-3 pt-0.5">
@@ -54,7 +54,7 @@ export const Testimonials = ({ initialReviews = [] }) => {
             disabled={!canScrollLeft}
             className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollLeft
-                ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
+                ? 'opacity-95 hover:opacity-100 hover:bg-[#930303] hover:text-white hover:border-[#930303] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
             }`}
             aria-label="Previous Testimonials"
@@ -68,7 +68,7 @@ export const Testimonials = ({ initialReviews = [] }) => {
             disabled={!canScrollRight}
             className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollRight
-                ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
+                ? 'opacity-95 hover:opacity-100 hover:bg-[#930303] hover:text-white hover:border-[#930303] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
             }`}
             aria-label="Next Testimonials"
@@ -126,7 +126,7 @@ export const Testimonials = ({ initialReviews = [] }) => {
                     </div>
 
                     {/* Review Title */}
-                    <h4 className="font-display text-base sm:text-lg font-bold text-[#5B101D] leading-snug">
+                    <h4 className="font-display text-base sm:text-lg font-bold text-[#930303] leading-snug">
                       "{rev.title}"
                     </h4>
 
@@ -167,12 +167,12 @@ export const Testimonials = ({ initialReviews = [] }) => {
                       {avatarImg ? (
                         <img
                           src={avatarImg}
-                          alt={rev.userName || 'Patron'}
+                          alt={rev.userName || 'Customer'}
                           draggable={false}
                           className="w-11 h-11 rounded-full object-cover border-2 border-gold-300 shadow-xs shrink-0 select-none pointer-events-none"
                         />
                       ) : (
-                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 border-2 border-gold-300 flex items-center justify-center text-[#5B101D] font-bold text-sm shrink-0">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-amber-100 to-amber-200 border-2 border-gold-300 flex items-center justify-center text-[#930303] font-bold text-sm shrink-0">
                           {(rev.userName || 'P').charAt(0)}
                         </div>
                       )}

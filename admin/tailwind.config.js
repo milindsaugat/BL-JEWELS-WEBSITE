@@ -12,10 +12,10 @@ export default {
           100: '#FDF0F0',
           500: '#B02828',
           600: '#9B2020',
-          700: '#8B1A1A',
-          800: '#7A0F0F',
-          900: '#5C0A0A',
-          950: '#3D0505',
+          700: '#930303',
+          800: '#7A0303',
+          900: '#5C0202',
+          950: '#5C0202',
         },
         gold: {
           50:  '#FFFBEE',
@@ -32,6 +32,7 @@ export default {
         pearl: '#FAF7F2',
         ivory: '#F5F0E8',
         charcoal: '#1C1410',
+        royalCrimson: '#930303',
       },
       fontFamily: {
         heading: ['"Inter"', 'system-ui', 'sans-serif'],
@@ -46,7 +47,7 @@ export default {
       boxShadow: {
         'gold-sm': '0 2px 8px rgba(201, 164, 74, 0.15)',
         'gold':    '0 4px 20px rgba(201, 164, 74, 0.25)',
-        'crimson': '0 4px 20px rgba(139, 26, 26, 0.25)',
+        'crimson': '0 4px 20px rgba(147, 3, 3, 0.25)',
       },
       borderRadius: {
         'pill': '9999px',

@@ -1,209 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { User, Package, MapPin, ShieldCheck, LogOut, Truck, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Link, Navigate } from 'react-router-dom';
+import { Package, Heart, MapPin, User, LogOut, ArrowUpRight } from 'lucide-react';
+import { api, orderService, authService } from '../services/api';
 import { useAuthStore } from '../store/authStore';
-import { orderService } from '../services/api';
-import { formatCurrency } from '../lib/utils';
-
-export const AccountPage = () => {
-  const { user, isAuthenticated, logout } = useAuthStore();
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('orders');
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/auth');
-      return;
-    }
-
-    const fetchOrders = async () => {
-      try {
-        const res = await orderService.getMyOrders();
-        if (res.orders) {
-          setOrders(res.orders);
-        }
-      } catch (err) {
-        console.error('Fetch orders error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, [isAuthenticated, navigate]);
-
-  if (!isAuthenticated) return null;
-
-  return (
-    <div className="py-12 bg-pearl min-h-screen">
-      <div className="container-bl">
-        
-        {/* Profile Banner */}
-        <div className="bg-white rounded-3xl p-6 md:p-8 border border-gold-300 shadow-sm mb-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-crimson-700 text-white font-display text-2xl font-bold flex items-center justify-center border-2 border-gold-400 shadow-crimson">
-              {user?.name?.[0]?.toUpperCase() || 'B'}
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-display text-2xl font-bold text-charcoal">{user?.name}</h1>
-                {user?.role === 'admin' && (
-                  <span className="bg-crimson-100 text-crimson-800 text-[10px] font-bold px-2 py-0.5 rounded-pill font-body">
-                    Admin
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-stone-500 font-body">{user?.email}</p>
-              <p className="text-[11px] text-gold-700 font-semibold font-body mt-0.5">
-                ✦ BL Jewels Auspicious Member
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {user?.role === 'admin' && (
-              <Link
-                to="/admin"
-                className="px-4 py-2 bg-crimson-700 hover:bg-crimson-800 text-white rounded-xl text-xs font-semibold font-body transition-colors"
-              >
-                Admin Dashboard
-              </Link>
-            )}
-            <button
-              onClick={() => {
-                logout();
-                navigate('/');
-              }}
-              className="flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold font-body transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-4 mb-6 border-b border-border-light pb-2">
-          <button
-            onClick={() => setActiveTab('orders')}
-            className={`font-accent text-xs font-bold tracking-wider uppercase pb-2 border-b-2 transition-all flex items-center gap-1.5 ${
-              activeTab === 'orders'
-                ? 'border-crimson-700 text-crimson-700'
-                : 'border-transparent text-stone-400 hover:text-stone-700'
-            }`}
-          >
-            <Package className="w-4 h-4" />
-            <span>Order History ({orders.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('addresses')}
-            className={`font-accent text-xs font-bold tracking-wider uppercase pb-2 border-b-2 transition-all flex items-center gap-1.5 ${
-              activeTab === 'addresses'
-                ? 'border-crimson-700 text-crimson-700'
-                : 'border-transparent text-stone-400 hover:text-stone-700'
-            }`}
-          >
-            <MapPin className="w-4 h-4" />
-            <span>Saved Addresses</span>
-          </button>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === 'orders' && (
-          <div className="space-y-4">
-            {orders.length === 0 ? (
-              <div className="py-16 text-center bg-white rounded-2xl border border-border-light space-y-3">
-                <Package className="w-10 h-10 text-stone-300 mx-auto" />
-                <p className="font-display text-lg font-bold text-charcoal">No Orders Placed Yet</p>
-                <p className="text-xs text-stone-500 font-body">Your auspicious trousseau journey awaits.</p>
-                <Link to="/collections" className="inline-block px-6 py-2.5 bg-crimson-700 text-white rounded-xl text-xs font-semibold font-body">
-                  Explore Collections
-                </Link>
-              </div>
-            ) : (
-              orders.map((ord) => (
-                <div
-                  key={ord._id}
-                  className="bg-white rounded-2xl p-6 border border-border-light shadow-sm space-y-4"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pb-3 border-b border-border-light">
-                    <div>
-                      <span className="font-accent text-sm font-bold text-crimson-700 tracking-wider">
-                        {ord.orderNumber}
-                      </span>
-                      <p className="text-[11px] text-stone-400 font-body">
-                        Placed on {new Date(ord.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold px-3 py-1 rounded-pill uppercase tracking-wider font-body">
-                        {ord.status || 'Confirmed'}
-                      </span>
-                      <span className="font-accent text-base font-bold text-charcoal">
-                        ₹{formatCurrency(ord.pricing?.total)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Items in this order */}
-                  <div className="space-y-3">
-                    {ord.items?.map((item, idx) => (
-                      <div key={idx} className="flex items-center gap-3 text-xs font-body">
-                        <img
-                          src={item.snapshot?.image || 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80'}
-                          alt={item.snapshot?.name}
-                          className="w-14 h-14 rounded-lg object-cover border border-gold-200"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-charcoal truncate">{item.snapshot?.name}</h4>
-                          <p className="text-stone-500 text-[11px]">Qty: {item.quantity} • {item.snapshot?.variant?.label || '22K Gold'}</p>
-                        </div>
-                        <span className="font-accent font-bold text-crimson-700">
-                          ₹{formatCurrency(item.price * item.quantity)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Shipping / Tracking note */}
-                  <div className="pt-3 border-t border-border-light flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-stone-600 font-body gap-2">
-                    <div className="flex items-center gap-1.5 text-stone-700">
-                      <Truck className="w-4 h-4 text-gold-600" />
-                      <span>{ord.tracking?.carrier || 'Blue Dart Luxury Express'} (Tracking: {ord.tracking?.trackingId || 'In Transit'})</span>
-                    </div>
-                    <Link
-                      to={`/order/success/${ord._id}`}
-                      className="text-crimson-700 font-semibold hover:underline"
-                    >
-                      View Full Invoice Details →
-                    </Link>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {activeTab === 'addresses' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl p-6 border border-border-light shadow-sm space-y-2">
-              <span className="bg-gold-100 text-gold-900 text-[10px] font-bold px-2 py-0.5 rounded-pill uppercase tracking-wider font-body">
-                Primary Residence
-              </span>
-              <h3 className="font-display text-base font-bold text-charcoal">{user?.name}</h3>
-              <p className="text-xs text-stone-600 font-body leading-relaxed">
-                Flat 402, Royale Meadows, Juhu Tara Road, Mumbai, Maharashtra 400049, India
-              </p>
-              <p className="text-xs text-stone-500 font-body pt-1">Phone: +91 98200 12345</p>
-            </div>
-          </div>
-        )}
-
-      </div>
-    </div>
-  );
+const emptyAddress={label:'Home',name:'',phone:'',line1:'',line2:'',city:'',state:'',pincode:''};
+const money=v=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(v||0);
+export const AccountPage=()=>{
+ const {user,isAuthenticated,logout,updateUser,wishlist}=useAuthStore();
+ const [tab,setTab]=useState('orders'),[orders,setOrders]=useState([]),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
+ const [profile,setProfile]=useState({name:user?.name||'',phone:user?.phone||''}),[addresses,setAddresses]=useState(user?.addresses||[]),[address,setAddress]=useState(null),[editIndex,setEditIndex]=useState(-1);
+ useEffect(()=>{if(!isAuthenticated)return;let active=true;Promise.all([orderService.getMyOrders(),authService.getMe()]).then(([o,u])=>{if(active){setOrders(o.orders);updateUser(u.user);setAddresses(u.user.addresses||[]);setProfile({name:u.user.name,phone:u.user.phone||''});}}).catch(e=>{if(active)setError(e.response?.data?.message||'Unable to load your account. Please reload.');}).finally(()=>{if(active)setLoading(false);});return()=>{active=false;};},[isAuthenticated]);
+ const run=async(fn)=>{setBusy(true);setError('');setNotice('');try{await fn();}catch(e){setError(e.response?.data?.message||'Unable to save. Please try again.');}finally{setBusy(false);}};
+ const saveAddresses=async list=>{const {data}=await api.put('/auth/addresses',{addresses:list});updateUser(data.user);setAddresses(data.user.addresses);setAddress(null);setNotice('Addresses saved.');};
+ const action=(id,action)=>run(async()=>{const {data}=await api.post(`/auth/orders/${id}/action`,{action});setOrders(orders.map(o=>o._id===id?data.order:o));setNotice('Request recorded. Contact us for refund or return assistance.');});
+ if(!isAuthenticated)return <Navigate to="/auth" replace/>;
+ const tabs=[['orders','My orders',Package],['addresses','Address book',MapPin],['profile','My profile',User]];
+ return <section className="bg-[#FAF7F4] py-8 sm:py-12 min-h-[70vh]"><div className="container-bl"><header className="flex flex-wrap justify-between gap-4 mb-8"><div><p className="text-xs tracking-widest uppercase text-[#930303]">My account</p><h1 className="font-display text-3xl mt-2">Hello, {user?.name}</h1><p className="text-sm text-stone-500 mt-2">Your jewellery, orders and details. All in one place.</p></div><button onClick={logout} className="flex items-center gap-2 text-sm"><LogOut size={16}/>Sign out</button></header><div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">{[['Orders',orders.length],['On the way',orders.filter(o=>['shipped','out_for_delivery'].includes(o.status)).length],['Saved favourites',wishlist.length],['Addresses',addresses.length]].map(([label,value])=><div key={label} className="p-5 bg-white border border-stone-200 rounded-2xl"><p className="text-xs text-stone-500">{label}</p><p className="text-2xl font-semibold mt-2 text-[#930303]">{loading?'—':value}</p></div>)}</div><div className="grid lg:grid-cols-[220px_1fr] gap-6"><nav className="flex flex-wrap lg:flex-col gap-2 self-start bg-white border rounded-2xl p-3">{tabs.map(([id,label,Icon])=><button key={id} onClick={()=>setTab(id)} className={`flex items-center gap-3 p-3 text-sm rounded-xl text-left ${tab===id?'bg-[#930303] text-white':'hover:bg-stone-50'}`}><Icon size={18}/>{label}</button>)}<Link to="/wishlist" className="flex gap-3 p-3 text-sm"><Heart size={18}/>Wishlist</Link><Link to="/contact" className="flex gap-3 p-3 text-sm"><ArrowUpRight size={18}/>Help & support</Link></nav><div className="min-w-0 space-y-4">{error&&<p role="alert" className="bg-red-50 text-red-800 p-4 rounded-xl">{error}</p>}{notice&&<p role="status" className="bg-green-50 text-green-800 p-4 rounded-xl">{notice}</p>}{loading?<p role="status">Loading your account…</p>:<>
+ {tab==='orders'&&<><h2 className="text-xl font-semibold">Order history</h2>{!orders.length&&<div className="bg-white rounded-2xl border p-10 text-center"><Package className="mx-auto text-[#930303]"/><h3 className="text-lg mt-4">Your first favourite awaits</h3><p className="text-stone-500 text-sm my-3">Your orders will appear here after checkout.</p><Link to="/collections" className="text-[#930303] underline">Explore jewellery</Link></div>}{orders.map(o=><article key={o._id} className="bg-white border rounded-2xl p-5 space-y-4"><div className="flex flex-wrap justify-between gap-3"><div><h3 className="font-semibold">{o.orderNumber}</h3><p className="text-xs text-stone-500">{new Date(o.createdAt).toLocaleDateString('en-IN')}</p></div><div className="text-right"><p className="text-sm text-[#930303] capitalize">{o.status?.replaceAll('_',' ')}</p><p className="font-semibold">{money(o.pricing?.total)}</p></div></div>{o.items?.map((i,n)=><div key={n} className="flex items-center gap-3 text-sm">{i.snapshot?.image&&<img src={i.snapshot.image} alt="" className="w-12 h-12 rounded-lg object-cover"/>}<div><p>{i.snapshot?.name}</p><p className="text-stone-500 text-xs">Quantity {i.quantity} · {money(i.price)}</p></div></div>)}<div className="border-t pt-3 text-xs text-stone-500">Payment: {o.payment?.status||'Status unavailable'}{o.tracking?.trackingId&&<p className="mt-2">{o.tracking.carrier} · Tracking: {o.tracking.trackingId}</p>}</div><div className="flex flex-wrap gap-4 text-sm text-[#930303]"><Link to={`/order/success/${o._id}`}>Order details & receipt</Link>{['placed','confirmed'].includes(o.status)&&<button disabled={busy} onClick={()=>action(o._id,'cancel')}>Cancel order</button>}{o.status==='delivered'&&<button disabled={busy} onClick={()=>action(o._id,'return')}>Request a return</button>}</div><p className="text-xs text-stone-500">Returns and refunds are subject to store review and policy.</p></article>)}</>}
+ {tab==='profile'&&<form onSubmit={e=>{e.preventDefault();run(async()=>{const {data}=await api.put('/auth/profile',profile);updateUser(data.user);setNotice('Profile saved.');});}} className="bg-white border rounded-2xl p-6 space-y-5"><h2 className="text-xl font-semibold">Personal details</h2>{['name','phone'].map(k=><label key={k} className="block text-sm capitalize">{k}<input required={k==='name'} autoComplete={k==='name'?'name':'tel'} value={profile[k]} onChange={e=>setProfile({...profile,[k]:e.target.value})} className="block w-full border rounded-xl mt-2 p-3"/></label>)}<p className="text-sm text-stone-500">Verified email: {user.email}</p><button disabled={busy} className="bg-[#930303] text-white rounded-xl px-5 py-3">Save profile</button></form>}
+ {tab==='addresses'&&<><div className="flex justify-between items-center"><h2 className="text-xl font-semibold">Address book</h2><button disabled={busy||addresses.length>=10} onClick={()=>{setEditIndex(-1);setAddress({...emptyAddress,name:user.name,phone:user.phone||''});}} className="text-sm text-[#930303]">+ Add address</button></div>{!addresses.length&&!address&&<p className="bg-white border rounded-2xl p-8 text-stone-500">No saved addresses yet.</p>}<div className="grid sm:grid-cols-2 gap-4">{addresses.map((a,i)=><article key={a._id||i} className="bg-white border rounded-2xl p-5 space-y-2"><p className="text-xs text-[#930303]">{a.label}{i===0?' · Default':''}</p><h3 className="font-semibold">{a.name}</h3><p className="text-sm text-stone-500">{[a.line1,a.line2,a.city,a.state,a.pincode].filter(Boolean).join(', ')}</p><p className="text-sm">{a.phone}</p><div className="flex gap-4 text-xs text-[#930303] pt-3"><button disabled={busy} onClick={()=>{setEditIndex(i);setAddress(a);}}>Edit</button><button disabled={busy} onClick={()=>run(()=>saveAddresses(addresses.filter((_,n)=>n!==i)))}>Remove</button>{i>0&&<button disabled={busy} onClick={()=>run(()=>saveAddresses([a,...addresses.filter((_,n)=>n!==i)]))}>Make default</button>}</div></article>)}</div>{address&&<form className="bg-white border rounded-2xl p-6 grid sm:grid-cols-2 gap-4" onSubmit={e=>{e.preventDefault();run(()=>saveAddresses(editIndex<0?[...addresses,address]:addresses.map((a,i)=>i===editIndex?address:a)));}}><h3 className="sm:col-span-2 font-semibold">{editIndex<0?'New':'Edit'} address</h3><label className="text-sm">Label<select value={address.label} onChange={e=>setAddress({...address,label:e.target.value})} className="block border rounded-xl p-3 w-full mt-1">{['Home','Office','Other'].map(l=><option key={l}>{l}</option>)}</select></label>{Object.keys(emptyAddress).filter(k=>k!=='label').map(k=><label key={k} className="text-sm capitalize">{({line1:'Street address',line2:'Apartment / landmark',pincode:'PIN code'})[k]||k}<input required={k!=='line2'} value={address[k]||''} onChange={e=>setAddress({...address,[k]:e.target.value})} className="block border rounded-xl p-3 w-full mt-1"/></label>)}<div className="sm:col-span-2 flex gap-4"><button disabled={busy} className="bg-[#930303] text-white px-5 py-3 rounded-xl">Save address</button><button type="button" onClick={()=>setAddress(null)}>Cancel</button></div></form>}</>}
+ </>}</div></div></div></section>;
 };
-

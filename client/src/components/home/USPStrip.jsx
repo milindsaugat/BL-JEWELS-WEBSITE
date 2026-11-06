@@ -33,7 +33,7 @@ export const USPStrip = () => {
             const Icon = usp.icon;
             return (
               <div key={idx} className="flex items-start gap-4 group">
-                <div className="w-12 h-12 rounded-2xl bg-white border border-gold-300 flex items-center justify-center text-crimson-700 shadow-gold-sm shrink-0 group-hover:scale-105 group-hover:bg-crimson-700 group-hover:text-white transition-all duration-300">
+                <div className="w-12 h-12 rounded-2xl bg-white border border-gold-300 flex items-center justify-center text-[#930303] shadow-gold-sm shrink-0 group-hover:scale-105 group-hover:bg-[#930303] group-hover:text-white transition-all duration-300">
                   <Icon className="w-6 h-6" />
                 </div>
                 <div>

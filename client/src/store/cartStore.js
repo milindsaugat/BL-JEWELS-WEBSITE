@@ -20,16 +20,18 @@ export const useCartStore = create((set, get) => ({
   toggleDrawer: () => set((state) => ({ isDrawerOpen: !state.isDrawerOpen })),
 
   addToCart: (product, variant, quantity = 1) => {
+    const available = variant || product.variants?.[0];
+    if (!available || available.stock <= 0) return;
     set((state) => {
       const selectedVariant = variant || product.variants?.[0] || {};
       const itemIndex = state.items.findIndex(
-        (i) => i.product._id === product._id && (i.variant?.sku === selectedVariant.sku || i.variant?.label === selectedVariant.label)
+        (i) => i.product._id === product._id && (selectedVariant.sku ? i.variant?.sku === selectedVariant.sku : i.variant?.label === selectedVariant.label)
       );
 
       let newItems;
       if (itemIndex > -1) {
         newItems = [...state.items];
-        newItems[itemIndex].quantity += quantity;
+        newItems[itemIndex] = { ...newItems[itemIndex], variant: selectedVariant, price: selectedVariant.discountPrice ?? selectedVariant.price, quantity: Math.min(selectedVariant.stock, newItems[itemIndex].quantity + quantity) };
       } else {
         newItems = [
           ...state.items,
@@ -37,7 +39,7 @@ export const useCartStore = create((set, get) => ({
             product,
             variant: selectedVariant,
             price: selectedVariant.discountPrice || selectedVariant.price,
-            quantity,
+            quantity: Math.min(selectedVariant.stock, quantity),
           },
         ];
       }
@@ -65,7 +67,7 @@ export const useCartStore = create((set, get) => ({
     set((state) => {
       const newItems = state.items.map((i) => {
         if (i.product._id === productId && (i.variant?.sku === variantIdentifier || i.variant?.label === variantIdentifier)) {
-          return { ...i, quantity };
+          return { ...i, quantity: Math.min(i.variant?.stock ?? quantity, quantity) };
         }
         return i;
       });

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect } from 'react';
 import {
   Plus,
@@ -14,8 +15,10 @@ import {
   Sparkles,
   ArrowUpDown,
   Search,
+  Sliders,
+  ChevronDown,
 } from 'lucide-react';
-import { categoryService, uploadService } from '../services/api';
+import { categoryService, uploadService, settingService } from '../services/api';
 
 export const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
@@ -30,6 +33,15 @@ export const AdminCategories = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState(null);
 
+  // Global Navbar Dropdowns settings
+  const [navbarDropdowns, setNavbarDropdowns] = useState({
+    all: true,
+    gold: true,
+    diamond: true,
+    silver: true,
+    bridal: true,
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -39,6 +51,7 @@ export const AdminCategories = () => {
     originalFilename: '',
     metals: ['gold', 'diamond', 'silver'],
     featured: true,
+    showDropdown: true,
     order: 0,
   });
 
@@ -57,9 +70,33 @@ export const AdminCategories = () => {
     }
   };
 
+  const fetchSettings = async () => {
+    try {
+      const res = await settingService.getSettings();
+      if (res?.settings?.navbarDropdowns) {
+        setNavbarDropdowns(res.settings.navbarDropdowns);
+      }
+    } catch (err) {
+      // Ignore
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
+    fetchSettings();
   }, []);
+
+  // Lock body scroll when modal is open to prevent double scrollbars
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showModal]);
 
   const handleOpenAddModal = () => {
     setEditingCategory(null);
@@ -74,6 +111,7 @@ export const AdminCategories = () => {
       originalFilename: '',
       metals: ['gold', 'diamond', 'silver'],
       featured: true,
+      showDropdown: true,
       order: categories.length + 1,
     });
     setShowModal(true);
@@ -92,9 +130,43 @@ export const AdminCategories = () => {
       originalFilename: cat.originalFilename || '',
       metals: cat.metals && cat.metals.length > 0 ? cat.metals : ['gold', 'diamond', 'silver'],
       featured: cat.featured ?? true,
+      showDropdown: cat.showDropdown ?? true,
       order: cat.order ?? 0,
     });
     setShowModal(true);
+  };
+
+  const handleToggleDropdown = async (cat) => {
+    const updatedStatus = cat.showDropdown === false ? true : false;
+    setCategories((prev) =>
+      prev.map((c) => (c._id === cat._id ? { ...c, showDropdown: updatedStatus } : c))
+    );
+    try {
+      await categoryService.updateCategory(cat._id, { showDropdown: updatedStatus });
+      setActionSuccess(`Navbar Dropdown for "${cat.name}" set to ${updatedStatus ? 'Active' : 'Direct Link'}`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err) {
+      setCategories((prev) =>
+        prev.map((c) => (c._id === cat._id ? { ...c, showDropdown: cat.showDropdown } : c))
+      );
+      setActionError('Failed to update dropdown setting');
+    }
+  };
+
+  const handleToggleMetalDropdown = async (key) => {
+    const updated = {
+      ...navbarDropdowns,
+      [key]: !navbarDropdowns[key],
+    };
+    setNavbarDropdowns(updated);
+    try {
+      await settingService.updateSettings({ navbarDropdowns: updated });
+      setActionSuccess(`Navbar Dropdown for ${key.toUpperCase()} updated`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err) {
+      setNavbarDropdowns(navbarDropdowns);
+      setActionError('Failed to update metal dropdown setting');
+    }
   };
 
   const handleNameChange = (e) => {
@@ -152,11 +224,15 @@ export const AdminCategories = () => {
       if (editingCategory) {
         await categoryService.updateCategory(editingCategory._id, cleanData);
         setActionSuccess(`Category "${finalName}" updated successfully`);
+        setEditingCategory((prev) => ({ ...prev, ...cleanData }));
       } else {
-        await categoryService.createCategory(cleanData);
+        const res = await categoryService.createCategory(cleanData);
         setActionSuccess(`Category "${finalName}" created successfully`);
+        const created = res?.category || res;
+        if (created && created._id) {
+          setEditingCategory(created);
+        }
       }
-      setShowModal(false);
       await fetchCategories();
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err) {
@@ -195,24 +271,24 @@ export const AdminCategories = () => {
     <div className="space-y-6">
       
       {/* ── Top Header Banner ── */}
-      <div className="bg-[#8B1A1A] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-white rounded-2xl p-4 sm:p-5 text-stone-900 border border-stone-200 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-[#C9A44A]/15 to-transparent pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[#F3E5AB] text-xs font-semibold uppercase tracking-wider mb-2 border border-white/10">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#930303]/5 text-[#930303] text-xs font-semibold uppercase tracking-wider mb-2 border border-white/10">
               <Layers className="w-3.5 h-3.5" />
-              Taxonomy & Collections CMS
+              Collections
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-stone-900">
               Product Categories
             </h1>
-            <p className="text-stone-200 text-xs sm:text-sm mt-1 max-w-xl">
-              Manage category taxonomy, Cloudinary cover imagery, display sequence, and storefront carousel highlights in real time.
+            <p className="text-stone-500 text-xs sm:text-sm mt-1 max-w-xl">
+              Manage categories, cover images and where they appear in your store.
             </p>
           </div>
           <button
             onClick={handleOpenAddModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A44A] hover:bg-[#b08d3b] text-[#140D0F] font-bold text-xs rounded-xl shadow transition-colors shrink-0"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white font-bold text-xs rounded-xl shadow transition-colors shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Add New Category</span>
@@ -250,7 +326,7 @@ export const AdminCategories = () => {
         </div>
         <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
           <span className="text-xs text-stone-500 font-medium">Featured in Slider</span>
-          <p className="text-2xl font-bold font-body text-[#8B1A1A] mt-1">{featuredCount}</p>
+          <p className="text-2xl font-bold font-body text-[#930303] mt-1">{featuredCount}</p>
           <span className="text-[10px] text-stone-400">Active on homepage</span>
         </div>
         <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs">
@@ -268,6 +344,52 @@ export const AdminCategories = () => {
         </div>
       </div>
 
+      {/* ── Navbar Dropdowns Quick Control Center ── */}
+      <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+          <div>
+            <h3 className="font-display font-bold text-sm text-stone-900 flex items-center gap-2">
+              <Sliders className="w-4 h-4 text-[#930303]" />
+              <span>Navbar Dropdown Control Center</span>
+            </h3>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Control which collections and jewellery categories open a full-width live dropdown in the storefront navigation.
+            </p>
+          </div>
+          <span className="text-[11px] text-stone-400">
+            Realtime sync with Storefront Navbar
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 pt-1">
+          <span className="text-xs font-semibold text-stone-700">Collection Dropdowns:</span>
+          {[
+            { key: 'all', label: 'All Collections' },
+            { key: 'gold', label: 'Gold Jewellery' },
+            { key: 'diamond', label: 'Diamond Jewellery' },
+            { key: 'silver', label: 'Silver Jewellery' },
+            { key: 'bridal', label: 'Bridal Heritage' },
+          ].map((item) => {
+            const isActive = navbarDropdowns[item.key] !== false;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={() => handleToggleMetalDropdown(item.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#930303]/10 text-[#930303] border border-[#930303]/30 hover:bg-[#930303]/20'
+                    : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#930303]' : 'bg-stone-400'}`} />
+                <span>{item.label}: {isActive ? 'Dropdown ON' : 'Direct Link'}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ── Search & Filter Bar ── */}
       <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
@@ -277,7 +399,7 @@ export const AdminCategories = () => {
             placeholder="Search categories by name or slug..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-xs border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+            className="w-full pl-9 pr-3 py-2 text-xs border border-stone-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
           />
         </div>
         <span className="text-xs text-stone-500 self-end sm:self-auto">
@@ -289,7 +411,7 @@ export const AdminCategories = () => {
       <div className="bg-white rounded-xl border border-stone-200 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-stone-500 text-xs flex flex-col items-center justify-center gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-[#8B1A1A]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#930303]" />
             <span>Loading categories...</span>
           </div>
         ) : filteredCategories.length === 0 ? (
@@ -309,6 +431,7 @@ export const AdminCategories = () => {
                   <th className="py-3 px-4">Slug</th>
                   <th className="py-3 px-4">Designs</th>
                   <th className="py-3 px-4">Featured</th>
+                  <th className="py-3 px-4">Navbar Dropdown</th>
                   <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -383,20 +506,35 @@ export const AdminCategories = () => {
                         </span>
                       )}
                     </td>
+                    <td className="py-3.5 px-4">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleDropdown(cat)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+                          cat.showDropdown !== false
+                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 shadow-2xs'
+                            : 'bg-stone-100 text-stone-500 border border-stone-300 hover:bg-stone-200'
+                        }`}
+                        title="Click to toggle: Show Dropdown with Articles vs Direct Link"
+                      >
+                        <span className={`w-2 h-2 rounded-full ${cat.showDropdown !== false ? 'bg-emerald-500' : 'bg-stone-400'}`} />
+                        <span>{cat.showDropdown !== false ? 'Dropdown ON' : 'Direct Link'}</span>
+                      </button>
+                    </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <a
                           href={`http://localhost:5173/collections/${cat.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg text-stone-400 hover:text-[#8B1A1A] hover:bg-stone-100 transition-colors"
+                          className="p-1.5 rounded-lg text-stone-400 hover:text-[#930303] hover:bg-stone-100 transition-colors"
                           title="View on Storefront"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
                         <button
                           onClick={() => handleOpenEditModal(cat)}
-                          className="p-1.5 rounded-lg text-stone-600 hover:text-[#8B1A1A] hover:bg-stone-100 transition-colors"
+                          className="p-1.5 rounded-lg text-stone-600 hover:text-[#930303] hover:bg-stone-100 transition-colors"
                           title="Edit Category"
                         >
                           <Edit className="w-4 h-4" />
@@ -424,15 +562,17 @@ export const AdminCategories = () => {
       </div>
 
       {/* ── Add / Edit Modal ── */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95 duration-200 my-8">
+      {showModal && createPortal(
+        <div className="fixed inset-0 bg-stone-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-5">
+          <div role="dialog" aria-modal="true" aria-labelledby="category-dialog-title" className="bg-white rounded-2xl max-w-xl w-full max-h-[calc(100dvh-40px)] flex flex-col overflow-hidden shadow-2xl border border-stone-200">
             
-            <div className="flex items-center justify-between pb-4 border-b border-stone-200">
-              <h2 className="text-base font-bold text-stone-900">
+            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-stone-200">
+              <h2 id="category-dialog-title" className="text-sm font-semibold text-stone-900">
                 {editingCategory ? `Edit Category: ${editingCategory.name}` : 'Create New Category'}
               </h2>
               <button
+                aria-label="Close category editor"
+                autoFocus
                 onClick={() => setShowModal(false)}
                 className="text-stone-400 hover:text-stone-700 p-1 text-lg leading-none"
               >
@@ -440,7 +580,7 @@ export const AdminCategories = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit} className="min-h-0 overflow-y-auto overscroll-contain space-y-4 p-5">
               
               {/* Name & Slug */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -453,7 +593,7 @@ export const AdminCategories = () => {
                     placeholder="e.g. Mangalsutras, Solitaire Rings"
                     value={formData.name}
                     onChange={handleNameChange}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
                 <div>
@@ -465,7 +605,7 @@ export const AdminCategories = () => {
                     placeholder="e.g. mangalsutras (auto-generated)"
                     value={formData.slug}
                     onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
               </div>
@@ -480,7 +620,7 @@ export const AdminCategories = () => {
                   placeholder="e.g. Auspicious 22K gold sacred bonds crafted with eternal devotion"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
                 />
               </div>
 
@@ -490,7 +630,7 @@ export const AdminCategories = () => {
                   Category Cover Image (Cloudinary CDN)
                 </label>
                 
-                <div className="border-2 border-dashed border-stone-300 hover:border-[#8B1A1A] rounded-xl p-4 text-center cursor-pointer bg-stone-50 hover:bg-white transition-colors relative">
+                <div className="border-2 border-dashed border-stone-300 hover:border-[#930303] rounded-xl p-4 text-center cursor-pointer bg-stone-50 hover:bg-white transition-colors relative">
                   <input
                     type="file"
                     accept="image/*"
@@ -501,7 +641,7 @@ export const AdminCategories = () => {
                   
                   {uploadingImage ? (
                     <div className="flex flex-col items-center justify-center gap-2 py-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#8B1A1A]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-[#930303]" />
                       <span className="text-xs font-medium text-stone-600">Uploading to Cloudinary CDN...</span>
                     </div>
                   ) : (
@@ -581,7 +721,7 @@ export const AdminCategories = () => {
                               : cur.filter((x) => x !== m.id);
                             setFormData({ ...formData, metals: updated });
                           }}
-                          className="w-4 h-4 text-[#8B1A1A] rounded border-stone-300 focus:ring-[#8B1A1A]"
+                          className="w-4 h-4 text-[#930303] rounded border-stone-300 focus:ring-[#930303]"
                         />
                         <span>{m.label}</span>
                       </label>
@@ -601,7 +741,7 @@ export const AdminCategories = () => {
                     min="0"
                     value={formData.order}
                     onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-body font-semibold focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-body font-semibold focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                   <span className="text-[10px] text-stone-400">Lower numbers appear first</span>
                 </div>
@@ -612,12 +752,33 @@ export const AdminCategories = () => {
                     id="featuredCheckbox"
                     checked={formData.featured}
                     onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                    className="w-4 h-4 text-[#8B1A1A] rounded border-stone-300 focus:ring-[#8B1A1A]"
+                    className="w-4 h-4 text-[#930303] rounded border-stone-300 focus:ring-[#930303] cursor-pointer"
                   />
                   <label htmlFor="featuredCheckbox" className="text-xs font-semibold text-stone-700 cursor-pointer">
                     Show in Homepage Category Slider
                   </label>
                 </div>
+              </div>
+
+              {/* Show in Navbar Dropdown Checkbox */}
+              <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/80">
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="showDropdownCheckbox"
+                    checked={formData.showDropdown ?? true}
+                    onChange={(e) => setFormData({ ...formData, showDropdown: e.target.checked })}
+                    className="w-4 h-4 mt-0.5 text-[#930303] rounded border-stone-300 focus:ring-[#930303] cursor-pointer shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-stone-900 block">
+                      Show Navbar Dropdown (Articles Preview on Hover)
+                    </span>
+                    <span className="text-[11px] text-stone-600 block mt-0.5 leading-relaxed">
+                      Checked: Website navbar hover karne par is category ke articles/products ka dropdown khulega. Unchecked: Direct link ban jayega bina dropdown ke.
+                    </span>
+                  </div>
+                </label>
               </div>
 
               {/* Modal Action Buttons */}
@@ -632,7 +793,7 @@ export const AdminCategories = () => {
                 <button
                   type="submit"
                   disabled={saving || uploadingImage}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#8B1A1A] hover:bg-[#721515] rounded-xl shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#930303] hover:bg-[#7A0303] rounded-xl shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>{editingCategory ? 'Update Category' : 'Create Category'}</span>
@@ -642,7 +803,7 @@ export const AdminCategories = () => {
             </form>
 
           </div>
-        </div>
+        </div>, document.body
       )}
 
     </div>

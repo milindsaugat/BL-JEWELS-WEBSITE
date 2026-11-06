@@ -1,12 +1,9 @@
+import Order from '../models/Order.js';
+import { productInput } from '../services/productValidation.js';
 import { getDbStatus } from '../config/db.js';
 import Product from '../models/Product.js';
 import Category from '../models/Category.js';
 import { memoryStore } from '../config/memoryStore.js';
-import {
-  deleteFromCloudinary,
-  extractPublicIdFromUrl,
-  uploadBufferToCloudinary,
-} from '../config/cloudinary.js';
 
 export const getProducts = async (req, res) => {
   try {
@@ -119,21 +116,23 @@ export const getProductBySlug = async (req, res) => {
 
     if (getDbStatus()) {
       const product = await Product.findOne({
+        isActive: true,
         $or: [{ slug }, { _id: slug.match(/^[0-9a-fA-F]{24}$/) ? slug : null }]
-      }).populate('category', 'name slug');
+      }).populate('category', 'name slug').populate('comboItems.product', 'name slug images isActive variants');
 
       if (!product) {
         return res.status(404).json({ success: false, message: 'Product not found' });
       }
 
-      const related = await Product.find({
-        category: product.category,
-        _id: { $ne: product._id }
-      }).limit(4);
+      const [matching, more] = await Promise.all([
+        Product.find({ isActive: true, category: product.category?._id || product.category, _id: { $ne: product._id } }).limit(12),
+        Product.find({ isActive: true, category: { $ne: product.category?._id || product.category }, _id: { $ne: product._id } }).sort({ updatedAt: -1 }).limit(12),
+      ]);
+      const related = [...matching, ...more].slice(0, 12);
 
       return res.json({ success: true, product, related });
     } else {
-      const product = memoryStore.products.find(p => p.slug === slug || p._id === slug);
+      const product = memoryStore.products.find(p => p.isActive !== false && (p.slug === slug || p._id === slug));
       if (!product) {
         return res.status(404).json({ success: false, message: 'Product not found' });
       }
@@ -149,107 +148,53 @@ export const getProductBySlug = async (req, res) => {
   }
 };
 
-export const createProduct = async (req, res) => {
-  try {
-    const data = req.body;
-    if (!data.name || !data.description || !data.variants?.length) {
-      return res.status(400).json({ success: false, message: 'Missing required product information.' });
-    }
-
-    // Safety guard: MongoDB never stores binary or raw base64 images.
-    // If any base64 image was passed, auto-stream it to Cloudinary so only the CDN URL is saved in MongoDB.
-    if (data.images && data.images.length > 0) {
-      for (let i = 0; i < data.images.length; i++) {
-        const img = data.images[i];
-        if (img.url && img.url.startsWith('data:image/')) {
-          const base64Data = img.url.split(';base64,').pop();
-          const buffer = Buffer.from(base64Data, 'base64');
-          const filename = `${data.name || 'product'}-${i + 1}.png`;
-          const uploaded = await uploadBufferToCloudinary(buffer, filename, 'bl-jewels/products');
-          data.images[i].url = uploaded.secure_url;
-          data.images[i].publicId = uploaded.public_id;
-        }
-      }
-    }
-
-    const slug = data.slug || data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-    if (getDbStatus()) {
-      const newProduct = await Product.create({ ...data, slug });
-      return res.status(201).json({ success: true, product: newProduct });
-    } else {
-      const newProduct = {
-        _id: `prod_${Date.now()}`,
-        slug,
-        ...data,
-        createdAt: new Date().toISOString(),
-      };
-      memoryStore.products.unshift(newProduct);
-      return res.status(201).json({ success: true, product: newProduct });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+export const getAdminProducts = async (req, res) => {
+  if (!getDbStatus()) return res.status(503).json({ message: 'Database unavailable. Please try again.' });
+  try { const products = await Product.find().sort({ createdAt: -1 }).populate('category', 'name slug'); res.json({ success: true, products }); }
+  catch { res.status(503).json({ message: 'Could not load products.' }); }
 };
-
-export const updateProduct = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updates = req.body;
-
-    if (getDbStatus()) {
-      const updated = await Product.findByIdAndUpdate(id, updates, { new: true });
-      if (!updated) return res.status(404).json({ success: false, message: 'Product not found' });
-      return res.json({ success: true, product: updated });
-    } else {
-      const idx = memoryStore.products.findIndex(p => p._id === id || p.slug === id);
-      if (idx === -1) return res.status(404).json({ success: false, message: 'Product not found' });
-
-      memoryStore.products[idx] = { ...memoryStore.products[idx], ...updates };
-      return res.json({ success: true, product: memoryStore.products[idx] });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+export const getProductsByIds = async (req, res) => {
+  const ids = [...new Set(String(req.query.ids || '').split(',').filter(id => /^[a-f0-9]{24}$/i.test(id)))].slice(0, 24);
+  if (!getDbStatus()) return res.status(503).json({ message: 'Products temporarily unavailable.' });
+  try { const products = await Product.find({ _id: { $in: ids }, isActive: true }).populate('category', 'name slug'); res.json({ success: true, products: ids.map(id => products.find(p => String(p._id) === id)).filter(Boolean) }); }
+  catch { res.status(503).json({ message: 'Could not load products.' }); }
 };
+const saveProduct = updating => async (req, res) => {
+  if (!getDbStatus()) return res.status(503).json({ message: 'Database unavailable. Changes were not saved.' });
+  try {
+    const data = productInput(req.body, updating);
+    if (updating && data.variants) {
+      const existing = await Product.findById(req.params.id);
+      const removed = (existing?.variants || []).filter(v => !data.variants.some(next => next.sku === v.sku)).map(v => v.sku);
+      if (removed.length && await Order.exists({ inventoryReserved: true, items: { $elemMatch: { product: req.params.id, 'snapshot.variant.sku': { $in: removed } } } })) return res.status(409).json({ message: 'A removed SKU is used by an open order. Keep that SKU until the order is complete.' });
+    }
+    if (data.category) {
+      const category = await Category.findById(data.category);
+      if (!category) return res.status(400).json({ message: 'Select a valid category.' });
+      data.categorySlug = category.slug;
+    }
+    if (!updating && !data.slug) data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (data.productType === 'single') data.comboItems = [];
+    for (const item of data.comboItems || []) {
+      if (String(item.product) === req.params.id) return res.status(400).json({ message: 'A combo cannot include itself.' });
+      const component = await Product.findOne({ _id: item.product, isActive: true, productType: { $ne: 'combo' } });
+      if (!component || !component.variants.some(v => v.sku === item.variantSku)) return res.status(400).json({ message: 'Choose an active product and variant for every combo item.' });
+    }
+    const product = updating ? await Product.findByIdAndUpdate(req.params.id, { $set: data }, { new: true, runValidators: true }) : await Product.create(data);
+    if (!product) return res.status(404).json({ message: 'Product not found.' });
+    res.status(updating ? 200 : 201).json({ success: true, product });
+  } catch (error) { res.status(error.code === 11000 ? 409 : error.status || 400).json({ success: false, message: error.code === 11000 ? 'This SKU or product URL already exists.' : error.message }); }
+};
+export const createProduct = saveProduct(false);
+export const updateProduct = saveProduct(true);
 
 export const deleteProduct = async (req, res) => {
+  if (!getDbStatus()) return res.status(503).json({ message: 'Database unavailable. Nothing was deleted.' });
   try {
-    const { id } = req.params;
-
-    if (getDbStatus()) {
-      const product = await Product.findById(id);
-      if (product) {
-        // Automatically purge all product gallery & primary images from Cloudinary
-        if (product.images && product.images.length > 0) {
-          for (const img of product.images) {
-            const publicId = img.publicId || extractPublicIdFromUrl(img.url);
-            if (publicId) {
-              await deleteFromCloudinary(publicId);
-            }
-          }
-        }
-        await Product.findByIdAndDelete(id);
-      }
-      return res.json({ success: true, message: 'Product and associated Cloudinary assets deleted successfully' });
-    } else {
-      const idx = memoryStore.products.findIndex(p => p._id === id || p.slug === id);
-      if (idx !== -1) {
-        const p = memoryStore.products[idx];
-        if (p.images && p.images.length > 0) {
-          for (const img of p.images) {
-            const publicId = img.publicId || extractPublicIdFromUrl(img.url);
-            if (publicId) {
-              await deleteFromCloudinary(publicId);
-            }
-          }
-        }
-        memoryStore.products.splice(idx, 1);
-      }
-      return res.json({ success: true, message: 'Product deleted successfully' });
-    }
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
+    if (await Order.exists({ inventoryReserved: true, 'items.product': req.params.id, status: { $nin: ['delivered','returned','cancelled'] } })) return res.status(409).json({ message: 'This product has open orders. Unpublish it instead.' });
+    if (await Product.exists({ 'comboItems.product': req.params.id })) return res.status(409).json({ message: 'Remove this product from its combos before deleting it.' });
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found.' });
+    res.json({ success: true });
+  } catch { res.status(400).json({ message: 'Could not delete this product.' }); }
 };
-

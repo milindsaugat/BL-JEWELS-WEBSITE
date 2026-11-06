@@ -24,8 +24,17 @@ export const protect = async (req, res, next) => {
     const secret = process.env.JWT_SECRET || 'bl_jewels_super_secret_jwt_key_2026_dev';
     const decoded = jwt.verify(token, secret);
 
-    const user = await User.findById(decoded.id).select('-password');
+    let user;
+    try {
+      user = await User.findById(decoded.id).select('-password');
+    } catch {}
+
     if (!user) {
+      const memUser = (memoryStore.users || []).find(u => u._id === decoded.id || (decoded.role === 'admin' && u.role === 'admin'));
+      if (memUser) user = memUser;
+    }
+
+    if (!user || user.isActive === false) {
       return res.status(401).json({
         success: false,
         message: 'The user belonging to this token no longer exists.',
@@ -35,6 +44,7 @@ export const protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    if (!['JsonWebTokenError', 'TokenExpiredError', 'NotBeforeError'].includes(error.name)) return res.status(503).json({ success: false, message: 'Account service is temporarily unavailable.' });
     return res.status(401).json({
       success: false,
       message: 'Invalid or expired authentication token.',

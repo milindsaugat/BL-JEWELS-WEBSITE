@@ -173,12 +173,12 @@ export const AISearchBar = () => {
                           {item.matchReason}
                         </span>
                       </div>
-                      <h4 className="font-display text-sm font-semibold text-charcoal truncate mt-0.5 group-hover:text-crimson-700 transition-colors">
+                      <h4 className="font-display text-sm font-semibold text-charcoal truncate mt-0.5 group-hover:text-[#930303] transition-colors">
                         {item.name}
                       </h4>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="font-body text-sm font-bold text-crimson-800">
+                      <span className="font-body text-sm font-bold text-[#930303]">
                         ₹{formatCurrency(item.price)}
                       </span>
                       <ArrowRight className="w-4 h-4 text-stone-300 group-hover:text-gold-600 transition-colors ml-auto mt-1" />

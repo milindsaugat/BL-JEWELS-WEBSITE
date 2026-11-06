@@ -61,7 +61,7 @@ export const seedDatabase = async () => {
 
     // 5. Seed Users (Admin & Customer)
     console.log('Seeding Admin & Customer Accounts...');
-    await User.deleteMany({ email: { $in: ['admin@bljewels.com', 'priya@example.com'] } });
+    await User.deleteMany({ email: { $in: ['admin@bljewels.com', 'priya@example.com', 'demo@bljewels.com'] } });
     
     const adminUser = new User({
       name: 'BL Jewels Administrator',
@@ -73,16 +73,30 @@ export const seedDatabase = async () => {
     await adminUser.save();
 
     const customerUser = new User({
-      name: 'Priya Sharma',
-      email: 'priya@example.com',
-      password: 'customerpassword123',
+      name: 'Priya Sharma (Demo Patron)',
+      email: 'demo@bljewels.com',
+      password: 'DemoUser123!',
       role: 'customer',
-      phone: '+91 98111 22334',
+      phone: '+91 98765 01234',
+      addresses: [
+        {
+          label: 'Home',
+          name: 'Priya Sharma',
+          phone: '+91 98765 01234',
+          line1: 'Villa 42, Palm Avenue, Near ISKCON',
+          line2: 'Juhu Scheme',
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          pincode: '400049',
+          country: 'India',
+          isDefault: true,
+        }
+      ]
     });
     await customerUser.save();
 
     console.log('✓ Seeded Admin User (admin@bljewels.com / adminpassword123)');
-    console.log('✓ Seeded Customer User (priya@example.com / customerpassword123)');
+    console.log('✓ Seeded Customer Demo User (demo@bljewels.com / DemoUser123!)');
 
     // 6. Seed Patron Reviews / Testimonials
     console.log('Seeding Patron Reviews & Testimonials...');

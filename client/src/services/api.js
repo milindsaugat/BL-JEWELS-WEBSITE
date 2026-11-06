@@ -43,7 +43,8 @@ export const productService = {
   getProducts: (params) => api.get('/products', { params }).then(res => res.data),
   getFeatured: () => readPublic('/products/featured'),
   getNewArrivals: () => readPublic('/products/new-arrivals'),
-  getProductBySlug: (slug) => api.get(`/products/${slug}`).then(res => res.data),
+  getProductBySlug: (slug) => readPublic(`/products/${encodeURIComponent(slug)}`),
+  getProductsByIds: (ids) => ids.length ? readPublic(`/products/by-ids?ids=${ids.join(',')}`) : Promise.resolve({ products: [] }),
   createProduct: (data) => api.post('/products', data).then(res => res.data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data).then(res => res.data),
   deleteProduct: (id) => api.delete(`/products/${id}`).then(res => res.data),
@@ -75,6 +76,13 @@ export const orderService = {
   getOrderById: (id) => api.get(`/orders/${id}`).then(res => res.data),
   getAllOrders: () => api.get('/orders').then(res => res.data),
   updateStatus: (id, statusData) => api.patch(`/orders/${id}/status`, statusData).then(res => res.data),
+};
+
+export const couponService = {
+  getCoupons: () => api.get('/coupons').then(res => res.data),
+  createCoupon: (data) => api.post('/coupons', data).then(res => res.data),
+  updateCoupon: (id, data) => api.put(`/coupons/${id}`, data).then(res => res.data),
+  deleteCoupon: (id) => api.delete(`/coupons/${id}`).then(res => res.data),
 };
 
 export const paymentService = {
@@ -110,5 +118,34 @@ export const aiService = {
   chat: (messages, context) => api.post('/ai/chat', { messages, context }).then(res => res.data),
   searchSuggest: (query) => api.post('/ai/search-suggest', { query }).then(res => res.data),
   generateDescription: (details) => api.post('/ai/generate-description', details).then(res => res.data),
+};
+
+export const userService = {
+  getUsers: (params) => api.get('/users', { params }).then(res => res.data),
+  getUserStats: () => api.get('/users/stats').then(res => res.data),
+  getUserById: (id) => api.get(`/users/${id}`).then(res => res.data),
+  updateStatus: (id, isActive) => api.patch(`/users/${id}/status`, { isActive }).then(res => res.data),
+  updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }).then(res => res.data),
+  deleteUser: (id) => api.delete(`/users/${id}`).then(res => res.data),
+};
+
+export const uploadService = {
+  uploadImage: (file, folder = 'bl-jewels/uploads') => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', folder);
+    return api.post('/upload/single', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
+  uploadMultiple: (files, folder = 'bl-jewels/products') => {
+    const formData = new FormData();
+    Array.from(files).forEach(f => formData.append('images', f));
+    formData.append('folder', folder);
+    return api.post('/upload/multiple', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
+  deleteAsset: (publicId, url) => api.delete('/upload/asset', { data: { publicId, url } }).then(res => res.data),
 };
 

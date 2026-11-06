@@ -18,6 +18,13 @@ const settingSchema = new mongoose.Schema({
   announcements: [{
     type: String,
   }],
+  navbarDropdowns: {
+    all: { type: Boolean, default: true },
+    gold: { type: Boolean, default: true },
+    diamond: { type: Boolean, default: true },
+    silver: { type: Boolean, default: true },
+    bridal: { type: Boolean, default: true },
+  },
   announcementBar: {
     enabled: {
       type: Boolean,

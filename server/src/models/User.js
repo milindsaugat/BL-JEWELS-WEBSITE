@@ -53,8 +53,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     select: false,
   },
-  resetToken: String,
-  resetOtp: String,
+  resetToken: { type: String, select: false },
+  resetOtp: { type: String, select: false },
   resetExpiry: Date,
   isActive: {
     type: Boolean,

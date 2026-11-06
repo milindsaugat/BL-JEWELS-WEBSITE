@@ -169,7 +169,7 @@ export const AdminDashboard = () => {
             <span className="font-accent text-xs font-bold text-gold-700 tracking-wider uppercase">
               Management Portal
             </span>
-            <h1 className="font-display text-3xl sm:text-4xl font-bold text-crimson-900">
+            <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#930303]">
               BL Jewels Executive Suite
             </h1>
           </div>
@@ -177,7 +177,7 @@ export const AdminDashboard = () => {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2.5 bg-crimson-700 hover:bg-crimson-800 text-white rounded-xl text-xs font-semibold font-body flex items-center gap-1.5 shadow-crimson transition-all"
+              className="px-4 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body flex items-center gap-1.5 shadow-md shadow-[#930303]/25 transition-all"
             >
               <Plus className="w-4 h-4" />
               <span>Add New Creation</span>
@@ -192,7 +192,7 @@ export const AdminDashboard = () => {
               <span>Gross Order Revenue</span>
               <TrendingUp className="w-4 h-4 text-emerald-600" />
             </div>
-            <p className="font-accent text-2xl font-bold text-crimson-700">
+            <p className="font-accent text-2xl font-bold text-[#930303]">
               ₹{formatCurrency(totalRevenue || 435000)}
             </p>
             <p className="text-[11px] text-emerald-700 font-body">↑ 18.4% this month</p>
@@ -238,7 +238,7 @@ export const AdminDashboard = () => {
             onClick={() => setActiveTab('overview')}
             className={`font-accent text-xs font-bold tracking-wider uppercase pb-2 border-b-2 transition-all ${
               activeTab === 'overview'
-                ? 'border-crimson-700 text-crimson-700'
+                ? 'border-[#930303] text-[#930303]'
                 : 'border-transparent text-stone-400 hover:text-stone-700'
             }`}
           >
@@ -248,7 +248,7 @@ export const AdminDashboard = () => {
             onClick={() => setActiveTab('products')}
             className={`font-accent text-xs font-bold tracking-wider uppercase pb-2 border-b-2 transition-all ${
               activeTab === 'products'
-                ? 'border-crimson-700 text-crimson-700'
+                ? 'border-[#930303] text-[#930303]'
                 : 'border-transparent text-stone-400 hover:text-stone-700'
             }`}
           >
@@ -274,7 +274,7 @@ export const AdminDashboard = () => {
                 <tbody className="divide-y divide-border-light">
                   {orders.map((ord) => (
                     <tr key={ord._id} className="hover:bg-pearl/50 transition-colors">
-                      <td className="p-4 font-accent font-bold text-crimson-700">
+                      <td className="p-4 font-accent font-bold text-[#930303]">
                         {ord.orderNumber}
                       </td>
                       <td className="p-4">
@@ -349,7 +349,7 @@ export const AdminDashboard = () => {
                         <td className="p-4 capitalize text-stone-600">{p.categorySlug}</td>
                         <td className="p-4 font-accent font-bold text-gold-800">{p.metal?.karat || '22K'} (916)</td>
                         <td className="p-4">{variant.weight || '—'}g</td>
-                        <td className="p-4 font-accent font-bold text-crimson-700">
+                        <td className="p-4 font-accent font-bold text-[#930303]">
                           ₹{formatCurrency(variant.discountPrice || variant.price)}
                         </td>
                         <td className="p-4">
@@ -378,7 +378,7 @@ export const AdminDashboard = () => {
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-gold-300 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
             
             <div className="flex items-center justify-between pb-3 border-b border-border-light">
-              <h3 className="font-display text-xl font-bold text-crimson-900">
+              <h3 className="font-display text-xl font-bold text-[#930303]">
                 Publish New Fine Jewelry Creation
               </h3>
               <button onClick={() => setShowAddModal(false)} className="text-stone-400 hover:text-charcoal text-sm">
@@ -474,7 +474,7 @@ export const AdminDashboard = () => {
                   type="button"
                   onClick={handleAIGenerateCopy}
                   disabled={isGeneratingAI}
-                  className="px-3 py-1 bg-crimson-700 text-white rounded-lg text-xs font-semibold disabled:opacity-50"
+                  className="px-3 py-1 bg-[#930303] text-white rounded-lg text-xs font-semibold disabled:opacity-50"
                 >
                   {isGeneratingAI ? 'Generating...' : '✨ Generate Copy'}
                 </button>
@@ -500,7 +500,7 @@ export const AdminDashboard = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-crimson-700 text-white rounded-xl text-xs font-semibold"
+                  className="px-6 py-2 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold"
                 >
                   Publish Creation
                 </button>

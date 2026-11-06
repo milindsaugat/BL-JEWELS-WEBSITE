@@ -209,7 +209,7 @@ export const AdminLogin = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-crimson-700 hover:bg-crimson-600 disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-crimson flex items-center justify-center gap-2 border border-gold-400/40 cursor-pointer"
+            className="w-full py-3.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-2 border border-gold-400/40 cursor-pointer"
           >
             <span>Authorize & Enter Admin Suite</span>
             <ArrowRight className="w-4 h-4" />
@@ -398,7 +398,7 @@ export const AdminLogin = () => {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full py-3 bg-crimson-700 hover:bg-crimson-600 text-white font-bold text-xs rounded-xl shadow-crimson transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-gold-400/40 cursor-pointer"
+                  className="w-full py-3 bg-[#930303] hover:bg-[#7A0303] text-white font-bold text-xs rounded-xl shadow-md shadow-[#930303]/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-gold-400/40 cursor-pointer"
                 >
                   {forgotLoading ? (
                     <>

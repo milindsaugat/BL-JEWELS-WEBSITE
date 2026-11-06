@@ -46,7 +46,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
             </span>
             <span className="w-6 h-px bg-gold-400" />
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-[40px] font-semibold text-[#5B101D] tracking-tight leading-tight">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-[40px] font-semibold text-[#930303] tracking-tight leading-tight">
             Curated Jewelry Collections
           </h2>
           <p className="font-body text-xs sm:text-sm text-stone-500 max-w-lg mx-auto font-normal leading-relaxed">
@@ -63,7 +63,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
                   onClick={() => setActiveMetal(tab.id)}
                   className={`text-sm sm:text-base md:text-lg tracking-wide transition-colors duration-150 relative pb-1 ${
                     isActive
-                      ? 'text-[#7A1D28] font-bold after:content-[""] after:absolute after:-bottom-[13px] after:left-0 after:right-0 after:h-[2.5px] after:bg-[#7A1D28] after:rounded-full'
+                      ? 'text-[#930303] font-bold after:content-[""] after:absolute after:-bottom-[13px] after:left-0 after:right-0 after:h-[2.5px] after:bg-[#930303] after:rounded-full'
                       : 'text-stone-600 hover:text-stone-900 font-medium'
                   }`}
                 >
@@ -88,7 +88,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
             disabled={!canScrollLeft}
             className={`absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollLeft
-                ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
+                ? 'opacity-95 hover:opacity-100 hover:bg-[#930303] hover:text-white hover:border-[#930303] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
             }`}
             aria-label="Previous Categories"
@@ -102,7 +102,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
             disabled={!canScrollRight}
             className={`absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-md shadow-lg border border-stone-200 hidden md:flex items-center justify-center transition-all duration-200 ${
               canScrollRight
-                ? 'opacity-95 hover:opacity-100 hover:bg-[#7A1D28] hover:text-white hover:border-[#7A1D28] text-stone-800 cursor-pointer shadow-md'
+                ? 'opacity-95 hover:opacity-100 hover:bg-[#930303] hover:text-white hover:border-[#930303] text-stone-800 cursor-pointer shadow-md'
                 : 'opacity-30 border-stone-200 bg-stone-50 text-stone-300 cursor-not-allowed pointer-events-none'
             }`}
             aria-label="Next Categories"
@@ -192,7 +192,7 @@ export const FeaturedCollections = ({ categories = [], initialOccasions = [] }) 
             </span>
             <span className="w-8 h-px bg-gold-400/80" />
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#5B101D] tracking-tight leading-tight">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-[42px] font-semibold text-[#930303] tracking-tight leading-tight">
             BL Jewels Royal World
           </h2>
           <div className="flex items-center justify-center gap-3 pt-0.5">

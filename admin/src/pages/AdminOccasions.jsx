@@ -138,11 +138,15 @@ export const AdminOccasions = () => {
       if (editingOccasion) {
         await occasionService.updateOccasion(editingOccasion._id, cleanData);
         setActionSuccess(`Occasion card "${cleanData.title}" updated successfully`);
+        setEditingOccasion((prev) => ({ ...prev, ...cleanData }));
       } else {
-        await occasionService.createOccasion(cleanData);
+        const res = await occasionService.createOccasion(cleanData);
         setActionSuccess(`Occasion card "${cleanData.title}" created successfully`);
+        const created = res?.occasion || res;
+        if (created && created._id) {
+          setEditingOccasion(created);
+        }
       }
-      setShowModal(false);
       await fetchOccasions();
       setTimeout(() => setActionSuccess(null), 4000);
     } catch (err) {
@@ -178,7 +182,7 @@ export const AdminOccasions = () => {
     <div className="space-y-6">
       
       {/* ── Top Header Banner ── */}
-      <div className="bg-[#8B1A1A] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+      <div className="bg-[#930303] rounded-2xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-[#C9A44A]/15 to-transparent pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -237,7 +241,7 @@ export const AdminOccasions = () => {
 
         {loading ? (
           <div className="p-12 text-center text-stone-500 text-xs flex flex-col items-center justify-center gap-2">
-            <Loader2 className="w-6 h-6 animate-spin text-[#8B1A1A]" />
+            <Loader2 className="w-6 h-6 animate-spin text-[#930303]" />
             <span>Loading occasions...</span>
           </div>
         ) : (
@@ -246,7 +250,7 @@ export const AdminOccasions = () => {
               <div
                 key={occ._id}
                 className={`group relative aspect-[3/4] rounded-2xl overflow-hidden border shadow-sm transition-all duration-300 bg-stone-900 flex flex-col justify-between ${
-                  occ.isActive ? 'border-stone-200 hover:border-[#8B1A1A]' : 'opacity-60 border-dashed border-stone-300'
+                  occ.isActive ? 'border-stone-200 hover:border-[#930303]' : 'opacity-60 border-dashed border-stone-300'
                 }`}
               >
                 {/* Background Model Image */}
@@ -342,7 +346,7 @@ export const AdminOccasions = () => {
                     placeholder="e.g. Royal Bridal Heritage"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
                 <div>
@@ -354,7 +358,7 @@ export const AdminOccasions = () => {
                     placeholder="e.g. BRIDAL, FESTIVE, EVERYDAY"
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
               </div>
@@ -369,7 +373,7 @@ export const AdminOccasions = () => {
                   placeholder="e.g. Wedding Trousseau & Heirloom Sets"
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
                 />
               </div>
 
@@ -383,7 +387,7 @@ export const AdminOccasions = () => {
                   placeholder="e.g. /collections?occasion=bridal (defaults to /collections)"
                   value={formData.link}
                   onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#930303]"
                 />
               </div>
 
@@ -393,7 +397,7 @@ export const AdminOccasions = () => {
                   Model Wearing Occasion Jewellery (Cloudinary Storage) <span className="text-stone-400 font-normal">(Optional)</span>
                 </label>
                 
-                <div className="border-2 border-dashed border-stone-300 hover:border-[#8B1A1A] rounded-xl p-4 text-center cursor-pointer bg-stone-50 hover:bg-white transition-colors relative">
+                <div className="border-2 border-dashed border-stone-300 hover:border-[#930303] rounded-xl p-4 text-center cursor-pointer bg-stone-50 hover:bg-white transition-colors relative">
                   <input
                     type="file"
                     accept="image/*"
@@ -404,7 +408,7 @@ export const AdminOccasions = () => {
                   
                   {uploadingImage ? (
                     <div className="flex flex-col items-center justify-center gap-2 py-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#8B1A1A]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-[#930303]" />
                       <span className="text-xs font-medium text-stone-600">Uploading to Cloudinary CDN...</span>
                     </div>
                   ) : (
@@ -471,7 +475,7 @@ export const AdminOccasions = () => {
                     min="1"
                     value={formData.order}
                     onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-body font-semibold focus:outline-none focus:ring-1 focus:ring-[#8B1A1A]"
+                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-body font-semibold focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
 
@@ -481,7 +485,7 @@ export const AdminOccasions = () => {
                     id="activeCheckbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-[#8B1A1A] rounded border-stone-300 focus:ring-[#8B1A1A]"
+                    className="w-4 h-4 text-[#930303] rounded border-stone-300 focus:ring-[#930303]"
                   />
                   <label htmlFor="activeCheckbox" className="text-xs font-semibold text-stone-700 cursor-pointer">
                     Show on Customer Storefront
@@ -501,7 +505,7 @@ export const AdminOccasions = () => {
                 <button
                   type="submit"
                   disabled={saving || uploadingImage}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#8B1A1A] hover:bg-[#721515] rounded-xl shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#930303] hover:bg-[#7A0303] rounded-xl shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>{editingOccasion ? 'Update Occasion' : 'Create Occasion'}</span>
