@@ -63,6 +63,11 @@ export const saveProviderConfig = async ({ enabled, apiKey, useEnvironmentKey })
 };
 
 export const publicProviderConfig = (config) => ({
-  enabled: config.enabled, keyConfigured: Boolean(config.apiKey), keySource: config.keySource,
-  refreshHours: 4, providerRequestsPerRefresh: 3, estimatedMonthlyRequests: 540,
+  enabled: config.enabled,
+  keyConfigured: Boolean(config.apiKey),
+  keySource: config.keySource,
+  keyMasked: config.apiKey ? `${config.apiKey.slice(0, 10)}••••••••••••${config.apiKey.slice(-5)}` : null,
+  refreshHours: 4,
+  providerRequestsPerRefresh: 3,
+  estimatedMonthlyRequests: 540,
 });

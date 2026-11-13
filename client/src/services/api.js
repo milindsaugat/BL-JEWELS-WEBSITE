@@ -80,15 +80,25 @@ export const orderService = {
 
 export const couponService = {
   getCoupons: () => api.get('/coupons').then(res => res.data),
+  getPublicCoupons: () => readPublic('/coupons/public'),
+  validateCoupon: (data) => api.post('/coupons/validate', data).then(res => res.data),
   createCoupon: (data) => api.post('/coupons', data).then(res => res.data),
   updateCoupon: (id, data) => api.put(`/coupons/${id}`, data).then(res => res.data),
   deleteCoupon: (id) => api.delete(`/coupons/${id}`).then(res => res.data),
 };
 
+export const offerService = {
+  getActiveOffers: () => readPublic('/offers/active'),
+  getOffers: () => api.get('/offers').then(res => res.data),
+  createOffer: (data) => api.post('/offers', data).then(res => res.data),
+  updateOffer: (id, data) => api.put(`/offers/${id}`, data).then(res => res.data),
+  deleteOffer: (id) => api.delete(`/offers/${id}`).then(res => res.data),
+};
+
 export const paymentService = {
   createRazorpayOrder: (data) => api.post('/payments/create-order', data).then(res => res.data),
   verifyPayment: (data) => api.post('/payments/verify', data).then(res => res.data),
-  validateCoupon: (data) => api.post('/payments/validate-coupon', data).then(res => res.data),
+  validateCoupon: (data) => api.post('/coupons/validate', data).then(res => res.data),
 };
 
 export const bannerService = {
@@ -100,7 +110,7 @@ export const bannerService = {
 };
 
 export const rateService = {
-  getLiveRates: () => readPublic('/rates/live', 20000),
+  getLiveRates: () => api.get('/rates/live', { params: { _t: Date.now() } }).then(res => res.data),
 };
 
 export const reviewService = {
@@ -114,6 +124,18 @@ export const settingService = {
   updateSettings: (data) => api.put('/settings', data).then(res => res.data),
 };
 
+export const blogService = {
+  getBlogs: (params = {}) => {
+    const qs = new URLSearchParams();
+    if (params.category && params.category !== 'all') qs.set('category', params.category);
+    if (params.search) qs.set('search', params.search);
+    if (params.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return readPublic(`/blogs${q ? `?${q}` : ''}`);
+  },
+  getBlogBySlug: (slug) => readPublic(`/blogs/${encodeURIComponent(slug)}`),
+};
+
 export const aiService = {
   chat: (messages, context) => api.post('/ai/chat', { messages, context }).then(res => res.data),
   searchSuggest: (query) => api.post('/ai/search-suggest', { query }).then(res => res.data),
@@ -124,6 +146,7 @@ export const userService = {
   getUsers: (params) => api.get('/users', { params }).then(res => res.data),
   getUserStats: () => api.get('/users/stats').then(res => res.data),
   getUserById: (id) => api.get(`/users/${id}`).then(res => res.data),
+  updateUser: (id, data) => api.put(`/users/${id}`, data).then(res => res.data),
   updateStatus: (id, isActive) => api.patch(`/users/${id}/status`, { isActive }).then(res => res.data),
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }).then(res => res.data),
   deleteUser: (id) => api.delete(`/users/${id}`).then(res => res.data),
@@ -148,4 +171,33 @@ export const uploadService = {
   },
   deleteAsset: (publicId, url) => api.delete('/upload/asset', { data: { publicId, url } }).then(res => res.data),
 };
+
+export const ticketService = {
+  submitContact: (data) => api.post('/tickets/contact', data).then(res => res.data),
+  getMyTickets: () => api.get('/tickets/my').then(res => res.data),
+  createMyTicket: (data) => api.post('/tickets/my', data).then(res => res.data),
+  replyMyTicket: (id, message) => api.post(`/tickets/my/${id}/reply`, { message }).then(res => res.data),
+};
+
+export const checkoutUploadService = {
+  uploadPaymentProof: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('folder', 'bl-jewels/payment-proofs');
+    return api.post('/upload/single', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(res => res.data);
+  },
+};
+
+export const legalService = {
+  getPublicPages: () => api.get('/legal').then(res => res.data),
+  getPageBySlug: (slug) => api.get(`/legal/${slug}`).then(res => res.data),
+};
+
+export const settingsService = {
+  getSettings: () => api.get('/settings').then(res => res.data),
+};
+
+
 

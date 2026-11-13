@@ -14,6 +14,13 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
   },
+  username: {
+    type: String,
+    unique: true,
+    sparse: true,
+    lowercase: true,
+    trim: true,
+  },
   phone: {
     type: String,
     trim: true,
@@ -30,6 +37,16 @@ const userSchema = new mongoose.Schema({
     default: 'customer',
   },
   avatar: {
+    type: String,
+    default: '',
+  },
+  panNumber: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    default: '',
+  },
+  panCardImage: {
     type: String,
     default: '',
   },

@@ -4,12 +4,16 @@ export const memoryStore = {
   categories: [],
   products: [],
   coupons: [],
+  offers: [],
+  legalPages: [],
   users: [
     {
       _id: 'usr_admin',
       name: 'BL Jewels Administrator',
       email: 'admin@bljewels.com',
+      username: 'admin',
       role: 'admin',
+      avatar: '',
       addresses: [
         {
           label: 'Office',
@@ -29,9 +33,12 @@ export const memoryStore = {
     },
     {
       _id: 'usr_customer',
-      name: 'Priya Sharma (Demo Patron)',
+      name: 'Priya Sharma',
       email: 'demo@bljewels.com',
       role: 'customer',
+      avatar: '',
+      panNumber: '',
+      panCardImage: '',
       addresses: [
         {
           label: 'Home',

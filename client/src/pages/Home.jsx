@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { HeroSection } from '../components/home/HeroSection';
+import { FlashSaleBanner } from '../components/home/FlashSaleBanner';
+import { FestivalOfferPopup } from '../components/common/FestivalOfferPopup';
 import { LiveRatesMarquee } from '../components/layout/LiveRatesMarquee';
 import { LoadingSkeleton } from '../components/common/LoadingSkeleton';
 import { FeaturedCollections } from '../components/home/FeaturedCollections';
@@ -17,6 +19,7 @@ import {
   rateService,
   reviewService,
   settingService,
+  offerService,
 } from '../services/api';
 
 export const Home = () => {
@@ -25,6 +28,7 @@ export const Home = () => {
   const [bestSellers, setBestSellers] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [banners, setBanners] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [liveRates, setLiveRates] = useState(null);
   const [testimonials, setTestimonials] = useState([]);
   const [siteSettings, setSiteSettings] = useState(null);
@@ -37,6 +41,7 @@ export const Home = () => {
       if (active) setter(key ? (data?.[key] ?? []) : data);
     }).catch(() => {});
 
+    load(offerService.getActiveOffers(), 'offers', setOffers);
     load(bannerService.getBanners(), 'banners', setBanners)
       .finally(() => { if (active) setBannersLoading(false); });
     load(categoryService.getCategories(), 'categories', setCategories);
@@ -57,6 +62,24 @@ export const Home = () => {
           <LoadingSkeleton className="w-full aspect-[2.1/1] min-h-[195px] sm:aspect-[2.6/1] md:aspect-[3/1] max-h-[640px]" />
         </div>
       ) : <HeroSection initialBanners={banners} />}
+
+      {/* 1.5. Dynamic Festive Sale Banner (Controlled from Admin -> Coupons & Offers -> Homepage Sale Section) */}
+      {(() => {
+        const activeOffer = offers.find(
+          (o) =>
+            o.isActive &&
+            o.showHeroSectionSale !== false &&
+            (o.placement === 'section' || o.placement === 'both' || !o.placement) &&
+            new Date(o.endDate) > new Date()
+        );
+        if (activeOffer) {
+          return <FlashSaleBanner offer={activeOffer} />;
+        }
+        return null;
+      })()}
+
+      {/* Animated Festival Popup Timer Modal */}
+      <FestivalOfferPopup initialOffers={offers} />
 
       {/* 2. Dynamic Live Bullion Rates Dual Marquee (Direct from Backend Rate Service) */}
       <LiveRatesMarquee initialRates={liveRates} />
@@ -79,7 +102,7 @@ export const Home = () => {
       {/* 7. The BL Jewels Royal Promises & Itemized "Bill Yourself" Price Calculator */}
       <RoyalPromisesSection />
 
-      {/* 9. Dynamic Patron Reflection Reviews (Testimonials at the End) */}
+      {/* 9. Dynamic Customer Reviews (Testimonials at the End) */}
       <Testimonials initialReviews={testimonials} />
 
       {/* 10. Auspicious VIP Newsletter */}

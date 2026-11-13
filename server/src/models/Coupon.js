@@ -7,6 +7,17 @@ const couponSchema = new mongoose.Schema({
     unique: true,
     uppercase: true,
     trim: true,
+    index: true,
+  },
+  title: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  description: {
+    type: String,
+    default: '',
+    trim: true,
   },
   discountType: {
     type: String,
@@ -23,18 +34,33 @@ const couponSchema = new mongoose.Schema({
   },
   maxDiscount: {
     type: Number,
-    default: 10000,
+    default: null, // null means unlimited / uncapped for percentage, and not applicable for flat cash
   },
   validUntil: {
     type: Date,
-    default: () => new Date(+new Date() + 30 * 24 * 60 * 60 * 1000), // 30 days
+    default: () => new Date(+new Date() + 90 * 24 * 60 * 60 * 1000), // 90 days default
+  },
+  usageLimit: {
+    type: Number,
+    default: null, // null means unlimited
+  },
+  usedCount: {
+    type: Number,
+    default: 0,
+  },
+  isPublic: {
+    type: Boolean,
+    default: true,
   },
   isActive: {
     type: Boolean,
     default: true,
+    index: true,
   },
 }, { timestamps: true });
 
-const Coupon = mongoose.model('Coupon', couponSchema);
-export default Coupon;
+// Compound index for instant concurrent public coupon lookups
+couponSchema.index({ isActive: 1, isPublic: 1, validUntil: 1 });
 
+const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
+export default Coupon;

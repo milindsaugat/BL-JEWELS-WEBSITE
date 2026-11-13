@@ -563,24 +563,24 @@ export const AdminCategories = () => {
 
       {/* ── Add / Edit Modal ── */}
       {showModal && createPortal(
-        <div className="fixed inset-0 bg-stone-950/40 backdrop-blur-sm z-[100] flex items-center justify-center p-3 sm:p-5">
-          <div role="dialog" aria-modal="true" aria-labelledby="category-dialog-title" className="bg-white rounded-2xl max-w-xl w-full max-h-[calc(100dvh-40px)] flex flex-col overflow-hidden shadow-2xl border border-stone-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div role="dialog" aria-modal="true" aria-labelledby="category-dialog-title" className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] my-auto flex flex-col overflow-hidden shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95 duration-150">
             
-            <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-stone-200">
-              <h2 id="category-dialog-title" className="text-sm font-semibold text-stone-900">
+            <div className="shrink-0 flex items-center justify-between px-5 py-3.5 border-b border-stone-200 bg-white">
+              <h2 id="category-dialog-title" className="text-sm font-bold text-stone-900">
                 {editingCategory ? `Edit Category: ${editingCategory.name}` : 'Create New Category'}
               </h2>
               <button
                 aria-label="Close category editor"
                 autoFocus
                 onClick={() => setShowModal(false)}
-                className="text-stone-400 hover:text-stone-700 p-1 text-lg leading-none"
+                className="w-7 h-7 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center text-base leading-none transition-colors"
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="min-h-0 overflow-y-auto overscroll-contain space-y-4 p-5">
+            <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto overscroll-contain space-y-3.5 p-4 sm:p-5 text-xs font-body">
               
               {/* Name & Slug */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -663,38 +663,44 @@ export const AdminCategories = () => {
 
                 {/* Preview Thumbnail */}
                 {formData.image && (
-                  <div className="flex items-center gap-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <img
-                      src={formData.image}
-                      alt="Category Preview"
-                      className="w-12 h-12 rounded-lg object-cover border border-emerald-300 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-emerald-900 truncate">
-                        {formData.originalFilename || 'Uploaded Image'}
-                      </p>
-                      <p className="text-[10px] text-emerald-700">
-                        ✓ Stored on Cloudinary CDN
-                      </p>
+                  <div className="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-xl justify-between">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <img
+                        src={formData.image}
+                        alt="Category Preview"
+                        className="w-14 h-14 rounded-lg object-cover border border-stone-300 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-stone-900 truncate">
+                          {formData.originalFilename || 'Category Cover Image'}
+                        </p>
+                        <p className="text-[10px] text-emerald-700 font-medium">
+                          ✓ Stored on Cloudinary CDN
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, image: '', cloudinaryPublicId: '', originalFilename: '' })}
-                      className="text-stone-400 hover:text-rose-600 text-xs px-2 py-1"
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg text-xs flex items-center gap-1.5 border border-rose-200 transition-colors cursor-pointer shrink-0"
+                      title="Remove category cover"
                     >
-                      Remove
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
                     </button>
                   </div>
                 )}
 
                 {/* Fallback image URL */}
-                <input
-                  type="url"
-                  placeholder="Or paste custom direct image URL (Unsplash, CDN, etc.)"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-3 py-1.5 text-[11px] border border-stone-200 rounded-lg text-stone-600"
-                />
+                <div className="pt-1">
+                  <input
+                    type="url"
+                    placeholder="Or paste custom direct image URL (Unsplash, CDN, etc.)"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-3 py-2 text-xs border border-stone-200 rounded-lg text-stone-700 bg-stone-50"
+                  />
+                </div>
               </div>
 
               {/* Metal Tabs Availability */}

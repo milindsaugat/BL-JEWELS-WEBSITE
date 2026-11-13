@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Plus,
   Trash2,
@@ -27,6 +28,17 @@ export const AdminOccasions = () => {
   const [actionSuccess, setActionSuccess] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showModal]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -317,55 +329,57 @@ export const AdminOccasions = () => {
       </div>
 
       {/* ── Add / Edit Modal ── */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95 duration-200 my-8">
+      {showModal && createPortal(
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div role="dialog" aria-modal="true" className="bg-white rounded-2xl max-w-md w-full p-4 sm:p-5 shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95 duration-150 my-auto max-h-[90vh] flex flex-col">
             
-            <div className="flex items-center justify-between pb-4 border-b border-stone-200">
-              <h2 className="text-base font-bold text-stone-900">
+            <div className="shrink-0 flex items-center justify-between pb-3 border-b border-stone-200">
+              <h2 className="text-sm font-bold text-stone-900">
                 {editingOccasion ? `Edit Occasion: ${editingOccasion.title}` : 'Add New Occasion Card'}
               </h2>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="text-stone-400 hover:text-stone-700 p-1 text-lg leading-none"
+                className="w-7 h-7 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center text-base leading-none transition-colors"
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-3 pt-3 pr-1 text-xs">
               
               {/* Title & Badge */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Occasion Title
+                  <label className="block text-[11px] font-semibold text-stone-700 mb-1">
+                    Occasion Title *
                   </label>
                   <input
                     type="text"
+                    required
                     placeholder="e.g. Royal Bridal Heritage"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
+                    className="w-full px-2.5 py-1.5 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                  <label className="block text-[11px] font-semibold text-stone-700 mb-1">
                     Badge Tag <span className="text-stone-400 font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. BRIDAL, FESTIVE, EVERYDAY"
+                    placeholder="e.g. BRIDAL, FESTIVE"
                     value={formData.badge}
                     onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-[#930303]"
+                    className="w-full px-2.5 py-1.5 text-xs border border-stone-300 rounded-lg uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
               </div>
 
               {/* Subtitle */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                <label className="block text-[11px] font-semibold text-stone-700 mb-1">
                   Subtitle Description <span className="text-stone-400 font-normal">(Optional)</span>
                 </label>
                 <input
@@ -373,31 +387,31 @@ export const AdminOccasions = () => {
                   placeholder="e.g. Wedding Trousseau & Heirloom Sets"
                   value={formData.subtitle}
                   onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
+                  className="w-full px-2.5 py-1.5 text-xs border border-stone-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#930303]"
                 />
               </div>
 
               {/* Target Link */}
               <div>
-                <label className="block text-xs font-semibold text-stone-700 mb-1">
+                <label className="block text-[11px] font-semibold text-stone-700 mb-1">
                   Storefront Target URL Link <span className="text-stone-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. /collections?occasion=bridal (defaults to /collections)"
+                  placeholder="e.g. /collections?occasion=bridal"
                   value={formData.link}
                   onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-                  className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#930303]"
+                  className="w-full px-2.5 py-1.5 text-xs border border-stone-300 rounded-lg font-mono focus:outline-none focus:ring-1 focus:ring-[#930303]"
                 />
               </div>
 
               {/* Model Image Upload to Cloudinary */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-stone-700">
-                  Model Wearing Occasion Jewellery (Cloudinary Storage) <span className="text-stone-400 font-normal">(Optional)</span>
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold text-stone-700">
+                  Model Wearing Occasion Jewellery (Cloudinary Storage)
                 </label>
                 
-                <div className="border-2 border-dashed border-stone-300 hover:border-[#930303] rounded-xl p-4 text-center cursor-pointer bg-stone-50 hover:bg-white transition-colors relative">
+                <div className="border border-dashed border-stone-300 hover:border-[#930303] rounded-xl py-2 px-3 text-center cursor-pointer bg-stone-50 hover:bg-white transition-colors relative">
                   <input
                     type="file"
                     accept="image/*"
@@ -407,79 +421,82 @@ export const AdminOccasions = () => {
                   />
                   
                   {uploadingImage ? (
-                    <div className="flex flex-col items-center justify-center gap-2 py-2">
-                      <Loader2 className="w-6 h-6 animate-spin text-[#930303]" />
+                    <div className="flex items-center justify-center gap-2 py-1">
+                      <Loader2 className="w-4 h-4 animate-spin text-[#930303]" />
                       <span className="text-xs font-medium text-stone-600">Uploading to Cloudinary CDN...</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center justify-center gap-1.5 py-1">
-                      <UploadCloud className="w-7 h-7 text-stone-400" />
-                      <span className="text-xs font-semibold text-stone-700">
+                    <div className="flex items-center justify-center gap-2 py-1 text-stone-600">
+                      <UploadCloud className="w-4 h-4 text-stone-400 shrink-0" />
+                      <span className="text-xs font-semibold">
                         Click or drag image file from computer
-                      </span>
-                      <span className="text-[11px] text-stone-400">
-                        Portrait 3:4 aspect ratio recommended • Cloudinary synced
                       </span>
                     </div>
                   )}
                 </div>
 
                 {uploadError && (
-                  <p className="text-xs text-rose-600 font-medium">{uploadError}</p>
+                  <p className="text-[11px] text-rose-600 font-medium">{uploadError}</p>
                 )}
 
                 {/* Preview Thumbnail */}
                 {formData.image && (
-                  <div className="flex items-center gap-3 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                    <img
-                      src={formData.image}
-                      alt="Occasion Preview"
-                      className="w-12 h-16 rounded-lg object-cover border border-emerald-300 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-emerald-900 truncate">
-                        {formData.originalFilename || 'Model Image'}
-                      </p>
-                      <p className="text-[10px] text-emerald-700">
-                        ✓ Stored on Cloudinary CDN
-                      </p>
+                  <div className="flex items-center gap-2.5 p-3 bg-stone-50 border border-stone-200 rounded-xl justify-between">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <img
+                        src={formData.image}
+                        alt="Occasion Preview"
+                        className="w-12 h-14 rounded-lg object-cover border border-stone-300 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-stone-900 truncate">
+                          {formData.originalFilename || 'Occasion Image'}
+                        </p>
+                        <p className="text-[10px] text-emerald-700 font-medium">
+                          ✓ Stored on Cloudinary CDN
+                        </p>
+                      </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, image: '', cloudinaryPublicId: '', originalFilename: '' })}
-                      className="text-stone-400 hover:text-rose-600 text-xs px-2 py-1"
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-lg text-xs flex items-center gap-1.5 border border-rose-200 transition-colors cursor-pointer shrink-0"
+                      title="Remove occasion image"
                     >
-                      Remove
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
                     </button>
                   </div>
                 )}
 
                 {/* Direct Image URL input */}
-                <input
-                  type="url"
-                  placeholder="Or paste direct image URL (Unsplash, CDN, etc.)"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  className="w-full px-3 py-1.5 text-[11px] border border-stone-200 rounded-lg text-stone-600"
-                />
+                <div className="pt-1">
+                  <input
+                    type="url"
+                    placeholder="Or paste direct image URL (Unsplash, CDN, etc.)"
+                    value={formData.image}
+                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                    className="w-full px-3 py-2 text-xs border border-stone-200 rounded-lg text-stone-700 bg-stone-50"
+                  />
+                </div>
               </div>
 
               {/* Order & Active Toggle */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="grid grid-cols-2 gap-3 pt-1 items-center">
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Display Order (Numeric)
+                  <label className="block text-[11px] font-semibold text-stone-700 mb-1">
+                    Display Order
                   </label>
                   <input
                     type="number"
                     min="1"
                     value={formData.order}
                     onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 text-xs border border-stone-300 rounded-lg font-body font-semibold focus:outline-none focus:ring-1 focus:ring-[#930303]"
+                    className="w-full px-2.5 py-1.5 text-xs border border-stone-300 rounded-lg font-body font-semibold focus:outline-none focus:ring-1 focus:ring-[#930303]"
                   />
                 </div>
 
-                <div className="flex items-center gap-2 pt-5">
+                <div className="flex items-center gap-2 pt-4">
                   <input
                     type="checkbox"
                     id="activeCheckbox"
@@ -488,24 +505,24 @@ export const AdminOccasions = () => {
                     className="w-4 h-4 text-[#930303] rounded border-stone-300 focus:ring-[#930303]"
                   />
                   <label htmlFor="activeCheckbox" className="text-xs font-semibold text-stone-700 cursor-pointer">
-                    Show on Customer Storefront
+                    Show on Storefront
                   </label>
                 </div>
               </div>
 
               {/* Modal Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-stone-200">
+              <div className="shrink-0 flex items-center justify-end gap-2 pt-3 border-t border-stone-200 mt-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-100 rounded-xl transition-colors"
+                  className="px-3.5 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-100 rounded-lg transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving || uploadingImage}
-                  className="px-5 py-2 text-xs font-bold text-white bg-[#930303] hover:bg-[#7A0303] rounded-xl shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-4 py-1.5 text-xs font-bold text-white bg-[#930303] hover:bg-[#7A0303] rounded-lg shadow-sm transition-colors flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
                 >
                   {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                   <span>{editingOccasion ? 'Update Occasion' : 'Create Occasion'}</span>
@@ -515,7 +532,8 @@ export const AdminOccasions = () => {
             </form>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

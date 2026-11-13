@@ -1,4 +1,5 @@
 import { memoryStore } from '../config/memoryStore.js';
+import { calculateCouponDiscount } from './couponController.js';
 
 export const createRazorpayOrder = async (req, res) => {
   try {
@@ -47,38 +48,23 @@ export const verifyPayment = async (req, res) => {
 export const validateCoupon = async (req, res) => {
   try {
     const { code, cartTotal = 0 } = req.body;
-    if (!code) {
-      return res.status(400).json({ success: false, message: 'Please provide coupon code.' });
-    }
+    const result = await calculateCouponDiscount(code, cartTotal);
 
-    const coupon = memoryStore.coupons.find(c => c.code.toUpperCase() === code.trim().toUpperCase() && c.isActive);
-    if (!coupon) {
-      return res.status(404).json({ success: false, message: 'Invalid or expired coupon code.' });
-    }
-
-    if (cartTotal < coupon.minOrderValue) {
+    if (!result.valid) {
       return res.status(400).json({
         success: false,
-        message: `This coupon requires a minimum cart value of ₹${coupon.minOrderValue.toLocaleString('en-IN')}.`,
+        valid: false,
+        message: result.message,
+        shortfall: result.shortfall,
+        minOrderValue: result.minOrderValue,
       });
-    }
-
-    let discount = 0;
-    if (coupon.discountType === 'percentage') {
-      discount = Math.min((cartTotal * coupon.value) / 100, coupon.maxDiscount);
-    } else {
-      discount = Math.min(coupon.value, coupon.maxDiscount);
     }
 
     return res.json({
       success: true,
-      coupon: {
-        code: coupon.code,
-        discountType: coupon.discountType,
-        value: coupon.value,
-        calculatedDiscount: discount,
-      },
-      message: `Coupon ${coupon.code} applied! You save ₹${discount.toLocaleString('en-IN')}`,
+      valid: true,
+      coupon: result.coupon,
+      message: result.message,
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

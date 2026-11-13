@@ -24,12 +24,17 @@ import reviewRoutes from './routes/review.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import bannerRoutes from './routes/banner.routes.js';
 import couponRoutes from './routes/coupon.routes.js';
+import offerRoutes from './routes/offer.routes.js';
 import rateRoutes from './routes/rate.routes.js';
 import goldRateRoutes from './routes/goldRate.routes.js';
 import settingRoutes from './routes/setting.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import occasionRoutes from './routes/occasion.routes.js';
 import userRoutes from './routes/user.routes.js';
+import subscriberRoutes from './routes/subscriber.routes.js';
+import blogRoutes from './routes/blog.routes.js';
+import ticketRoutes from './routes/ticket.routes.js';
+import legalRoutes from './routes/legal.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -143,12 +148,17 @@ app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/ai', aiRoutes);
 app.use('/api/v1/banners', bannerRoutes);
 app.use('/api/v1/coupons', couponRoutes);
+app.use('/api/v1/offers', offerRoutes);
 app.use('/api/v1/rates', rateRoutes);
 app.use('/api/v1/gold-rates', goldRateRoutes);
 app.use('/api/v1/settings', settingRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/occasions', occasionRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/subscribers', subscriberRoutes);
+app.use('/api/v1/blogs', blogRoutes);
+app.use('/api/v1/tickets', ticketRoutes);
+app.use('/api/v1/legal', legalRoutes);
 
 // Error Handling
 app.use(errorHandler);
@@ -168,3 +178,4 @@ if (!process.env.VERCEL) {
 
 // Export Express App for Vercel Serverless Execution
 export default app;
+

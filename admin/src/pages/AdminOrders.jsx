@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Package,
   Search,
@@ -42,11 +43,49 @@ export const AdminOrders = () => {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    if (selectedOrder) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedOrder]);
+
+  const handleVerifyBankPayment = async (orderId, paymentStatus) => {
+    setUpdatingStatus(true);
+    try {
+      const res = await orderService.updateStatus(orderId, {
+        paymentStatus,
+        note:
+          paymentStatus === 'paid'
+            ? 'Direct Bank / QR transfer payment verified by admin.'
+            : 'Direct Bank / QR payment proof rejected.',
+      });
+      toast.success(
+        paymentStatus === 'paid'
+          ? 'Payment verified & order marked Paid!'
+          : 'Payment marked failed / rejected.'
+      );
+      await fetchOrders();
+      if (res?.order && selectedOrder?._id === orderId) {
+        setSelectedOrder(res.order);
+      }
+    } catch {
+      toast.error('Failed to update payment verification status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const handleUpdateStatus = async (orderId) => {
     if (!newStatus) return;
     setUpdatingStatus(true);
     try {
-      await orderService.updateStatus(orderId, {
+      const res = await orderService.updateStatus(orderId, {
+        status: newStatus,
         orderStatus: newStatus,
         trackingNumber: trackingId || undefined,
         carrier: 'Blue Dart Armored Security Logistics'
@@ -54,9 +93,9 @@ export const AdminOrders = () => {
       toast.success('Order status updated successfully!');
       await fetchOrders();
       if (selectedOrder && selectedOrder._id === orderId) {
-        setSelectedOrder(prev => ({ ...prev, orderStatus: newStatus, trackingNumber: trackingId || prev.trackingNumber }));
+        setSelectedOrder(res?.order || (prev => ({ ...prev, status: newStatus, orderStatus: newStatus, trackingNumber: trackingId || prev.trackingNumber })));
       }
-    } catch (err) {
+    } catch {
       toast.error('Failed to update order status');
     } finally {
       setUpdatingStatus(false);
@@ -208,7 +247,7 @@ export const AdminOrders = () => {
 
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-stone-900">
-                        {order.shippingAddress?.name || 'Valued Patron'}
+                        {order.shippingAddress?.name || 'Valued Customer'}
                       </div>
                       <div className="text-[11px] text-stone-500">
                         {order.shippingAddress?.city || 'India'}, {order.shippingAddress?.state || ''}
@@ -228,31 +267,47 @@ export const AdminOrders = () => {
                     </td>
 
                     <td className="py-3.5 px-4 font-semibold text-[#930303]">
-                      ₹{(order.totalAmount || 0).toLocaleString('en-IN')}
+                      ₹{(order.pricing?.total ?? order.totalAmount ?? 0).toLocaleString('en-IN')}
                     </td>
 
                     <td className="py-3.5 px-4">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                        order.paymentStatus === 'paid'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-stone-100 text-stone-700 border border-stone-200'
-                      }`}>
-                        {order.paymentStatus || 'Paid (Prepaid)'}
-                      </span>
+                      {(() => {
+                        const payStatus = order.payment?.status || order.paymentStatus || 'pending';
+                        const isBank = order.payment?.method === 'bank_transfer';
+                        return (
+                          <div className="space-y-1">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
+                              payStatus === 'paid'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : payStatus === 'verification_pending'
+                                  ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                                  : 'bg-stone-100 text-stone-700 border border-stone-200'
+                            }`}>
+                              {payStatus.replaceAll('_', ' ')}
+                            </span>
+                            {isBank && (
+                              <span className="block text-[10px] font-medium text-[#930303]">
+                                Bank / QR Transfer
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     <td className="py-3.5 px-4">
-                      {getStatusBadge(order.orderStatus || 'pending')}
+                      {getStatusBadge(order.status || order.orderStatus || 'pending')}
                     </td>
 
                     <td className="py-3.5 px-4 text-right">
                       <button
+                        type="button"
                         onClick={() => {
                           setSelectedOrder(order);
-                          setNewStatus(order.orderStatus || 'confirmed');
-                          setTrackingId(order.trackingNumber || '');
+                          setNewStatus(order.status || order.orderStatus || 'confirmed');
+                          setTrackingId(order.tracking?.trackingId || order.trackingNumber || '');
                         }}
-                        className="px-3 py-1.5 bg-stone-100 hover:bg-gold-50 hover:text-gold-900 text-stone-700 rounded-lg font-medium transition-colors border border-stone-200 inline-flex items-center gap-1.5"
+                        className="px-3 py-1.5 bg-stone-100 hover:bg-gold-50 hover:text-gold-900 text-stone-700 rounded-lg font-medium transition-colors border border-stone-200 inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>Manage</span>
@@ -267,22 +322,23 @@ export const AdminOrders = () => {
       </div>
 
       {/* Order Details & Status Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto space-y-6 shadow-2xl border border-stone-200">
+      {selectedOrder && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div role="dialog" aria-modal="true" className="bg-white rounded-2xl max-w-xl w-full p-4 sm:p-5 max-h-[90vh] my-auto overflow-y-auto space-y-4 shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95 duration-150">
             
-            <div className="flex items-start justify-between border-b border-stone-200 pb-4">
+            <div className="flex items-start justify-between border-b border-stone-200 pb-3">
               <div>
-                <span className="text-[10px] font-accent uppercase tracking-widest text-gold-600 font-bold block">
+                <span className="text-[10px] font-accent uppercase tracking-widest text-[#930303] font-bold block">
                   BL Jewels • Insured Vault Dispatch
                 </span>
-                <h2 className="font-heading text-xl font-bold text-stone-900 mt-0.5">
+                <h2 className="font-heading text-lg font-bold text-stone-900 mt-0.5">
                   Order #{selectedOrder._id?.slice(-8).toUpperCase()}
                 </h2>
               </div>
               <button
+                type="button"
                 onClick={() => setSelectedOrder(null)}
-                className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100"
+                className="w-7 h-7 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center text-sm leading-none transition-colors"
               >
                 ✕
               </button>
@@ -293,19 +349,19 @@ export const AdminOrders = () => {
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-semibold">Total Price</span>
                 <span className="font-bold text-[#930303] text-sm">
-                  ₹{(selectedOrder.totalAmount || 0).toLocaleString('en-IN')}
+                  ₹{(selectedOrder.pricing?.total ?? selectedOrder.totalAmount ?? 0).toLocaleString('en-IN')}
                 </span>
               </div>
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-semibold">Payment</span>
                 <span className="font-semibold text-emerald-700 capitalize">
-                  {selectedOrder.paymentStatus || 'Verified'}
+                  {(selectedOrder.payment?.status || selectedOrder.paymentStatus || 'pending').replaceAll('_', ' ')}
                 </span>
               </div>
               <div>
                 <span className="text-stone-400 block text-[10px] uppercase font-semibold">Current State</span>
                 <span className="font-semibold text-stone-800 capitalize">
-                  {selectedOrder.orderStatus || 'Pending'}
+                  {(selectedOrder.status || selectedOrder.orderStatus || 'pending').replaceAll('_', ' ')}
                 </span>
               </div>
               <div>
@@ -316,6 +372,74 @@ export const AdminOrders = () => {
                 </span>
               </div>
             </div>
+
+            {/* Direct Bank Transfer Proof & Verification */}
+            {selectedOrder.payment?.method === 'bank_transfer' && (
+              <div className="bg-[#FFF8EE] border border-amber-300 rounded-2xl p-4 space-y-3 text-xs">
+                <div className="flex flex-wrap justify-between items-center gap-2">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider font-bold text-[#930303]">
+                      Direct Bank / UPI QR Transfer Verification
+                    </p>
+                    <p className="font-semibold text-stone-900 mt-0.5">
+                      {selectedOrder.payment?.bankLabel || selectedOrder.payment?.bankName || 'Showroom Bank Account'}
+                      {selectedOrder.payment?.accountNumberLast4 ? ` (•••• ${selectedOrder.payment.accountNumberLast4})` : ''}
+                    </p>
+                  </div>
+                  <span className="font-mono font-bold px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-[#930303]">
+                    Ref: {selectedOrder.payment?.transactionId || 'N/A'}
+                  </span>
+                </div>
+
+                {selectedOrder.payment?.proofImage && (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <a
+                      href={selectedOrder.payment.proofImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-24 h-24 rounded-xl border border-amber-200 bg-white overflow-hidden shrink-0"
+                    >
+                      <img
+                        src={selectedOrder.payment.proofImage}
+                        alt="Customer bank transfer proof"
+                        className="w-full h-full object-cover"
+                      />
+                    </a>
+                    <div className="space-y-2">
+                      <a
+                        href={selectedOrder.payment.proofImage}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-[#930303] font-semibold hover:underline"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Inspect Full Payment Screenshot</span>
+                      </a>
+                      {selectedOrder.payment?.status !== 'paid' && (
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            disabled={updatingStatus}
+                            onClick={() => handleVerifyBankPayment(selectedOrder._id, 'paid')}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold cursor-pointer"
+                          >
+                            Verify & Mark Paid
+                          </button>
+                          <button
+                            type="button"
+                            disabled={updatingStatus}
+                            onClick={() => handleVerifyBankPayment(selectedOrder._id, 'failed')}
+                            className="px-3 py-1.5 rounded-lg bg-white border border-red-300 text-red-700 hover:bg-red-50 font-semibold cursor-pointer"
+                          >
+                            Reject Proof
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Update Order Status */}
             <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-3">
@@ -358,7 +482,7 @@ export const AdminOrders = () => {
                   onClick={() => handleUpdateStatus(selectedOrder._id)}
                   className="px-4 py-2 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
                 >
-                  {updatingStatus ? 'Updating Vault Records...' : 'Save & Notify Patron'}
+                  {updatingStatus ? 'Updating Records...' : 'Save & Notify Customer'}
                 </button>
               </div>
             </div>
@@ -418,7 +542,8 @@ export const AdminOrders = () => {
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

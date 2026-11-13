@@ -4,7 +4,7 @@ import { Trash2, Plus, Minus, ArrowRight, ShieldCheck, Tag, ShoppingBag, Sparkle
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
-import { paymentService } from '../services/api';
+import { paymentService, couponService } from '../services/api';
 import { formatCurrency } from '../lib/utils';
 import { PriceDisplay } from '../components/common/PriceDisplay';
 
@@ -51,28 +51,20 @@ export const CartPage = () => {
     setIsApplying(true);
     setCouponError('');
     try {
-      const res = await paymentService.validateCoupon({
+      const res = await couponService.validateCoupon({
         code: couponInput.trim(),
         cartTotal: subtotal,
       });
 
-      if (res.success) {
+      if (res.success && res.coupon) {
         applyCoupon(res.coupon);
         setCouponInput('');
       } else {
         setCouponError(res.message || 'Invalid coupon code');
       }
-    } catch {
-      // Fallback discount
-      const code = couponInput.trim().toUpperCase();
-      if (code === 'SHUBH10' || code === 'WELCOME5') {
-        const pct = code === 'SHUBH10' ? 10 : 5;
-        const calc = Math.min((subtotal * pct) / 100, 15000);
-        applyCoupon({ code, discountType: 'percentage', value: pct, calculatedDiscount: calc });
-        setCouponInput('');
-      } else {
-        setCouponError('Invalid coupon code. Try SHUBH10');
-      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || 'Invalid or expired coupon code.';
+      setCouponError(errMsg);
     } finally {
       setIsApplying(false);
     }
@@ -197,12 +189,17 @@ export const CartPage = () => {
               <div>
                 {coupon ? (
                   <div className="flex items-center justify-between bg-gold-50 border border-gold-300 rounded-xl px-3.5 py-2 text-xs">
-                    <div className="flex items-center gap-1.5 text-gold-900 font-medium font-body">
-                      <Tag className="w-4 h-4 text-gold-600" />
-                      <span>Coupon <strong>{coupon.code}</strong></span>
-                      <span className="text-emerald-700">(-₹{formatCurrency(discount)})</span>
+                    <div className="flex items-center gap-2 text-gold-900 font-medium font-body flex-wrap">
+                      <Tag className="w-4 h-4 text-gold-600 shrink-0" />
+                      <span>Coupon <strong className="font-mono">{coupon.code}</strong></span>
+                      <span className="text-[10px] font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">
+                        {coupon.discountType === 'percentage'
+                          ? `${coupon.value}% OFF`
+                          : `Flat ₹${formatCurrency(coupon.value || discount)} OFF`}
+                      </span>
+                      <span className="text-emerald-700 font-bold">(-₹{formatCurrency(discount)})</span>
                     </div>
-                    <button onClick={removeCoupon} className="text-stone-500 hover:text-stone-800 text-xs underline">
+                    <button onClick={removeCoupon} className="text-stone-500 hover:text-stone-800 text-xs underline cursor-pointer shrink-0">
                       Remove
                     </button>
                   </div>
@@ -234,8 +231,12 @@ export const CartPage = () => {
                   <span className="font-semibold text-charcoal">₹{formatCurrency(subtotal)}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex justify-between text-emerald-700">
-                    <span>Auspicious Discount</span>
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>
+                      {coupon?.discountType === 'percentage'
+                        ? `Auspicious Discount (${coupon?.code} • ${coupon?.value}% OFF)`
+                        : `Auspicious Discount (${coupon?.code} • Flat ₹${formatCurrency(coupon?.value || discount)} OFF)`}
+                    </span>
                     <span>-₹{formatCurrency(discount)}</span>
                   </div>
                 )}

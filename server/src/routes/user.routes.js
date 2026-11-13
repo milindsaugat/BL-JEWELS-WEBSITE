@@ -5,6 +5,7 @@ import {
   getUserById,
   updateUserStatus,
   updateUserRole,
+  updateUserDetails,
   deleteUser,
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
@@ -17,6 +18,7 @@ router.use(protect, adminOnly);
 router.get('/stats', getUserStats);
 router.get('/', getUsers);
 router.get('/:id', getUserById);
+router.put('/:id', updateUserDetails);
 router.patch('/:id/status', updateUserStatus);
 router.patch('/:id/role', updateUserRole);
 router.delete('/:id', deleteUser);

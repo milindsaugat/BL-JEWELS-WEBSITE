@@ -13,6 +13,11 @@ import { AdminCoupons } from './pages/AdminCoupons';
 import { AdminReviews } from './pages/AdminReviews';
 import { AdminGoldRates } from './pages/AdminGoldRates';
 import { AdminAnnouncement } from './pages/AdminAnnouncement';
+import { AdminSubscribers } from './pages/AdminSubscribers';
+import { AdminBlogs } from './pages/AdminBlogs';
+import AdminSupport from './pages/AdminSupport';
+import { AdminPaymentAccounts } from './pages/AdminPaymentAccounts';
+import { AdminSettings } from './pages/AdminSettings';
 import { useAuthStore } from './store/authStore';
 
 // Protected route wrapper
@@ -81,6 +86,26 @@ export const router = createBrowserRouter([
       {
         path: 'announcements',
         element: <AdminAnnouncement />,
+      },
+      {
+        path: 'subscribers',
+        element: <AdminSubscribers />,
+      },
+      {
+        path: 'blogs',
+        element: <AdminBlogs />,
+      },
+      {
+        path: 'support',
+        element: <AdminSupport />,
+      },
+      {
+        path: 'payment-accounts',
+        element: <AdminPaymentAccounts />,
+      },
+      {
+        path: 'settings',
+        element: <AdminSettings />,
       },
     ],
   },

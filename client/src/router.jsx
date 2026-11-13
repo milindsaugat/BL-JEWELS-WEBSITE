@@ -18,6 +18,10 @@ const WishlistPage = lazy(() => import('./pages/WishlistPage').then(module => ({
 const AboutPage = lazy(() => import('./pages/AboutPage').then(module => ({ default: module.AboutPage })));
 const ContactPage = lazy(() => import('./pages/ContactPage').then(module => ({ default: module.ContactPage })));
 const LiveRatePage = lazy(() => import('./pages/LiveRatePage').then(module => ({ default: module.LiveRatePage })));
+const BlogPage = lazy(() => import('./pages/BlogPage').then(module => ({ default: module.BlogPage })));
+const BlogDetailPage = lazy(() => import('./pages/BlogDetailPage').then(module => ({ default: module.BlogDetailPage })));
+const BankAccountsPage = lazy(() => import('./pages/BankAccountsPage').then(module => ({ default: module.BankAccountsPage })));
+const LegalPage = lazy(() => import('./pages/LegalPage').then(module => ({ default: module.LegalPage })));
 
 // Admin Pages
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin').then(module => ({ default: module.AdminLogin })));
@@ -49,6 +53,13 @@ export const AppRoutes = () => {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/live-rate" element={<LiveRatePage />} />
+        <Route path="/live-rates" element={<LiveRatePage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/blog/:slug" element={<BlogDetailPage />} />
+        <Route path="/bank-accounts" element={<BankAccountsPage />} />
+        <Route path="/page/:slug" element={<LegalPage />} />
+        <Route path="/privacy-policy" element={<LegalPage />} />
+        <Route path="/terms-and-conditions" element={<LegalPage />} />
       </Route>
 
       {/* ── ADMIN LOGIN (Standalone Login Portal) ── */}

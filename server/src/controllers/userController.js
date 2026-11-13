@@ -12,19 +12,18 @@ const isMongoConnected = () => mongoose.connection.readyState === 1;
 export const getUserStats = async (req, res) => {
   try {
     if (!isMongoConnected()) {
-      const users = memoryStore.users || [];
-      const totalUsers = users.length;
-      const totalCustomers = users.filter(u => u.role === 'customer').length;
-      const totalAdmins = users.filter(u => u.role === 'admin').length;
-      const activeUsers = users.filter(u => u.isActive !== false).length;
+      const customers = (memoryStore.users || []).filter(u => u.role !== 'admin');
+      const totalCustomers = customers.length;
+      const activeCustomers = customers.filter(u => u.isActive !== false).length;
+      const verifiedMobile = customers.filter(u => u.phone && u.phone.trim()).length;
 
       return res.json({
         success: true,
         stats: {
-          totalUsers,
+          totalUsers: totalCustomers,
           totalCustomers,
-          totalAdmins,
-          activeUsers,
+          activeUsers: activeCustomers,
+          verifiedMobile,
           newThisMonth: totalCustomers,
         },
       });
@@ -32,22 +31,22 @@ export const getUserStats = async (req, res) => {
 
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 
-    // Run all 5 metric queries concurrently via Promise.all
-    const [totalUsers, totalCustomers, totalAdmins, activeUsers, newThisMonth] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: 'customer' }),
-      User.countDocuments({ role: 'admin' }),
-      User.countDocuments({ isActive: { $ne: false } }),
-      User.countDocuments({ createdAt: { $gte: startOfMonth } }),
+    // Concurrently count customers only (exclude administrative accounts)
+    const customerFilter = { role: { $ne: 'admin' } };
+    const [totalCustomers, activeCustomers, verifiedMobile, newThisMonth] = await Promise.all([
+      User.countDocuments(customerFilter),
+      User.countDocuments({ ...customerFilter, isActive: { $ne: false } }),
+      User.countDocuments({ ...customerFilter, phone: { $exists: true, $ne: '' } }),
+      User.countDocuments({ ...customerFilter, createdAt: { $gte: startOfMonth } }),
     ]);
 
     res.json({
       success: true,
       stats: {
-        totalUsers,
+        totalUsers: totalCustomers,
         totalCustomers,
-        totalAdmins,
-        activeUsers,
+        activeUsers: activeCustomers,
+        verifiedMobile,
         newThisMonth,
       },
     });
@@ -60,6 +59,7 @@ export const getUserStats = async (req, res) => {
 /**
  * GET /api/v1/users
  * High-performance paginated & filtered user list with concurrent order spend aggregation
+ * NOTE: Administration accounts are strictly excluded from the customer directory.
  */
 export const getUsers = async (req, res) => {
   try {
@@ -67,10 +67,11 @@ export const getUsers = async (req, res) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 15));
     const skip = (page - 1) * limit;
 
-    const { search, role, status, sort } = req.query;
+    const { search, status, sort } = req.query;
 
     if (!isMongoConnected()) {
-      let users = [...(memoryStore.users || [])];
+      // Exclude admin accounts strictly
+      let users = (memoryStore.users || []).filter(u => u.role !== 'admin');
 
       if (search) {
         const s = search.toLowerCase();
@@ -80,9 +81,6 @@ export const getUsers = async (req, res) => {
             (u.email && u.email.toLowerCase().includes(s)) ||
             (u.phone && u.phone.toLowerCase().includes(s))
         );
-      }
-      if (role && role !== 'all') {
-        users = users.filter(u => u.role === role);
       }
       if (status && status !== 'all') {
         users = users.filter(u => (status === 'active' ? u.isActive !== false : u.isActive === false));
@@ -107,8 +105,8 @@ export const getUsers = async (req, res) => {
       });
     }
 
-    // Build Mongo Filter
-    const query = {};
+    // Build Mongo Filter - Always exclude admin accounts
+    const query = { role: { $ne: 'admin' } };
 
     if (search && search.trim()) {
       const term = search.trim();
@@ -117,10 +115,6 @@ export const getUsers = async (req, res) => {
         { email: { $regex: term, $options: 'i' } },
         { phone: { $regex: term, $options: 'i' } },
       ];
-    }
-
-    if (role && role !== 'all') {
-      query.role = role;
     }
 
     if (status && status !== 'all') {
@@ -277,49 +271,88 @@ export const updateUserStatus = async (req, res) => {
 
 /**
  * PATCH /api/v1/users/:id/role
- * Promote or demote user role ('customer' <-> 'admin')
+ * Administrative role promotion is permanently disabled for customer accounts.
  */
 export const updateUserRole = async (req, res) => {
+  return res.status(403).json({
+    success: false,
+    message: 'Administrative role assignment is disabled. External accounts cannot be granted administrative privileges.',
+  });
+};
+
+/**
+ * PUT /api/v1/users/:id
+ * Admin updates customer details (name, email, phone, isActive, avatar)
+ */
+export const updateUserDetails = async (req, res) => {
   try {
     const { id } = req.params;
-    const { role } = req.body;
-
-    if (!['customer', 'admin'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Invalid role specified.' });
-    }
-
-    if (req.user && String(req.user._id) === id && role !== 'admin') {
-      return res.status(400).json({
-        success: false,
-        message: 'You cannot remove administrative privileges from yourself.',
-      });
-    }
+    const { name, email, phone, isActive, avatar, panNumber, panCardImage } = req.body;
 
     if (!isMongoConnected()) {
       const user = (memoryStore.users || []).find(u => u._id === id);
-      if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
-      user.role = role;
-      return res.json({ success: true, message: `Role updated to ${role}.`, user });
+      if (!user) return res.status(404).json({ success: false, message: 'Customer account not found.' });
+      if (user.role === 'admin') {
+        return res.status(403).json({ success: false, message: 'Administrator accounts cannot be modified here.' });
+      }
+
+      if (name !== undefined) user.name = String(name).trim();
+      if (email !== undefined) {
+        const normalized = String(email).trim().toLowerCase();
+        const existing = (memoryStore.users || []).find(u => u.email === normalized && u._id !== id);
+        if (existing) {
+          return res.status(400).json({ success: false, message: 'Another user account already uses this email.' });
+        }
+        user.email = normalized;
+      }
+      if (phone !== undefined) user.phone = String(phone).trim();
+      if (isActive !== undefined) user.isActive = Boolean(isActive);
+      if (avatar !== undefined) user.avatar = String(avatar).trim();
+      if (panNumber !== undefined) user.panNumber = String(panNumber).trim().toUpperCase();
+      if (panCardImage !== undefined) user.panCardImage = String(panCardImage).trim();
+      user.role = 'customer'; // Strictly customer
+
+      return res.json({ success: true, message: 'Customer details updated successfully.', user });
     }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'Customer account not found.' });
+    }
+    if (targetUser.role === 'admin') {
+      return res.status(403).json({ success: false, message: 'Administrator accounts cannot be modified from the customer management directory.' });
+    }
+
+    const updateFields = { role: 'customer' };
+    if (name !== undefined) updateFields.name = String(name).trim();
+    if (email !== undefined) {
+      const normalizedEmail = String(email).trim().toLowerCase();
+      const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: id } });
+      if (existing) {
+        return res.status(400).json({ success: false, message: 'Another user account already uses this email.' });
+      }
+      updateFields.email = normalizedEmail;
+    }
+    if (phone !== undefined) updateFields.phone = String(phone).trim();
+    if (isActive !== undefined) updateFields.isActive = Boolean(isActive);
+    if (avatar !== undefined) updateFields.avatar = String(avatar).trim();
+    if (panNumber !== undefined) updateFields.panNumber = String(panNumber).trim().toUpperCase();
+    if (panCardImage !== undefined) updateFields.panCardImage = String(panCardImage).trim();
 
     const user = await User.findByIdAndUpdate(
       id,
-      { role },
+      { $set: updateFields },
       { new: true, runValidators: true }
     ).select('-password');
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
     res.json({
       success: true,
-      message: `User role has been updated to ${role} successfully.`,
+      message: 'Customer details updated successfully by administrator.',
       user,
     });
   } catch (error) {
-    console.error('Error updating user role:', error);
-    res.status(500).json({ success: false, message: 'Failed to update user role.' });
+    console.error('Error updating user details:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to update user details.' });
   }
 };
 

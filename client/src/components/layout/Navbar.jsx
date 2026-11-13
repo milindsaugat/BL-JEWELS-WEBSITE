@@ -50,7 +50,13 @@ export const Navbar = () => {
     let active = true;
     rateService.getLiveRates().then((data) => {
       const rate = data?.goldRates?.find((item) => item.label?.includes('22KT'));
-      if (active && rate?.rate) setLiveGoldPrice(rate.rate + '/g');
+      if (active && rate?.rate) {
+        if (rate.rate === 'Not Available' || data?.ratesAvailable === false) {
+          setLiveGoldPrice('Not Available');
+        } else {
+          setLiveGoldPrice(rate.rate + '/g');
+        }
+      }
     }).catch(() => {});
 
     categoryService.getCategories().then((data) => {
@@ -512,7 +518,7 @@ export const Navbar = () => {
     { key: 'bangles-bracelets', label: 'Bangles & Kadas', path: '/collections/bangles-bracelets', hasDropdown: isDropdownEnabled('bangles-bracelets') },
     { key: 'mangalsutra', label: 'Mangalsutras', path: '/collections/mangalsutra', hasDropdown: isDropdownEnabled('mangalsutra') },
     { label: 'Live Rate', path: '/live-rate', isLiveRate: true },
-    { label: 'Contact Us', path: '/contact' },
+    { label: 'Bank & QR', path: '/bank-accounts' },
   ];
 
   return (
@@ -612,7 +618,7 @@ export const Navbar = () => {
               )}
             </button>
 
-            {/* Patron Account */}
+            {/* Customer Account */}
             <div className="relative">
               <button
                 onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
@@ -623,8 +629,16 @@ export const Navbar = () => {
                 }`}
                 aria-label="User Account Menu"
               >
-                <div className="w-7 h-7 rounded-full bg-[#FAF7F2] border border-[#E9DED2] flex items-center justify-center text-xs font-bold text-[#930303]">
-                  {isAuthenticated ? (user?.name?.[0]?.toUpperCase() || 'P') : <UserIcon className="w-4 h-4 text-stone-600" />}
+                <div className="w-7 h-7 rounded-full bg-[#FAF7F2] border border-[#E9DED2] flex items-center justify-center text-xs font-bold text-[#930303] overflow-hidden shrink-0">
+                  {isAuthenticated ? (
+                    user?.avatar ? (
+                      <img src={user.avatar} alt={user?.name || 'Customer'} className="w-full h-full object-cover" />
+                    ) : (
+                      user?.name?.[0]?.toUpperCase() || 'U'
+                    )
+                  ) : (
+                    <UserIcon className="w-4 h-4 text-stone-600" />
+                  )}
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 text-stone-400 mr-0.5" />
               </button>
@@ -638,8 +652,12 @@ export const Navbar = () => {
                   {isAuthenticated ? (
                     <>
                       <div className="p-4 bg-gradient-to-br from-[#FAF7F2] to-[#F5ECE1] border-b border-stone-200 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#930303] text-white flex items-center justify-center font-display font-bold text-sm shadow-xs shrink-0">
-                          {user?.name?.[0]?.toUpperCase() || 'P'}
+                        <div className="w-10 h-10 rounded-full bg-[#930303] text-white flex items-center justify-center font-display font-bold text-sm shadow-xs shrink-0 overflow-hidden">
+                          {user?.avatar ? (
+                            <img src={user.avatar} alt={user?.name || 'Customer'} className="w-full h-full object-cover" />
+                          ) : (
+                            user?.name?.[0]?.toUpperCase() || 'U'
+                          )}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-display font-bold text-sm text-stone-900 truncate">
@@ -1105,11 +1123,11 @@ export const Navbar = () => {
                 All Collections
               </Link>
               <Link
-                to="/contact"
+                to="/bank-accounts"
                 onClick={() => setMobileMenuOpen(false)}
                 className="py-2.5 px-3 rounded-xl bg-white border border-stone-200 text-stone-700 font-medium"
               >
-                Contact Us
+                Bank &amp; QR Details
               </Link>
             </div>
 

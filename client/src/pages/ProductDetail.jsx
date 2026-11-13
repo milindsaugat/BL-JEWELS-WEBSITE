@@ -79,7 +79,7 @@ export const ProductDetail = () => {
   const [pincodeStatus, setPincodeStatus] = useState(null); // null | 'available' | 'unavailable' | 'invalid'
 
   const { user, isAuthenticated, wishlist, toggleWishlist } = useAuthStore();
-  const { addToCart } = useCartStore();
+  const { addToCart, closeDrawer } = useCartStore();
   const { openAuthModal } = useUIStore();
   const userId = user?.id || user?._id;
 
@@ -227,7 +227,10 @@ export const ProductDetail = () => {
     if (!canBuy) return;
     addToCart(product, v, Math.min(stock, quantity));
     setAdded(true);
-    if (buy) navigate(isAuthenticated ? '/checkout' : '/auth?next=checkout');
+    if (buy) {
+      closeDrawer();
+      navigate(isAuthenticated ? '/checkout' : '/auth?next=checkout');
+    }
   };
 
   // Jewelry Specification Values (with user-provided sample fallbacks)
@@ -381,7 +384,7 @@ export const ProductDetail = () => {
                 <div className="flex items-center gap-1.5 mt-3 text-xs text-stone-600 font-body">
                   <span className="text-amber-500">★</span>
                   <span className="font-semibold text-stone-800">{product.ratings.average}</span>
-                  <span className="text-stone-400">({product.ratings.count} verified patron reviews)</span>
+                  <span className="text-stone-400">({product.ratings.count} verified customer reviews)</span>
                 </div>
               )}
             </div>
@@ -576,12 +579,14 @@ export const ProductDetail = () => {
               )}
 
               {pincodeStatus === 'unavailable' && (
-                <div className="text-[12px] text-amber-800 font-body flex items-start gap-1.5 pt-1">
-                  <AlertCircle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                <div className="text-[12px] text-rose-800 font-body flex items-start gap-1.5 pt-1">
+                  <AlertCircle size={14} className="text-rose-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold">Pincode {pincodeInput} not in direct route</p>
+                    <p className="font-semibold">
+                      Delivery is not available in this pincode area{pincodeInput ? ` (${pincodeInput})` : ''}
+                    </p>
                     <p className="text-stone-500 text-[11px]">
-                      Please contact our Royal Concierge for bespoke secure delivery arrangements.
+                      We currently do not deliver to this location. Please try entering a different delivery pincode.
                     </p>
                   </div>
                 </div>

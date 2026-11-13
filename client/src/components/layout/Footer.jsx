@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { api, legalService, settingsService } from '../../services/api';
 import {
   MapPin,
   Phone,
@@ -49,12 +50,18 @@ const exploreLinks = [
 
 const careLinks = [
   ['Contact Us',                '/contact'],
-  ['My Orders',                 '/account/orders'],
+  ['Official Bank & QR Details','/bank-accounts'],
+  ['Live Bullion Rates',        '/live-rate'],
+  ['Blog & Royal Journal',      '/blog'],
+  ['Our Heritage Story',        '/about'],
+];
+
+const userLinks = [
+  ['My Profile & KYC',          '/account?tab=profile'],
+  ['My Orders',                 '/account?tab=orders'],
   ['My Wishlist',               '/wishlist'],
-  ['My Account',                '/account'],
-  ['Shipping Information',      '/contact'],
-  ['Return & Exchange Policy',  '/contact'],
-  ['FAQs',                      '/contact'],
+  ['Support & Help Tickets',   '/account?tab=support'],
+  ['Address Book',             '/account?tab=addresses'],
 ];
 
 // ─── Trust Strip ──────────────────────────────────────────────────────────────
@@ -102,13 +109,13 @@ const FooterTrustStrip = () => {
 };
 
 // ─── Brand Column ─────────────────────────────────────────────────────────────
-const FooterBrand = () => (
+const FooterBrand = ({ settings }) => (
   <div className="flex flex-col gap-4">
     {/* Logo – natural on background, no white pill */}
     <Link to="/" aria-label="BL Jewels Home">
       <img
         src="/images/bl-jewels-logo.png"
-        alt="BL Jewels"
+        alt={settings?.brandName || 'BL Jewels'}
         loading="lazy"
         className="h-11 w-auto object-contain"
         style={{ maxWidth: '185px' }}
@@ -117,7 +124,7 @@ const FooterBrand = () => (
 
     {/* Tagline */}
     <p className="font-accent text-[11px] tracking-[0.22em] text-[#C9A13B] uppercase">
-      Purity With Auspiciousness
+      {settings?.tagline || 'Purity With Auspiciousness'}
     </p>
 
     {/* Display heading */}
@@ -127,7 +134,7 @@ const FooterBrand = () => (
 
     {/* Description */}
     <p className="text-[14px] text-[#756B65] font-body leading-[1.7] max-w-[270px]">
-      Discover timeless jewellery crafted with purity, elegance and tradition. Celebrate every special moment with BL Jewels.
+      Discover timeless jewellery crafted with purity, elegance and tradition. Celebrate every special moment with {settings?.brandName || 'BL Jewels'}.
     </p>
 
     {/* CTA */}
@@ -182,63 +189,120 @@ const FooterNavColumn = ({ title, links }) => {
   );
 };
 
-// ─── Showroom Column ──────────────────────────────────────────────────────────
-const FooterShowroom = () => (
-  <div>
-    <h3 className="font-accent text-[11px] tracking-[0.20em] uppercase font-semibold text-[#292321] mb-4">
-      Visit Our Showroom
-    </h3>
+// ─── Showroom Column with Live Google Map Embed ──────────────────────────────
+const FooterShowroom = ({ settings }) => {
+  const address = settings?.contact?.address || 'Shop No. 01, Upper Ground Floor, Suresh Mall, MG Road, Civil Lines, Agra, UP 282002';
+  const phone = settings?.contact?.phone || '074549 86610';
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const mapQuery = encodeURIComponent(
+    settings?.contact?.address || 'Suresh Mall, Mahatma Gandhi Road, Civil Lines, Agra, Uttar Pradesh 282002'
+  );
+  const googleMapsUrl = `https://maps.google.com/?q=${mapQuery}`;
 
-    {/* Address block */}
-    <div className="flex gap-2.5 mb-3">
-      <MapPin size={17} className="text-[#C9A13B] shrink-0 mt-[3px]" strokeWidth={1.6} />
-      <p className="text-[14px] text-[#756B65] font-body leading-[1.7]">
-        Shop No. 01, Upper Ground Floor,<br />
-        Suresh Mall, Mahatma Gandhi Road,<br />
-        Civil Lines, Agra,<br />
-        Uttar Pradesh 282002
-      </p>
+  return (
+    <div className="flex flex-col">
+      <h3 className="font-accent text-[11px] tracking-[0.20em] uppercase font-semibold text-[#292321] mb-3">
+        Visit Our Showroom
+      </h3>
+
+      {/* Address block */}
+      <div className="flex gap-2.5 mb-2.5">
+        <MapPin size={16} className="text-[#C9A13B] shrink-0 mt-[3px]" strokeWidth={1.6} />
+        <p className="text-[13px] text-[#756B65] font-body leading-[1.65] whitespace-pre-line">
+          {address}
+        </p>
+      </div>
+
+      {/* Showroom Timing if available */}
+      {settings?.contact?.showroomTiming && (
+        <p className="text-[11.5px] text-[#930303] font-semibold mb-2.5 flex items-center gap-1.5">
+          <span>🕒</span>
+          <span>{settings.contact.showroomTiming}</span>
+        </p>
+      )}
+
+      {/* ── LIVE INTERACTIVE GOOGLE MAP EMBED (Replaces button with actual map) ── */}
+      <div className="w-full my-2 rounded-xl overflow-hidden border border-[#E9DED2] bg-[#FAF7F2] shadow-xs relative group">
+        <iframe
+          title="BL Jewels Showroom Google Map Location"
+          src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+          width="100%"
+          height="140"
+          style={{ border: 0 }}
+          allowFullScreen=""
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+          className="w-full h-[140px] block border-0 transition-opacity duration-300 group-hover:opacity-95"
+        />
+        {/* Floating directions helper badge */}
+        <a
+          href={googleMapsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open in Google Maps app for live GPS navigation"
+          className="absolute bottom-2 right-2 inline-flex items-center gap-1 bg-white/95 hover:bg-white text-[#930303] hover:text-[#780303] text-[11px] font-semibold px-2 py-0.5 rounded shadow-sm border border-stone-200 backdrop-blur-xs transition-transform duration-150 hover:scale-[1.03]"
+        >
+          <span>Live Directions</span>
+          <ArrowUpRight size={11} />
+        </a>
+      </div>
+
+      {/* Phone & Direct Contact */}
+      <div className="mt-2.5 pt-2 border-t border-[#E9DED2]/80 flex flex-wrap items-center justify-between gap-2 text-[13px]">
+        <a
+          href={`tel:${cleanPhone || '07454986610'}`}
+          className="flex items-center gap-2 text-[#756B65] hover:text-[#940303] font-body transition-colors duration-200 group/p"
+        >
+          <Phone size={15} className="text-[#C9A13B] shrink-0 group-hover/p:text-[#940303] transition-colors duration-200" strokeWidth={1.6} />
+          <span>{phone}</span>
+        </a>
+
+        <Link
+          to="/contact"
+          className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#940303] hover:text-[#780303] transition-colors"
+        >
+          <span>Inquire</span>
+          <ArrowRight size={12} />
+        </Link>
+      </div>
     </div>
-
-    {/* Get Directions */}
-    <a
-      href="https://maps.google.com/?q=Suresh+Mall+Mahatma+Gandhi+Road+Civil+Lines+Agra+UP+282002"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1 text-[13px] text-[#940303] hover:text-[#780303] font-body font-medium mb-5 group/d transition-colors duration-200"
-    >
-      <span className="border-b border-[#940303]/30 group-hover/d:border-[#780303]/50 pb-px">Get Directions</span>
-      <ArrowUpRight size={12} className="transition-transform duration-200 group-hover/d:translate-x-0.5 group-hover/d:-translate-y-0.5" />
-    </a>
-
-    {/* Phone */}
-    <a
-      href="tel:07454986610"
-      className="flex items-center gap-2.5 text-[14px] text-[#756B65] hover:text-[#940303] font-body transition-colors duration-200 group/p"
-    >
-      <Phone size={17} className="text-[#C9A13B] shrink-0 group-hover/p:text-[#940303] transition-colors duration-200" strokeWidth={1.6} />
-      074549 86610
-    </a>
-  </div>
-);
+  );
+};
 
 // ─── Newsletter ───────────────────────────────────────────────────────────────
 const FooterNewsletter = () => {
   const [email, setEmail] = useState('');
-  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState({ type: '', text: '' });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const trimmed = email.trim();
+    const trimmed = email.trim().toLowerCase();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setMsg('error');
-      setTimeout(() => setMsg(''), 3500);
+      setStatus({ type: 'error', text: 'Please enter a valid email address.' });
+      setTimeout(() => setStatus({ type: '', text: '' }), 4000);
       return;
     }
-    // Placeholder – wire to backend newsletter endpoint when available
-    setMsg('success');
-    setEmail('');
-    setTimeout(() => setMsg(''), 5000);
+
+    setBusy(true);
+    setStatus({ type: '', text: '' });
+    try {
+      const res = await api.post('/auth/subscribe', { email: trimmed, source: 'footer' });
+      setStatus({
+        type: 'success',
+        text: res.data?.message || "Thank you! You'll be the first to know.",
+      });
+      setEmail('');
+      setTimeout(() => setStatus({ type: '', text: '' }), 5000);
+    } catch (err) {
+      setStatus({
+        type: 'error',
+        text: err.response?.data?.message || 'Unable to subscribe right now. Please try again.',
+      });
+      setTimeout(() => setStatus({ type: '', text: '' }), 4500);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -266,27 +330,29 @@ const FooterNewsletter = () => {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
+                disabled={busy}
                 placeholder="Your email address"
-                className="w-full h-[44px] pl-9 pr-3 border border-[#E9DED2] rounded-[7px] text-[14px] text-[#292321] font-body placeholder-[#B0A49C] bg-white focus:outline-none focus:border-[#C9A13B] transition-colors duration-200"
+                className="w-full h-[44px] pl-9 pr-3 border border-[#E9DED2] rounded-[7px] text-[14px] text-[#292321] font-body placeholder-[#B0A49C] bg-white focus:outline-none focus:border-[#C9A13B] transition-colors duration-200 disabled:opacity-60"
                 aria-describedby="nl-status"
               />
             </div>
             <button
               type="submit"
-              className="h-[44px] px-6 bg-[#940303] hover:bg-[#780303] text-white rounded-[7px] text-[14px] font-semibold font-body transition-colors duration-200 cursor-pointer shrink-0 whitespace-nowrap"
+              disabled={busy}
+              className="h-[44px] px-6 bg-[#940303] hover:bg-[#780303] text-white rounded-[7px] text-[14px] font-semibold font-body transition-colors duration-200 cursor-pointer shrink-0 whitespace-nowrap disabled:opacity-60"
             >
-              Subscribe
+              {busy ? 'Joining...' : 'Subscribe'}
             </button>
           </form>
         </div>
 
         {/* Inline status */}
         <div id="nl-status" className="mt-2 h-5" aria-live="polite">
-          {msg === 'success' && (
-            <p className="text-[13px] text-emerald-600 font-body">Thank you! You'll be the first to know.</p>
+          {status.type === 'success' && (
+            <p className="text-[13px] text-emerald-600 font-body">{status.text}</p>
           )}
-          {msg === 'error' && (
-            <p className="text-[13px] text-red-600 font-body">Please enter a valid email address.</p>
+          {status.type === 'error' && (
+            <p className="text-[13px] text-red-600 font-body">{status.text}</p>
           )}
         </div>
       </div>
@@ -295,30 +361,45 @@ const FooterNewsletter = () => {
 };
 
 // ─── Bottom Bar ───────────────────────────────────────────────────────────────
-const FooterBottomBar = () => {
+const FooterBottomBar = ({ legalPages = [], settings }) => {
   const socials = [
-    { Icon: IgIcon, href: 'https://www.instagram.com/', label: 'Instagram' },
-    { Icon: FbIcon, href: 'https://www.facebook.com/', label: 'Facebook' },
-    { Icon: YtIcon, href: 'https://www.youtube.com/', label: 'YouTube' },
+    { Icon: IgIcon, href: settings?.socialLinks?.instagram || 'https://www.instagram.com/', label: 'Instagram' },
+    { Icon: FbIcon, href: settings?.socialLinks?.facebook || 'https://www.facebook.com/', label: 'Facebook' },
+    { Icon: YtIcon, href: settings?.socialLinks?.youtube || 'https://www.youtube.com/', label: 'YouTube' },
   ];
 
   return (
     <div className="border-t border-[#E9DED2] bg-[#FFFCF8]">
-      <div className="max-w-[1440px] mx-auto px-10 sm:px-12">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 h-auto sm:h-[62px] py-4 sm:py-0">
+      <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-12">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 py-5">
 
-          {/* Copyright */}
-          <p className="text-[12.5px] text-[#756B65] font-body order-3 sm:order-1">
-            © {new Date().getFullYear()} BL Jewels. All rights reserved.
-          </p>
+          {/* Copyright & Brand signature */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3.5 order-3 md:order-1 text-center sm:text-left">
+            <p className="text-[12.5px] text-[#756B65] font-body">
+              © {new Date().getFullYear()} {settings?.brandName || 'BL Jewels'}. All rights reserved.
+            </p>
+            <span className="hidden sm:inline text-stone-300">·</span>
+            <p className="font-accent text-[10px] tracking-[0.24em] uppercase text-[#C9A13B]">
+              {settings?.tagline || 'Purity With Auspiciousness'}
+            </p>
+          </div>
 
-          {/* Brand signature */}
-          <p className="font-accent text-[10px] tracking-[0.26em] uppercase text-[#C9A13B] order-2">
-            Purity With Auspiciousness
-          </p>
+          {/* Dynamic Legal & Compliance Links (Auto-updated from CMS) */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-[12px] text-[#756B65] order-2 font-body font-medium">
+            {legalPages.map((p) => (
+              <Link
+                key={p.slug}
+                to={`/page/${p.slug}`}
+                className="hover:text-[#940303] transition-colors relative group py-0.5"
+              >
+                <span>{p.title}</span>
+                <span className="absolute -bottom-px left-0 w-0 group-hover:w-full h-px bg-[#940303]/40 transition-all duration-200" />
+              </Link>
+            ))}
+          </div>
 
           {/* Social icons */}
-          <div className="flex items-center gap-2.5 order-1 sm:order-3">
+          <div className="flex items-center gap-2.5 order-1 md:order-3">
             {socials.map(({ Icon, href, label }) => (
               <a
                 key={label}
@@ -340,31 +421,73 @@ const FooterBottomBar = () => {
 };
 
 // ─── Main Footer ──────────────────────────────────────────────────────────────
-export const Footer = () => (
-  <footer className="bg-[#FFFCF8] text-[#292321] border-t border-[#E9DED2] font-body">
+export const Footer = () => {
+  const [legalPages, setLegalPages] = useState([
+    { title: 'Privacy Policy', slug: 'privacy-policy' },
+    { title: 'Terms & Conditions', slug: 'terms-and-conditions' },
+  ]);
+  const [settings, setSettings] = useState(null);
 
-    {/* 1. Trust Strip */}
-    <FooterTrustStrip />
+  useEffect(() => {
+    let active = true;
+    legalService.getPublicPages()
+      .then((res) => {
+        const pagesList = res?.pages || res?.data;
+        if (active && res?.success && Array.isArray(pagesList) && pagesList.length > 0) {
+          setLegalPages(pagesList);
+        }
+      })
+      .catch(() => {});
 
-    {/* 2. Main Grid */}
-    <div className="max-w-[1440px] mx-auto px-10 sm:px-12 py-12">
-      <div className="grid grid-cols-2 lg:grid-cols-[1.25fr_1fr_1fr_1.15fr] gap-x-10 xl:gap-x-14 gap-y-10">
-        <div className="col-span-2 lg:col-span-1">
-          <FooterBrand />
+    settingsService.getSettings()
+      .then((res) => {
+        const s = res?.settings || res?.data;
+        if (active && res?.success && s) {
+          setSettings(s);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Dynamically include legal pages into Customer Care links as well
+  const dynamicCareLinks = [
+    ...careLinks,
+    ...legalPages.map((p) => [p.title, `/page/${p.slug}`]),
+  ];
+
+  return (
+    <footer className="bg-[#FFFCF8] text-[#292321] border-t border-[#E9DED2] font-body">
+
+      {/* 1. Trust Strip */}
+      <FooterTrustStrip />
+
+      {/* 2. Main Grid: Brand, Explore Collections, Customer Care, My Account (User Pages in Separate Grid), Showroom with Google Map */}
+      <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-12 py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-8 xl:gap-x-10 gap-y-10">
+          <div className="sm:col-span-2 md:col-span-1 lg:col-span-1">
+            <FooterBrand settings={settings} />
+          </div>
+          <FooterNavColumn title="Explore" links={exploreLinks} />
+          <FooterNavColumn title="Customer Care" links={dynamicCareLinks} />
+          <FooterNavColumn title="My Account" links={userLinks} />
+          <div className="sm:col-span-2 md:col-span-1 lg:col-span-1">
+            <FooterShowroom settings={settings} />
+          </div>
         </div>
-        <FooterNavColumn title="Explore"       links={exploreLinks} />
-        <FooterNavColumn title="Customer Care" links={careLinks}    />
-        <FooterShowroom />
       </div>
-    </div>
 
-    {/* 3. Newsletter – compact horizontal strip */}
-    <FooterNewsletter />
+      {/* 3. Newsletter – compact horizontal strip */}
+      <FooterNewsletter />
 
-    {/* 4. Bottom bar */}
-    <FooterBottomBar />
+      {/* 4. Dynamic Bottom bar */}
+      <FooterBottomBar legalPages={legalPages} settings={settings} />
 
-  </footer>
-);
+    </footer>
+  );
+};
 
 export default Footer;

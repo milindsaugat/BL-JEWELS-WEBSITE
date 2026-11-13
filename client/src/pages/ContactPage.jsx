@@ -1,20 +1,48 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Clock, Sparkles, Send, ShieldCheck } from 'lucide-react';
-import { BRAND } from '../lib/constants';
+import { ticketService } from '../services/api';
+import { useAuthStore } from '../store/authStore';
 
 export const ContactPage = () => {
+  const { user, isAuthenticated } = useAuthStore();
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
+    name: null,
+    phone: null,
+    email: null,
     occasion: 'wedding',
     message: '',
   });
-  const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [submittedTicket, setSubmittedTicket] = useState(null);
 
-  const handleSubmit = (e) => {
+  const effectiveName = formData.name ?? user?.name ?? '';
+  const effectivePhone = formData.phone ?? user?.phone ?? '';
+  const effectiveEmail = formData.email ?? user?.email ?? '';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSent(true);
+    setError('');
+    setSubmitting(true);
+    try {
+      const res = await ticketService.submitContact({
+        name: effectiveName,
+        phone: effectivePhone,
+        email: effectiveEmail,
+        occasion: formData.occasion,
+        message: formData.message,
+        subject: `Showroom Consultation — ${formData.occasion}`,
+      });
+      setSubmittedTicket(res.data || { ticketNumber: '' });
+      setFormData((prev) => ({ ...prev, message: '' }));
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 'Unable to submit your inquiry right now. Please try again.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -89,65 +117,119 @@ export const ContactPage = () => {
 
           {/* Right Appointment Form */}
           <div className="lg:col-span-7 bg-white rounded-3xl p-8 sm:p-10 border border-gold-300/60 shadow-sm">
-            <h2 className="font-display text-2xl font-bold text-charcoal mb-2">
+            <h2 id="contact-form-title" className="font-display text-2xl font-bold text-charcoal mb-2">
               Book a Private Styling Appointment
             </h2>
             <p className="text-xs text-stone-500 font-body mb-6">
               Our gemologists and stylists will curate customized selections aligned with your wedding dates and purity preferences.
             </p>
 
-            {sent ? (
-              <div className="py-12 text-center space-y-3 bg-ivory rounded-2xl border border-gold-200">
+            {error && (
+              <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-800">
+                {error}
+              </p>
+            )}
+
+            {submittedTicket ? (
+              <div role="status" className="py-12 px-6 text-center space-y-3 bg-ivory rounded-2xl border border-gold-200">
                 <Sparkles className="w-10 h-10 text-gold-600 mx-auto" />
                 <h3 className="font-display text-xl font-bold text-charcoal">Appointment Request Received</h3>
+                {submittedTicket.ticketNumber && (
+                  <p className="inline-block rounded-full bg-white border border-gold-300 px-3 py-1 text-[11px] font-semibold text-[#930303]">
+                    Reference ID: {submittedTicket.ticketNumber}
+                  </p>
+                )}
                 <p className="text-xs text-stone-600 font-body max-w-sm mx-auto">
-                  Namaste! Our showroom team will call you within 2 business hours to confirm your appointment.
+                  Namaste! Our showroom team has logged your inquiry and will respond shortly.
                 </p>
+                <div className="pt-2 flex flex-wrap justify-center gap-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setSubmittedTicket(null)}
+                    className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 hover:border-[#930303] hover:text-[#930303] cursor-pointer"
+                  >
+                    Send Another Inquiry
+                  </button>
+                  {isAuthenticated && (
+                    <Link
+                      to="/account"
+                      className="px-4 py-2 rounded-xl bg-[#930303] text-white hover:bg-[#7A0303]"
+                    >
+                      Track in My Account
+                    </Link>
+                  )}
+                </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4 text-xs font-body">
+              <form aria-labelledby="contact-form-title" onSubmit={handleSubmit} method="POST" className="space-y-4 font-body">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Your Full Name *</label>
+                    <label htmlFor="contact-name" className="block text-xs font-semibold text-stone-700 mb-1">
+                      Your Full Name <span aria-hidden="true">*</span>
+                    </label>
                     <input
+                      id="contact-name"
+                      name="name"
                       type="text"
                       required
-                      value={formData.name}
+                      autoComplete="name"
+                      enterKeyHint="next"
+                      value={effectiveName}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="e.g. Radhika Sharma"
-                      className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
+                      className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Contact Phone *</label>
+                    <label htmlFor="contact-phone" className="block text-xs font-semibold text-stone-700 mb-1">
+                      Contact Phone <span aria-hidden="true">*</span>
+                    </label>
                     <input
+                      id="contact-phone"
+                      name="phone"
                       type="tel"
                       required
-                      value={formData.phone}
+                      autoComplete="tel"
+                      inputMode="tel"
+                      enterKeyHint="next"
+                      value={effectivePhone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+91 98200 12345"
-                      className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
+                      className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Email Address</label>
+                  <label htmlFor="contact-email" className="block text-xs font-semibold text-stone-700 mb-1">
+                    Email Address
+                  </label>
                   <input
+                    id="contact-email"
+                    name="email"
                     type="email"
-                    value={formData.email}
+                    autoComplete="email"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    enterKeyHint="next"
+                    value={effectiveEmail}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="name@example.com"
-                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
+                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Celebrating Occasion</label>
+                  <label htmlFor="contact-occasion" className="block text-xs font-semibold text-stone-700 mb-1">
+                    Celebrating Occasion
+                  </label>
                   <select
+                    id="contact-occasion"
+                    name="occasion"
                     value={formData.occasion}
                     onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
+                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                   >
                     <option value="wedding">Bridal & Wedding Trousseau</option>
                     <option value="engagement">Diamond Solitaire Engagement</option>
@@ -157,22 +239,28 @@ export const ContactPage = () => {
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-stone-700 mb-1">Special Preferences / Note</label>
+                  <label htmlFor="contact-message" className="block text-xs font-semibold text-stone-700 mb-1">
+                    Special Preferences / Inquiry <span aria-hidden="true">*</span>
+                  </label>
                   <textarea
+                    id="contact-message"
+                    name="message"
                     rows={3}
+                    required
                     placeholder="Tell us about desired karat purity (22K/18K), budget, or specific styles..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-stone-900 focus:outline-none focus:border-gold-400"
+                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                   />
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full py-3.5 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-1.5 cursor-pointer"
+                  disabled={submitting}
+                  className="w-full py-3.5 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] disabled:opacity-60 text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
-                  <span>Request Private Appointment</span>
+                  <span>{submitting ? 'Sending Request…' : 'Request Private Appointment'}</span>
                 </button>
               </form>
             )}

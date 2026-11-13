@@ -9,10 +9,12 @@ import { PriyaChatbot } from '../components/ai/PriyaChatbot';
 import { QuickViewModal } from '../components/product/QuickViewModal';
 import { LiveRateModal } from '../components/common/LiveRateModal';
 import { AuthModal } from '../components/common/AuthModal';
+import { GlobalSeoSync } from '../components/common/SeoHead';
 
 export const CustomerLayout = () => {
   return (
     <div className="min-h-screen flex flex-col bg-white text-charcoal font-body antialiased">
+      <GlobalSeoSync />
       {/* Top Announcement Ribbon */}
       <AnnouncementBar />
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { settingService } from '../../services/api';
+import { useCartStore } from '../../store/cartStore';
 
 const DEFAULT_CONFIG = {
   enabled: true,
@@ -26,6 +27,21 @@ const DEFAULT_CONFIG = {
 export const AnnouncementBar = () => {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [activeMessageIdx, setActiveMessageIdx] = useState(0);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const { openDrawer } = useCartStore();
+
+  const handlePillClick = (e) => {
+    if (config.pillLink) return;
+    e.preventDefault();
+    const codeMatch = (config.pillText || '').match(/[A-Z0-9]{4,}/i);
+    const code = codeMatch ? codeMatch[0] : 'SHUBH10';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(code).catch(() => {});
+    }
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+    openDrawer();
+  };
 
   useEffect(() => {
     settingService.getSettings()
@@ -161,10 +177,15 @@ export const AnnouncementBar = () => {
                     <span>{config.pillText}</span>
                   </a>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#7A0303] border border-[#C9A44A]/70 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap ml-1 shadow-sm shrink-0">
+                  <button
+                    type="button"
+                    onClick={handlePillClick}
+                    title="Click to copy & view cart"
+                    className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#7A0303] hover:bg-[#5C0202] border border-[#C9A44A]/70 text-[10px] font-bold text-[#F9E59B] uppercase whitespace-nowrap ml-1 shadow-sm transition-all cursor-pointer shrink-0"
+                  >
                     <i className="uil uil-tag-alt text-[10px]" />
-                    <span>{config.pillText}</span>
-                  </span>
+                    <span>{copiedCode ? '✓ Copied!' : config.pillText}</span>
+                  </button>
                 )
               )}
             </div>

@@ -49,6 +49,20 @@ export const authService = {
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }).then(res => res.data),
   verifyOtp: (email, otp) => api.post('/auth/verify-otp', { email, otp }).then(res => res.data),
   resetPassword: (email, otp, newPassword) => api.post('/auth/reset-password', { email, otp, newPassword }).then(res => res.data),
+  requestCredentialOtp: (data = {}) => api.post('/auth/admin/request-credential-otp', data).then(res => res.data),
+  updateCredentials: (data) => api.post('/auth/admin/update-credentials', data).then(res => res.data),
+};
+
+export const settingsService = {
+  getSettings: () => api.get('/settings').then(res => res.data),
+  updateSettings: (data) => api.put('/settings', data).then(res => res.data),
+};
+
+export const legalService = {
+  getAdminPages: () => api.get('/legal/admin/all').then(res => res.data),
+  createPage: (data) => api.post('/legal', data).then(res => res.data),
+  updatePage: (id, data) => api.put(`/legal/${id}`, data).then(res => res.data),
+  deletePage: (id) => api.delete(`/legal/${id}`).then(res => res.data),
 };
 
 export const productService = {
@@ -77,6 +91,13 @@ export const couponService = {
   createCoupon: (data) => api.post('/coupons', data).then(res => res.data),
   updateCoupon: (id, data) => api.put(`/coupons/${id}`, data).then(res => res.data),
   deleteCoupon: (id) => api.delete(`/coupons/${id}`).then(res => res.data),
+};
+
+export const offerService = {
+  getOffers: () => api.get('/offers').then(res => res.data),
+  createOffer: (data) => api.post('/offers', data).then(res => res.data),
+  updateOffer: (id, data) => api.put(`/offers/${id}`, data).then(res => res.data),
+  deleteOffer: (id) => api.delete(`/offers/${id}`).then(res => res.data),
 };
 
 export const categoryService = {
@@ -115,9 +136,30 @@ export const userService = {
   getUsers: (params) => api.get('/users', { params }).then(res => res.data),
   getUserStats: () => api.get('/users/stats').then(res => res.data),
   getUserById: (id) => api.get(`/users/${id}`).then(res => res.data),
+  updateUser: (id, data) => api.put(`/users/${id}`, data).then(res => res.data),
   updateStatus: (id, isActive) => api.patch(`/users/${id}/status`, { isActive }).then(res => res.data),
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }).then(res => res.data),
   deleteUser: (id) => api.delete(`/users/${id}`).then(res => res.data),
+};
+
+export const subscriberService = {
+  getSubscribers: (params) => api.get('/subscribers', { params }).then(res => res.data),
+  addSubscriber: (data) => api.post('/subscribers', data).then(res => res.data),
+  deleteSubscriber: (id) => api.delete(`/subscribers/${id}`).then(res => res.data),
+};
+
+export const blogService = {
+  getAllBlogs: () => api.get('/blogs/all').then(res => res.data),
+  createBlog: (data) => api.post('/blogs', data).then(res => res.data),
+  updateBlog: (id, data) => api.put(`/blogs/${id}`, data).then(res => res.data),
+  deleteBlog: (id) => api.delete(`/blogs/${id}`).then(res => res.data),
+};
+
+export const ticketService = {
+  getAll: (params) => api.get('/tickets', { params }).then(res => res.data),
+  reply: (id, data) => api.post(`/tickets/${id}/reply`, data).then(res => res.data),
+  updateStatus: (id, data) => api.patch(`/tickets/${id}/status`, data).then(res => res.data),
+  remove: (id) => api.delete(`/tickets/${id}`).then(res => res.data),
 };
 
 export const uploadService = {

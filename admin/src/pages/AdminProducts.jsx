@@ -489,8 +489,9 @@ export const AdminProducts = () => {
         labourRate: Number(form.labourRate) || 0,
         labourPercent: Number(form.labourPercent) || 0,
         todaysRate: Number(form.todaysRate) || 0,
-        variants: form.variants.map((v) => ({
+        variants: form.variants.map((v, idx) => ({
           ...v,
+          sku: v.sku?.trim() || `${form.sku ? form.sku.trim() : 'BLJ'}-V${idx + 1}`,
           price: Number(v.price),
           stock: Number(v.stock),
           weight: Number(v.weight || 0),
@@ -641,7 +642,7 @@ export const AdminProducts = () => {
             <p className="text-2xl font-bold font-display text-emerald-700 mt-2">
               {products.filter((p) => p.isActive).length}
             </p>
-            <p className="text-[11px] text-stone-400 mt-0.5">Live for patrons</p>
+            <p className="text-[11px] text-stone-400 mt-0.5">Live for customers</p>
           </div>
 
           <div className="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs">
@@ -1256,8 +1257,11 @@ export const AdminProducts = () => {
                   <p className="text-xs text-stone-600 truncate mt-0.5">{primaryCoverImage.url}</p>
                   <button
                     type="button"
-                    onClick={() => handleRemoveImage(form.images.indexOf(primaryCoverImage))}
-                    className="mt-2 text-xs text-red-700 hover:underline flex items-center gap-1 font-semibold cursor-pointer"
+                    onClick={() => {
+                      handleRemoveImage(form.images.indexOf(primaryCoverImage));
+                      toast.success('Main cover image removed');
+                    }}
+                    className="mt-2.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer w-fit"
                   >
                     <Trash2 size={13} />
                     <span>Remove Cover</span>
@@ -1279,7 +1283,7 @@ export const AdminProducts = () => {
                   Additional Gallery Images (Multi-Photos)
                 </h3>
                 <p className="text-xs text-stone-500 font-body mt-0.5">
-                  Secondary carousel photos for angles, side views, hallmarking marks, and patron zoom.
+                  Secondary carousel photos for angles, side views, hallmarking marks, and customer zoom.
                 </p>
               </div>
 
@@ -1384,7 +1388,7 @@ export const AdminProducts = () => {
                 Jewelry Specifications & Tagging (BL Jewels Engine)
               </h2>
               <p className="text-xs text-stone-500 font-body">
-                Powers the "Product Details" accordion on the patron product page.
+                Powers the "Product Details" accordion on the product page.
               </p>
             </div>
           </div>
@@ -2037,12 +2041,29 @@ export const AdminProducts = () => {
 
                   <div>
                     <label className="block text-[11px] text-stone-500 mb-1">Option Image URL</label>
-                    <input
-                      value={v.image || ''}
-                      onChange={(e) => updateVariant(i, 'image', e.target.value)}
-                      placeholder="https://..."
-                      className="w-full p-2 bg-white border border-stone-200 rounded-lg text-xs"
-                    />
+                    <div className="flex gap-2 items-center">
+                      <input
+                        value={v.image || ''}
+                        onChange={(e) => updateVariant(i, 'image', e.target.value)}
+                        placeholder="https://..."
+                        className="flex-1 p-2 bg-white border border-stone-200 rounded-lg text-xs"
+                      />
+                      {v.image && (
+                        <button
+                          type="button"
+                          onClick={() => updateVariant(i, 'image', '')}
+                          className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg border border-rose-200 transition-colors cursor-pointer shrink-0"
+                          title="Remove Variant Image"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
+                    </div>
+                    {v.image && (
+                      <div className="mt-1.5 w-12 h-12 rounded-lg overflow-hidden border border-stone-200">
+                        <img src={v.image} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

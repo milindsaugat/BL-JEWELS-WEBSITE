@@ -66,6 +66,7 @@ export const seedDatabase = async () => {
     const adminUser = new User({
       name: 'BL Jewels Administrator',
       email: 'admin@bljewels.com',
+      username: 'admin',
       password: 'adminpassword123',
       role: 'admin',
       phone: '+91 98765 43210',
@@ -73,7 +74,7 @@ export const seedDatabase = async () => {
     await adminUser.save();
 
     const customerUser = new User({
-      name: 'Priya Sharma (Demo Patron)',
+      name: 'Priya Sharma',
       email: 'demo@bljewels.com',
       password: 'DemoUser123!',
       role: 'customer',
@@ -98,15 +99,15 @@ export const seedDatabase = async () => {
     console.log('✓ Seeded Admin User (admin@bljewels.com / adminpassword123)');
     console.log('✓ Seeded Customer Demo User (demo@bljewels.com / DemoUser123!)');
 
-    // 6. Seed Patron Reviews / Testimonials
-    console.log('Seeding Patron Reviews & Testimonials...');
+    // 6. Seed Customer Reviews / Testimonials
+    console.log('Seeding Customer Reviews & Testimonials...');
     await Review.deleteMany({});
     const reviewsWithProducts = seedReviews.map((r, idx) => ({
       ...r,
       product: createdProducts[idx % createdProducts.length]._id,
     }));
     const createdReviews = await Review.insertMany(reviewsWithProducts);
-    console.log(`✓ Seeded ${createdReviews.length} patron reflection reviews`);
+    console.log(`✓ Seeded ${createdReviews.length} customer reviews`);
 
     // 7. Seed Global Site Settings
     console.log('Seeding Global Site Settings (Brand Story, Rates, Announcements)...');

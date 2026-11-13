@@ -641,7 +641,7 @@ export const AdminProducts = () => {
             <p className="text-2xl font-bold font-display text-emerald-700 mt-2">
               {products.filter((p) => p.isActive).length}
             </p>
-            <p className="text-[11px] text-stone-400 mt-0.5">Live for patrons</p>
+            <p className="text-[11px] text-stone-400 mt-0.5">Live for customers</p>
           </div>
 
           <div className="bg-white border border-stone-200/90 rounded-2xl p-4 shadow-xs">
@@ -1279,7 +1279,7 @@ export const AdminProducts = () => {
                   Additional Gallery Images (Multi-Photos)
                 </h3>
                 <p className="text-xs text-stone-500 font-body mt-0.5">
-                  Secondary carousel photos for angles, side views, hallmarking marks, and patron zoom.
+                  Secondary carousel photos for angles, side views, hallmarking marks, and customer zoom.
                 </p>
               </div>
 
@@ -1384,7 +1384,7 @@ export const AdminProducts = () => {
                 Jewelry Specifications & Tagging (BL Jewels Engine)
               </h2>
               <p className="text-xs text-stone-500 font-body">
-                Powers the "Product Details" accordion on the patron product page.
+                Powers the "Product Details" accordion on the product page.
               </p>
             </div>
           </div>

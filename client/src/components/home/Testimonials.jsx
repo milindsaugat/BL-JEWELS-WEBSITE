@@ -159,11 +159,11 @@ export const Testimonials = ({ initialReviews = [] }) => {
 
                   </div>
 
-                  {/* Bottom Patron Author Info */}
+                  {/* Bottom Customer Author Info */}
                   <div className="pt-5 border-t border-stone-100 mt-5 flex items-center justify-between gap-3">
                     
                     <div className="flex items-center gap-3 min-w-0">
-                      {/* Patron Avatar Image */}
+                      {/* Customer Avatar Image */}
                       {avatarImg ? (
                         <img
                           src={avatarImg}

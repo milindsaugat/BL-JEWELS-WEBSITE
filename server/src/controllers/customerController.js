@@ -10,7 +10,18 @@ import { isEmailConfigured } from '../services/emailService.js';
 
 const digest = (email, purpose, otp) => crypto.createHmac('sha256', process.env.JWT_SECRET).update(`${email}:${purpose}:${otp}`).digest('hex');
 const emailOf = req => String(req.body.email || '').trim().toLowerCase();
-const safeUser = u => ({ id: u._id, name: u.name, email: u.email, phone: u.phone, role: u.role, addresses: u.addresses, wishlist: u.wishlist });
+const safeUser = u => ({
+  id: u._id,
+  name: u.name,
+  email: u.email,
+  phone: u.phone,
+  avatar: u.avatar || '',
+  panNumber: u.panNumber || '',
+  panCardImage: u.panCardImage || '',
+  role: u.role,
+  addresses: u.addresses,
+  wishlist: u.wishlist
+});
 export const sendCode = purpose => async (req, res) => {
   const email = emailOf(req);
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return res.status(400).json({ message: 'Enter a valid email.' });
@@ -59,11 +70,50 @@ export const verifyCode = (purpose, consume = true) => async (req, res) => {
 };
 export const saveProfile = async (req, res) => {
   try {
-    const name = String(req.body.name || '').trim(), phone = String(req.body.phone || '').trim();
-    if (!name || name.length > 80 || (phone && !/^[+\d\s-]{7,20}$/.test(phone))) return res.status(400).json({ message: 'Enter a valid name and phone.' });
-    req.user.name = name; req.user.phone = phone; await req.user.save();
+    const requestedName = req.body.name !== undefined ? String(req.body.name).trim() : req.user.name;
+    const requestedPhone = req.body.phone !== undefined ? String(req.body.phone).trim() : (req.user.phone || '');
+
+    // Customer details (Name & Phone) are locked for non-admin users. They must raise a support ticket.
+    if (req.user.role !== 'admin') {
+      const isNameChanged = requestedName && requestedName !== req.user.name;
+      const isPhoneChanged = requestedPhone !== (req.user.phone || '');
+      if (isNameChanged || isPhoneChanged) {
+        return res.status(403).json({
+          message: 'Customer personal details (Name & Phone) are verified and locked. To update your profile details, please submit a Support Request.',
+        });
+      }
+    } else {
+      if (requestedName) req.user.name = requestedName;
+      if (requestedPhone) req.user.phone = requestedPhone;
+    }
+
+    // Avatar can be updated or removed
+    if (req.body.avatar !== undefined) {
+      req.user.avatar = String(req.body.avatar || '').trim();
+    }
+
+    // PAN Card number & document image (KYC compliance)
+    if (req.body.panNumber !== undefined) {
+      const cleanPan = String(req.body.panNumber || '').trim().toUpperCase();
+      if (cleanPan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+        return res.status(400).json({
+          message: 'Please provide a valid 10-character PAN number (e.g. ABCDE1234F).',
+        });
+      }
+      req.user.panNumber = cleanPan;
+    }
+
+    if (req.body.panCardImage !== undefined) {
+      req.user.panCardImage = String(req.body.panCardImage || '').trim();
+    }
+
+    if (typeof req.user.save === 'function') {
+      await req.user.save();
+    }
     res.json({ success: true, user: safeUser(req.user) });
-  } catch { res.status(503).json({ message: 'Could not save profile.' }); }
+  } catch {
+    res.status(503).json({ message: 'Could not save profile.' });
+  }
 };
 export const saveAddresses = async (req, res) => {
   try {

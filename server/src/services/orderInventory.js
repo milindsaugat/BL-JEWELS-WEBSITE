@@ -15,7 +15,30 @@ export async function createInventoryOrder(user, body) {
   const lines = orderLines(body.items);
   const address = body.shippingAddress;
   if (!address?.name || !address.line1 || !address.city || !address.state || !/^\d{6}$/.test(address.pincode) || !/^[+\d\s-]{7,20}$/.test(address.phone)) throw new Error('Complete your delivery address.');
-  if (!['razorpay','cod','upi','card'].includes(body.paymentMethod)) throw new Error('Choose a payment method.');
+  if (!['razorpay', 'cod', 'upi', 'card', 'bank_transfer'].includes(body.paymentMethod)) {
+    throw new Error('Choose a payment method.');
+  }
+
+  let bankTransferMeta = null;
+  if (body.paymentMethod === 'bank_transfer') {
+    const bt = body.bankTransfer || {};
+    const txId = String(bt.transactionId || '').trim();
+    const proofUrl = String(bt.proofImage || '').trim();
+    if (txId.length < 4) {
+      throw new Error('Please enter a valid Transaction ID / UTR reference number for bank transfer.');
+    }
+    if (!/^https?:\/\/.+/i.test(proofUrl)) {
+      throw new Error('Please upload your bank transfer / UPI payment proof screenshot before completing checkout.');
+    }
+    bankTransferMeta = {
+      transactionId: txId.slice(0, 120),
+      proofImage: proofUrl.slice(0, 1000),
+      bankAccountId: String(bt.bankAccountId || '').slice(0, 80),
+      bankLabel: String(bt.bankLabel || '').slice(0, 120),
+      bankName: String(bt.bankName || '').slice(0, 120),
+      accountNumberLast4: String(bt.accountNumberLast4 || '').slice(-4),
+    };
+  }
   const session = await mongoose.startSession();
   let order;
   try {
@@ -32,16 +55,49 @@ export async function createInventoryOrder(user, body) {
       const subtotal = items.reduce((sum, i) => sum + i.quantity * i.price, 0);
       let discount = 0;
       if (body.couponCode) {
-        const coupon = await Coupon.findOne({ code: String(body.couponCode).toUpperCase(), isActive: true, validUntil: { $gt: new Date() } }).session(session);
-        if (!coupon || subtotal < coupon.minOrderValue) throw new Error('This coupon is not valid for this order.');
-        discount = Math.min(subtotal, coupon.maxDiscount, coupon.discountType === 'percentage' ? subtotal * coupon.value / 100 : coupon.value);
+        const coupon = await Coupon.findOne({
+          code: String(body.couponCode).toUpperCase(),
+          isActive: true,
+          validUntil: { $gt: new Date() }
+        }).session(session);
+
+        if (!coupon || subtotal < coupon.minOrderValue) {
+          throw new Error('This coupon is not valid for this order.');
+        }
+
+        if (coupon.usageLimit && (coupon.usedCount || 0) >= coupon.usageLimit) {
+          throw new Error('This coupon has reached its maximum usage limit.');
+        }
+
+        const calculated = coupon.discountType === 'percentage'
+          ? ((coupon.maxDiscount && Number(coupon.maxDiscount) > 0)
+              ? Math.min((subtotal * coupon.value) / 100, Number(coupon.maxDiscount))
+              : (subtotal * coupon.value) / 100)
+          : Math.min(coupon.value, subtotal);
+        discount = Math.round(calculated);
+
+        // Atomically increment used count
+        await Coupon.updateOne({ _id: coupon._id }, { $inc: { usedCount: 1 } }).session(session);
       }
       const shipping = subtotal >= 5000 ? 0 : 500;
       const gst = Math.round(Math.max(0, subtotal - discount) * 0.03);
       [order] = await Order.create([{ user, orderNumber: `BLJ-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`, items, shippingAddress: address,
         pricing: { subtotal, discount, coupon: body.couponCode || null, shipping, gst, total: subtotal - discount + shipping + gst },
-        inventoryReserved: true, payment: { method: body.paymentMethod, status: 'pending' }, status: 'placed',
-        statusHistory: [{ status: 'placed', note: 'Order placed; payment pending.' }], isGift: !!body.isGift, giftNote: String(body.giftNote || '').slice(0, 500) }], { session });
+        inventoryReserved: true,
+        payment: {
+          method: body.paymentMethod,
+          status: body.paymentMethod === 'bank_transfer' ? 'verification_pending' : 'pending',
+          ...(bankTransferMeta || {}),
+        },
+        status: 'placed',
+        statusHistory: [{
+          status: 'placed',
+          note:
+            body.paymentMethod === 'bank_transfer'
+              ? `Order placed via Bank / QR transfer (Ref: ${bankTransferMeta.transactionId}); awaiting payment verification.`
+              : 'Order placed; payment pending.',
+        }],
+        isGift: !!body.isGift, giftNote: String(body.giftNote || '').slice(0, 500) }], { session });
     });
     return order;
   } finally { await session.endSession(); }

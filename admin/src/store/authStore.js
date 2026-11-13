@@ -44,4 +44,8 @@ export const useAuthStore = create((set) => ({
     clearSession();
     set({ user: null, token: null, isAuthenticated: false });
   },
+  setUser: (user) => {
+    localStorage.setItem('bl_admin_user', JSON.stringify(user));
+    set({ user });
+  },
 }));

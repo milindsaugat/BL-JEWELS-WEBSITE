@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Eye, ShoppingBag, ShieldCheck } from 'lucide-react';
+import { Heart, Eye, ShoppingBag, ShieldCheck, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useCartStore } from '../../store/cartStore';
 import { useUIStore } from '../../store/uiStore';
+import { useOfferStore } from '../../store/offerStore';
 import { formatCurrency } from '../../lib/utils';
 import { PriceDisplay } from '../common/PriceDisplay';
 
@@ -11,10 +12,18 @@ export const ProductCard = ({ product }) => {
   const { wishlist, toggleWishlist, isAuthenticated } = useAuthStore();
   const { addToCart } = useCartStore();
   const { openQuickView, openAuthModal } = useUIStore();
+  const { getOfferForProduct } = useOfferStore();
 
   const isFav = isAuthenticated && wishlist.includes(product._id);
   const primaryVariant = product.variants?.find(v => v.isDefault && v.stock > 0) || product.variants?.find(v => v.stock > 0) || product.variants?.[0] || {};
   const primaryImage = product.images?.[0]?.url || product.image;
+
+  const offer = getOfferForProduct(product);
+  const effectiveDiscountPrice = offer
+    ? (offer.discountType === 'percentage'
+        ? Math.round(primaryVariant.price - (primaryVariant.price * offer.discountValue) / 100)
+        : Math.round(Math.max(0, primaryVariant.price - offer.discountValue)))
+    : primaryVariant.discountPrice;
 
   const handleQuickAdd = (e) => {
     e.preventDefault();
@@ -59,6 +68,12 @@ export const ProductCard = ({ product }) => {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-1 z-10 pointer-events-none">
+          {offer && (
+            <span className="bg-gradient-to-r from-[#930303] to-[#B02828] text-[#F9E59B] border border-[#C9A44A]/60 font-body text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-pill shadow-md flex items-center gap-1 animate-pulse">
+              <Sparkles className="w-2.5 h-2.5 text-[#E6C975]" />
+              <span>{offer.discountType === 'percentage' ? `SALE -${offer.discountValue}%` : 'FESTIVE SALE'}</span>
+            </span>
+          )}
           {product.isNewArrival && (
             <span className="bg-[#930303] text-white font-body text-[10px] font-semibold uppercase tracking-wider px-2.5 py-0.5 rounded-pill shadow-sm">
               New
@@ -132,7 +147,7 @@ export const ProductCard = ({ product }) => {
         <div className="pt-2 border-t border-border-light/60 space-y-1">
           <PriceDisplay
             price={primaryVariant.price}
-            discountPrice={primaryVariant.discountPrice}
+            discountPrice={effectiveDiscountPrice}
             size="md"
           />
 

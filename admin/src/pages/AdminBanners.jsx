@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Plus,
   Trash2,
@@ -21,6 +22,17 @@ export const AdminBanners = () => {
   const [editingBanner, setEditingBanner] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+
+  useEffect(() => {
+    if (showModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showModal]);
 
   const [formData, setFormData] = useState({
     isImageOnly: false,
@@ -186,7 +198,10 @@ export const AdminBanners = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* ══════════════════════════════════════════════════════════════════
+          HOMEPAGE HERO BANNERS & SLIDER CMS
+      ══════════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-stone-200 gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-stone-900">
@@ -327,15 +342,19 @@ export const AdminBanners = () => {
       )}
 
       {/* Add / Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/70 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full border border-gold-300 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      {showModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div role="dialog" aria-modal="true" className="bg-white rounded-2xl p-4 sm:p-5 max-w-lg w-full border border-stone-200 shadow-2xl max-h-[90vh] my-auto overflow-y-auto space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
             
             <div className="flex items-center justify-between pb-3 border-b border-stone-200">
-              <h3 className="font-display text-xl font-bold text-[#930303]">
+              <h3 className="font-display text-base font-bold text-[#930303]">
                 {editingBanner ? 'Edit Hero Slide' : 'Add New Hero Banner'}
               </h3>
-              <button onClick={() => setShowModal(false)} className="text-stone-400 hover:text-charcoal text-sm">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="w-7 h-7 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 flex items-center justify-center text-sm leading-none transition-colors"
+              >
                 ✕
               </button>
             </div>
@@ -440,30 +459,49 @@ export const AdminBanners = () => {
 
                   {/* Uploaded File Confirmation & Live Preview */}
                   {formData.image && (
-                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-center gap-3">
-                      <img
-                        src={formData.image}
-                        alt="Banner Preview"
-                        className="w-16 h-12 rounded-lg object-cover border border-stone-300 shrink-0"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                          <span>Uploaded to Cloudinary</span>
+                    <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <img
+                          src={formData.image}
+                          alt="Banner Preview"
+                          className="w-16 h-12 rounded-lg object-cover border border-stone-300 shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>Uploaded to Cloudinary</span>
+                          </div>
+                          <p className="text-[11px] text-stone-600 truncate font-mono mt-0.5">
+                            {formData.originalFilename || formData.cloudinaryPublicId || 'Custom Asset'}
+                          </p>
+                          <a
+                            href={formData.image}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] text-[#930303] hover:underline flex items-center gap-1 mt-0.5"
+                          >
+                            <span>View on Cloudinary CDN</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
                         </div>
-                        <p className="text-[11px] text-stone-600 truncate font-mono mt-0.5">
-                          {formData.originalFilename || formData.cloudinaryPublicId || 'Custom Asset'}
-                        </p>
-                        <a
-                          href={formData.image}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[10px] text-[#930303] hover:underline flex items-center gap-1 mt-0.5"
-                        >
-                          <span>View on Cloudinary CDN</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            image: '',
+                            cloudinaryPublicId: '',
+                            originalFilename: '',
+                          }));
+                          toast.success('Banner image removed');
+                        }}
+                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold rounded-xl text-xs flex items-center gap-1.5 border border-rose-200 transition-colors cursor-pointer shrink-0"
+                        title="Remove banner image"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
                     </div>
                   )}
 
@@ -664,7 +702,8 @@ export const AdminBanners = () => {
             </form>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

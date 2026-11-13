@@ -103,7 +103,20 @@ export const createGoldRateService = ({ getConfig = getProviderConfig, fetchImpl
     finally { pending = null; }
   };
 
-  return { getRates, getStatus: () => ({
+  const resetCooldown = () => {
+    retryAt = 0;
+    lastFailure = null;
+    lastAttempt = null;
+  };
+
+  const invalidateCache = () => {
+    cache = null;
+    retryAt = 0;
+    lastFailure = null;
+    lastAttempt = null;
+  };
+
+  return { getRates, resetCooldown, invalidateCache, getStatus: () => ({
     hasCache: Boolean(cache), refreshInProgress: Boolean(pending),
     lastUpdated: cache ? new Date(cache.updatedAt).toISOString() : null,
     lastApiCall: lastAttempt === null ? null : new Date(lastAttempt).toISOString(),

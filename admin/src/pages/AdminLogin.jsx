@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, Eye, EyeOff, KeyRound, Mail, Lock, X, CheckCircle2, RotateCw, Zap, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/api';
+import Lightfall from '../components/Lightfall';
 
 export const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -21,6 +23,31 @@ export const AdminLogin = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState('');
   const [forgotSuccessMsg, setForgotSuccessMsg] = useState('');
+
+  // Lock body background to royal obsidian maroon while on Login screen
+  useEffect(() => {
+    const prevBg = document.body.style.getPropertyValue('background-color');
+    const prevPriority = document.body.style.getPropertyPriority('background-color');
+    document.body.style.setProperty('background-color', '#120404', 'important');
+    return () => {
+      if (prevBg) {
+        document.body.style.setProperty('background-color', prevBg, prevPriority);
+      } else {
+        document.body.style.removeProperty('background-color');
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (showForgotModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showForgotModal]);
 
   const { login, isLoading } = useAuthStore();
   const navigate = useNavigate();
@@ -137,10 +164,47 @@ export const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF6F3] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-[radial-gradient(#C9A44A_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
+    <div
+      className="relative min-h-screen w-full overflow-hidden flex items-center justify-center p-4"
+      style={{ backgroundColor: '#120404' }}
+    >
+      {/* ── INTERACTIVE ROYAL LIGHTFALL BACKGROUND ── */}
+      <div
+        className="fixed inset-0 w-full h-full z-0 pointer-events-auto"
+        style={{ backgroundColor: '#120404' }}
+      >
+        <Lightfall
+          colors={["#C9A44A", "#DFBF68", "#FFD700", "#FFFFFF", "#930303", "#F5E6CC"]}
+          backgroundColor="#120404"
+          style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
+          speed={0.3}
+          streakCount={2}
+          streakWidth={0.8}
+          twinkle={0.3}
+          backgroundGlow={0.15}
+          headGlow={0.65}
+          bloom={0.35}
+          mouseInteraction
+          holdToWarp
+          intro
+          streakLength={1}
+          density={0.6}
+          glow={1}
+          depth={0.5}
+          zoom={3}
+          mouseStrength={0.4}
+          mouseRadius={0.45}
+          lens={0.5}
+          fade={0}
+          lightMode={false}
+        />
+      </div>
 
-      <div className="relative z-10 w-full max-w-md bg-white border border-[#C9A44A]/40 rounded-3xl p-8 sm:p-10 shadow-2xl space-y-6 text-stone-900">
+      {/* Subtle royal ambient vignette overlay */}
+      <div className="absolute inset-0 bg-radial from-transparent via-black/25 to-black/60 pointer-events-none z-1" />
+
+      {/* Floating Login Card with Gold Halo and Glassmorphism */}
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-md border border-[#C9A44A]/60 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/60 space-y-6 text-stone-900">
         
         {/* Emblem */}
         <div className="text-center space-y-3">
@@ -178,7 +242,7 @@ export const AdminLogin = () => {
               </span>
             </div>
             <p className="text-[11px] text-stone-500 font-body truncate mt-0.5">
-              admin@bljewels.com • Pass: adminpassword123
+              admin or admin@bljewels.com • Pass: adminpassword123
             </p>
           </div>
 
@@ -201,14 +265,14 @@ export const AdminLogin = () => {
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-body">
           <div>
-            <label className="block text-stone-700 font-semibold mb-1">Admin Email Address</label>
+            <label className="block text-stone-700 font-semibold mb-1">Admin Email or Username</label>
             <input
-              type="email"
+              type="text"
               autoComplete="username"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. admin@bljewels.com"
+              placeholder="e.g. admin or admin@bljewels.com"
               className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
             />
           </div>
@@ -276,9 +340,9 @@ export const AdminLogin = () => {
       </div>
 
       {/* ── FORGOT PASSWORD MODAL (EMAIL OTP FLOW VIA GOOGLE SMTP) ── */}
-      {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-white border border-[#C9A44A]/50 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-stone-900">
+      {showForgotModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div role="dialog" aria-modal="true" className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto bg-white border border-[#C9A44A]/50 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 text-stone-900 my-auto">
             
             {/* Close Modal Button */}
             <button
@@ -483,7 +547,8 @@ export const AdminLogin = () => {
             )}
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

@@ -38,8 +38,9 @@ export default {
         royalCrimson: '#930303',
       },
       fontFamily: {
-        display: ['"Bodoni Moda"', 'Georgia', 'serif'],
-        heading: ['"Bodoni Moda"', 'Georgia', 'serif'],
+        cormorant: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        display: ['"Cormorant Garamond"', '"Bodoni Moda"', 'Georgia', 'serif'],
+        heading: ['"Cormorant Garamond"', '"Bodoni Moda"', 'Georgia', 'serif'],
         body:    ['"DM Sans"', 'system-ui', 'sans-serif'],
         accent:  ['Cinzel', 'serif'],
         script:  ['"Alex Brush"', '"Great Vibes"', 'cursive'],

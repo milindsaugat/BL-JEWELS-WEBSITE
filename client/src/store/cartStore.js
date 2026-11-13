@@ -9,11 +9,38 @@ const loadCartFromStorage = () => {
   }
 };
 
+const loadCouponFromStorage = () => {
+  try {
+    const saved = localStorage.getItem('bl_coupon');
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
+const calculateDiscount = (items, coupon) => {
+  if (!coupon) return 0;
+  const subtotal = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  if (subtotal < (coupon.minOrderValue || 0)) return 0;
+  if (coupon.discountType === 'percentage') {
+    const raw = (subtotal * coupon.value) / 100;
+    const capped = (coupon.maxDiscount && Number(coupon.maxDiscount) > 0)
+      ? Math.min(raw, Number(coupon.maxDiscount))
+      : raw;
+    return Math.round(capped);
+  }
+  return Math.round(Math.min(coupon.value, subtotal));
+};
+
+const initialItems = loadCartFromStorage();
+const initialCoupon = loadCouponFromStorage();
+const initialDiscount = calculateDiscount(initialItems, initialCoupon);
+
 export const useCartStore = create((set, get) => ({
-  items: loadCartFromStorage(),
+  items: initialItems,
   isDrawerOpen: false,
-  coupon: null,
-  discount: 0,
+  coupon: initialCoupon,
+  discount: initialDiscount,
 
   openDrawer: () => set({ isDrawerOpen: true }),
   closeDrawer: () => set({ isDrawerOpen: false }),
@@ -31,7 +58,12 @@ export const useCartStore = create((set, get) => ({
       let newItems;
       if (itemIndex > -1) {
         newItems = [...state.items];
-        newItems[itemIndex] = { ...newItems[itemIndex], variant: selectedVariant, price: selectedVariant.discountPrice ?? selectedVariant.price, quantity: Math.min(selectedVariant.stock, newItems[itemIndex].quantity + quantity) };
+        newItems[itemIndex] = {
+          ...newItems[itemIndex],
+          variant: selectedVariant,
+          price: selectedVariant.discountPrice ?? selectedVariant.price,
+          quantity: Math.min(selectedVariant.stock, newItems[itemIndex].quantity + quantity),
+        };
       } else {
         newItems = [
           ...state.items,
@@ -45,7 +77,8 @@ export const useCartStore = create((set, get) => ({
       }
 
       localStorage.setItem('bl_cart', JSON.stringify(newItems));
-      return { items: newItems, isDrawerOpen: true };
+      const newDiscount = calculateDiscount(newItems, state.coupon);
+      return { items: newItems, discount: newDiscount, isDrawerOpen: true };
     });
   },
 
@@ -55,7 +88,8 @@ export const useCartStore = create((set, get) => ({
         (i) => !(i.product._id === productId && (i.variant?.sku === variantIdentifier || i.variant?.label === variantIdentifier))
       );
       localStorage.setItem('bl_cart', JSON.stringify(newItems));
-      return { items: newItems };
+      const newDiscount = calculateDiscount(newItems, state.coupon);
+      return { items: newItems, discount: newDiscount };
     });
   },
 
@@ -72,23 +106,30 @@ export const useCartStore = create((set, get) => ({
         return i;
       });
       localStorage.setItem('bl_cart', JSON.stringify(newItems));
-      return { items: newItems };
+      const newDiscount = calculateDiscount(newItems, state.coupon);
+      return { items: newItems, discount: newDiscount };
     });
   },
 
   clearCart: () => {
     localStorage.removeItem('bl_cart');
+    localStorage.removeItem('bl_coupon');
     set({ items: [], coupon: null, discount: 0 });
   },
 
   applyCoupon: (coupon) => {
+    const subtotal = get().getSubtotal();
+    const qualifies = subtotal >= (coupon.minOrderValue || 0);
+    const finalDiscount = qualifies ? calculateDiscount(get().items, coupon) : 0;
+    localStorage.setItem('bl_coupon', JSON.stringify(coupon));
     set({
       coupon,
-      discount: coupon.calculatedDiscount || 0,
+      discount: finalDiscount,
     });
   },
 
   removeCoupon: () => {
+    localStorage.removeItem('bl_coupon');
     set({ coupon: null, discount: 0 });
   },
 
@@ -123,4 +164,3 @@ export const useCartStore = create((set, get) => ({
     return items.reduce((acc, item) => acc + item.quantity, 0);
   },
 }));
-

@@ -208,7 +208,7 @@ export const AdminOrders = () => {
 
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-stone-900">
-                        {order.shippingAddress?.name || 'Valued Patron'}
+                        {order.shippingAddress?.name || 'Valued Customer'}
                       </div>
                       <div className="text-[11px] text-stone-500">
                         {order.shippingAddress?.city || 'India'}, {order.shippingAddress?.state || ''}
@@ -358,7 +358,7 @@ export const AdminOrders = () => {
                   onClick={() => handleUpdateStatus(selectedOrder._id)}
                   className="px-4 py-2 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold shadow-sm transition-all"
                 >
-                  {updatingStatus ? 'Updating Vault Records...' : 'Save & Notify Patron'}
+                  {updatingStatus ? 'Updating Records...' : 'Save & Notify Customer'}
                 </button>
               </div>
             </div>

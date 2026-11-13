@@ -62,36 +62,78 @@ export const getAllOrders = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, note } = req.body;
+    const nextStatus = req.body.status || req.body.orderStatus;
+    const { note, paymentStatus, trackingNumber, carrier } = req.body;
+    const validPayStatuses = ['pending', 'verification_pending', 'paid', 'failed', 'refunded'];
 
     if (getDbStatus()) {
-      if (status === 'cancelled') {
+      if (nextStatus === 'cancelled') {
         const order = await cancelInventoryOrder({ _id: id }, note);
         return res.json({ success: true, order });
       }
       const order = await Order.findById(id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
-      if (order.status === 'cancelled') return res.status(400).json({ message: 'A cancelled order cannot be reopened. Create a new order.' });
-      order.status = status;
-      order.statusHistory.push({
-        status,
-        note: note || `Order updated to ${status}`,
-        updatedAt: new Date(),
-      });
+      if (nextStatus) {
+        if (order.status === 'cancelled') {
+          return res.status(400).json({ message: 'A cancelled order cannot be reopened. Create a new order.' });
+        }
+        order.status = nextStatus;
+        order.statusHistory.push({
+          status: nextStatus,
+          note: note || `Order updated to ${nextStatus}`,
+          updatedAt: new Date(),
+        });
+      }
+
+      if (trackingNumber) {
+        order.tracking = {
+          ...(order.tracking?.toObject?.() || order.tracking || {}),
+          trackingId: String(trackingNumber).trim(),
+          carrier: carrier || order.tracking?.carrier || 'Blue Dart Armored Security Logistics',
+        };
+      }
+
+      if (paymentStatus && validPayStatuses.includes(paymentStatus)) {
+        order.payment.status = paymentStatus;
+        if (paymentStatus === 'paid') {
+          order.payment.verifiedAt = new Date();
+          order.payment.paidAt = order.payment.paidAt || new Date();
+          if (order.status === 'placed') {
+            order.status = 'confirmed';
+          }
+          order.statusHistory.push({
+            status: order.status,
+            note: note || 'Bank transfer payment verified by administrator.',
+            updatedAt: new Date(),
+          });
+        } else if (paymentStatus === 'failed') {
+          order.statusHistory.push({
+            status: order.status,
+            note: note || 'Bank transfer payment proof marked failed / rejected.',
+            updatedAt: new Date(),
+          });
+        }
+      }
+
       await order.save();
       return res.json({ success: true, order });
     } else {
       const order = memoryStore.orders.find(o => o._id === id || o.orderNumber === id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
-      order.status = status;
-      order.statusHistory = order.statusHistory || [];
-      order.statusHistory.push({
-        status,
-        note: note || `Order updated to ${status}`,
-        updatedAt: new Date(),
-      });
+      if (nextStatus) {
+        order.status = nextStatus;
+        order.statusHistory = order.statusHistory || [];
+        order.statusHistory.push({
+          status: nextStatus,
+          note: note || `Order updated to ${nextStatus}`,
+          updatedAt: new Date(),
+        });
+      }
+      if (paymentStatus && validPayStatuses.includes(paymentStatus)) {
+        order.payment = { ...(order.payment || {}), status: paymentStatus };
+      }
       return res.json({ success: true, order });
     }
   } catch (error) {

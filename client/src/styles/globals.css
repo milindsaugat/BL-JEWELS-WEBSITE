@@ -13,14 +13,14 @@
   html, body {
     margin: 0 !important;
     padding: 0 !important;
-    max-width: 100vw;
-    overflow-x: hidden !important;
+    max-width: 100%;
+    overflow-x: clip !important;
   }
 
   html {
     scroll-behavior: smooth;
-    scroll-padding-top: 8rem;
-    overflow-y: auto !important;
+    scroll-padding-top: 9.5rem;
+    overflow-y: visible !important;
   }
 
   :root {
@@ -46,8 +46,8 @@
     margin: 0 !important;
     padding: 0 !important;
     width: 100%;
-    max-width: 100vw;
-    overflow-x: hidden;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   ::selection {
@@ -217,3 +217,431 @@
   width: 0 !important;
   height: 0 !important;
 }
+
+/* ── Flip Card & Ticker Keyframes ── */
+@keyframes colon-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes gold-shimmer-border {
+  0%, 100% {
+    border-color: rgba(201, 164, 74, 0.38);
+    box-shadow: 0 12px 45px rgba(201, 164, 74, 0.12), 0 0 0 1px rgba(201, 164, 74, 0.2);
+  }
+  50% {
+    border-color: rgba(237, 217, 138, 0.75);
+    box-shadow: 0 16px 55px rgba(201, 164, 74, 0.22), 0 0 0 1.5px rgba(237, 217, 138, 0.5);
+  }
+}
+
+.animate-colon-blink {
+  animation: colon-blink 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-gold-shimmer-border {
+  animation: gold-shimmer-border 4s ease-in-out infinite;
+}
+
+.perspective-500 {
+  perspective: 500px;
+}
+
+@keyframes aurora-light {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translate3d(24px, -16px, 0) scale(1.08);
+    opacity: 0.85;
+  }
+}
+
+@keyframes gold-sparkle-float {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(6px, -12px, 0) rotate(12deg);
+    opacity: 0.9;
+  }
+}
+
+@keyframes light-sweep {
+  0% {
+    transform: translateX(-120%) skewX(-15deg);
+  }
+  45%, 100% {
+    transform: translateX(250%) skewX(-15deg);
+  }
+}
+
+.animate-aurora-light {
+  animation: aurora-light 10s ease-in-out infinite;
+}
+
+.animate-sparkle-1 {
+  animation: gold-sparkle-float 6s ease-in-out infinite;
+}
+
+.animate-sparkle-2 {
+  animation: gold-sparkle-float 8s ease-in-out infinite 2s;
+}
+
+.animate-sparkle-3 {
+  animation: gold-sparkle-float 7s ease-in-out infinite 4s;
+}
+
+.animate-light-sweep {
+  animation: light-sweep 10s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-aurora-light,
+  .animate-sparkle-1,
+  .animate-sparkle-2,
+  .animate-sparkle-3,
+  .animate-light-sweep {
+    animation: none !important;
+  }
+}
+
+/* ── Royal Journal: Editorial Magazine Prose Typography ─────────────────────── */
+.bl-editorial-prose {
+  color: #39322E;
+  font-size: 16px;
+  line-height: 1.8;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 768px) {
+  .bl-editorial-prose {
+    font-size: 17px;
+    line-height: 1.8;
+  }
+}
+
+.bl-editorial-prose > p:first-of-type {
+  font-size: 17px;
+  line-height: 1.8;
+  color: #292321;
+}
+
+@media (min-width: 768px) {
+  .bl-editorial-prose > p:first-of-type {
+    font-size: 18px;
+    line-height: 1.8;
+  }
+}
+
+.bl-editorial-prose > p:first-of-type::first-letter {
+  float: left;
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-size: 3.35rem;
+  line-height: 0.86;
+  font-weight: 500;
+  color: #940303;
+  margin-right: 0.7rem;
+  margin-top: 0.25rem;
+}
+
+.bl-editorial-prose p {
+  margin-top: 0;
+  margin-bottom: 1.375rem;
+}
+
+.bl-editorial-prose h2 {
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.22;
+  font-weight: 500;
+  color: #940303;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid #E9DED2;
+  scroll-margin-top: 7.5rem;
+}
+
+.bl-editorial-prose h3 {
+  font-size: clamp(20px, 2.2vw, 24px);
+  line-height: 1.3;
+  font-weight: 500;
+  color: #292321;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  scroll-margin-top: 7.5rem;
+}
+
+.bl-editorial-prose ul,
+.bl-editorial-prose ol {
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.bl-editorial-prose ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.bl-editorial-prose ul li {
+  position: relative;
+  padding-left: 1.35rem;
+  margin-bottom: 0.7rem;
+}
+
+.bl-editorial-prose ul li::before {
+  content: '';
+  position: absolute;
+  left: 0.15rem;
+  top: 0.68em;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #D4AF66;
+}
+
+.bl-editorial-prose ol {
+  list-style: decimal;
+}
+
+.bl-editorial-prose ol li {
+  padding-left: 0.35rem;
+  margin-bottom: 0.7rem;
+}
+
+.bl-editorial-prose ol li::marker {
+  color: #940303;
+  font-weight: 600;
+}
+
+.bl-editorial-prose strong,
+.bl-editorial-prose b {
+  color: #292321;
+  font-weight: 600;
+}
+
+.bl-editorial-prose a {
+  color: #940303;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(148, 3, 3, 0.3);
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.bl-editorial-prose a:hover {
+  color: #700202;
+  border-bottom-color: #700202;
+  text-decoration: underline;
+}
+
+.bl-editorial-prose blockquote {
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  border-left: 3px solid #D4AF66;
+  background-color: #F8F2EC;
+  border-radius: 0 12px 12px 0;
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(18px, 2vw, 22px);
+  line-height: 1.55;
+  color: #292321;
+}
+
+.bl-editorial-prose figure {
+  margin: 2rem 0;
+}
+
+.bl-editorial-prose img {
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid #E9DED2;
+  display: block;
+}
+
+.bl-editorial-prose figcaption {
+  margin-top: 0.6rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #756B65;
+  text-align: center;
+}
+
+.bl-editorial-prose hr {
+  margin: 2.25rem 0;
+  border: 0;
+  border-top: 1px solid #E9DED2;
+}
+
+/* Comparison / Data Tables inside Editorial Prose */
+.bl-editorial-prose .bl-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1.75rem 0;
+  border: 1px solid #E9DED2;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+}
+
+.bl-editorial-prose table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.bl-editorial-prose thead th {
+  background-color: #F8F2EC;
+  color: #292321;
+  font-weight: 600;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #E9DED2;
+  white-space: nowrap;
+}
+
+.bl-editorial-prose tbody td,
+.bl-editorial-prose tbody th {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #E9DED2;
+  color: #39322E;
+  vertical-align: top;
+}
+
+.bl-editorial-prose tbody tr:last-child td,
+.bl-editorial-prose tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.bl-editorial-prose .bl-callout,
+.bl-editorial-prose .callout,
+.bl-editorial-prose [data-callout] {
+  margin: 1.75rem 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #E9DED2;
+  border-left: 3px solid #940303;
+  background-color: #F8F2EC;
+  color: #292321;
+}
+
+.bl-editorial-prose .bl-callout > :last-child,
+.bl-editorial-prose .callout > :last-child,
+.bl-editorial-prose [data-callout] > :last-child {
+  margin-bottom: 0;
+}
+
+.bl-editorial-prose details {
+  margin: 0.9rem 0;
+  padding: 1rem 1.25rem;
+  border: 1px solid #E9DED2;
+  border-radius: 12px;
+  background-color: #FFFFFF;
+  transition: border-color 0.2s ease;
+}
+
+.bl-editorial-prose details[open] {
+  border-color: #D4AF66;
+}
+
+.bl-editorial-prose summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #292321;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bl-editorial-prose summary::-webkit-details-marker {
+  display: none;
+}
+
+.bl-editorial-prose summary::after {
+  content: '+';
+  color: #940303;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.bl-editorial-prose details[open] summary::after {
+  content: '−';
+}
+
+.bl-editorial-prose details[open] summary {
+  color: #940303;
+  margin-bottom: 0.65rem;
+}
+
+/* ─── Legal Content Styling ─── */
+.legal-content-body h2 {
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #930303;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(201, 164, 74, 0.35);
+}
+
+.legal-content-body h3 {
+  font-family: 'Bodoni Moda', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1C1410;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.legal-content-body p {
+  color: #4A403A;
+  line-height: 1.75;
+  margin-bottom: 1rem;
+}
+
+.legal-content-body ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 1.25rem;
+}
+
+.legal-content-body ul li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.6rem;
+  color: #4A403A;
+  line-height: 1.65;
+}
+
+.legal-content-body ul li::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  top: 0.15rem;
+  color: #C9A44A;
+  font-size: 0.75rem;
+}
+
+.legal-content-body strong {
+  color: #1C1410;
+  font-weight: 600;
+}
+
+.legal-content-body code {
+  background-color: #FAF7F2;
+  border: 1px solid #E9DED2;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.375rem;
+  font-size: 0.85em;
+  font-family: monospace;
+  color: #930303;
+}
+
