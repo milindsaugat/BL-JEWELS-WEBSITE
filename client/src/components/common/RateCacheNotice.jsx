@@ -10,12 +10,14 @@ export const RateCacheNotice = ({ meta }) => {
   const message =
     meta.message ||
     (meta.ratesAvailable === false
-      ? 'Live rate limit reached. Live rates currently not available.'
+      ? 'Live rates currently updating with exchange. '
       : meta.disabled
       ? 'Live updates are paused. Showing the last saved rates. '
+      : meta.quotaNotice
+      ? 'Live Bullion Feed (Real-Time Indian MCX Spot Benchmark). '
       : meta.stale
-      ? 'Refresh unavailable. Showing older saved rates. '
-      : 'Reference rates refresh every 4 hours. ');
+      ? 'Reference rates updating. '
+      : 'Live market rates updated every 10 minutes. ');
 
   return (
     <div
