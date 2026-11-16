@@ -186,16 +186,17 @@ export const AdminLogin = () => {
       </div>
 
       {/* Subtle royal ambient vignette overlay */}
-      <div className="absolute inset-0 bg-radial from-transparent via-black/25 to-black/60 pointer-events-none z-1" />
+      <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/50 pointer-events-none z-1" />
 
-      <div className="relative z-10 w-full max-w-md bg-[#180808]/90 backdrop-blur-2xl border border-[#C9A44A]/40 rounded-3xl p-8 sm:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_40px_rgba(201,164,74,0.12)] space-y-6 text-stone-100 relative overflow-hidden">
+      {/* Floating Login Card: Luxury Transparent Frosted Glassmorphism */}
+      <div className="relative z-10 w-full max-w-md bg-black/30 backdrop-blur-xl border border-white/15 border-t-[#C9A44A]/60 rounded-3xl p-8 sm:p-10 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] space-y-6 text-stone-100 relative overflow-hidden">
         
         {/* Subtle top gold rim accent */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/50 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/70 to-transparent pointer-events-none" />
 
         {/* Emblem */}
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#2D0F0F] via-[#1F0808] to-[#120404] p-3 border border-[#C9A44A]/60 flex items-center justify-center shadow-[0_0_20px_rgba(201,164,74,0.25)]">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-black/40 backdrop-blur-md p-3 border border-[#C9A44A]/60 flex items-center justify-center shadow-[0_0_25px_rgba(201,164,74,0.3)]">
             <img
               src="/images/bl-jewels-icon.png"
               alt="BL Jewels Royal Monogram"
@@ -203,28 +204,28 @@ export const AdminLogin = () => {
             />
           </div>
           <div>
-            <h1 className="font-accent text-2xl sm:text-3xl font-bold tracking-cinzel bg-gradient-to-r from-[#FFF5D6] via-[#DFBF68] to-[#C9A44A] bg-clip-text text-transparent drop-shadow-sm">
+            <h1 className="font-accent text-2xl sm:text-3xl font-bold tracking-cinzel bg-gradient-to-r from-[#FFF5D6] via-[#DFBF68] to-[#C9A44A] bg-clip-text text-transparent drop-shadow-md">
               BL JEWELS
             </h1>
-            <p className="font-accent text-[11px] tracking-[0.25em] text-[#C9A44A]/80 uppercase mt-1">
+            <p className="font-accent text-[11px] tracking-[0.25em] text-[#DFBF68] uppercase mt-1 font-semibold">
               Welcome Back • Store Administration
             </p>
           </div>
         </div>
 
         {/* 1-Click Instant Demo Admin Access */}
-        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#240A0A]/90 to-[#180606]/90 border border-[#C9A44A]/30 flex items-center justify-between gap-3 shadow-inner">
+        <div className="p-3.5 rounded-2xl bg-black/50 backdrop-blur-md border border-[#C9A44A]/50 flex items-center justify-between gap-3 shadow-md">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="font-accent text-[11px] font-bold text-[#DFBF68] uppercase tracking-wider">
+              <span className="font-accent text-[11px] font-bold text-[#FFD700] uppercase tracking-wider">
                 1-Click Executive Admin
               </span>
             </div>
-            <p className="text-[11px] text-stone-400 font-body truncate mt-0.5">
+            <p className="text-[11px] text-stone-300 font-mono truncate mt-0.5">
               admin or admin@bljewels.com • Pass: adminpassword123
             </p>
           </div>
@@ -233,7 +234,7 @@ export const AdminLogin = () => {
             type="button"
             onClick={handleQuickDemoAdminLogin}
             disabled={isLoading}
-            className="px-3 py-1.5 bg-gradient-to-r from-[#930303] to-[#B02828] hover:from-[#A81010] hover:to-[#930303] text-white rounded-xl text-xs font-semibold font-body shadow-[0_2px_10px_rgba(147,3,3,0.5)] flex items-center gap-1.5 shrink-0 transition-all border border-[#C9A44A]/40 cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-1.5 bg-gradient-to-r from-[#930303] to-[#BA1616] hover:from-[#A81010] hover:to-[#930303] text-white rounded-xl text-xs font-bold font-body shadow-[0_2px_12px_rgba(147,3,3,0.6)] flex items-center gap-1.5 shrink-0 transition-all border border-[#C9A44A]/50 cursor-pointer disabled:opacity-50"
           >
             <Zap className="w-3.5 h-3.5 text-gold-300" />
             <span>Instant Login</span>
@@ -241,14 +242,14 @@ export const AdminLogin = () => {
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-950/70 border border-red-500/60 rounded-xl text-red-200 text-xs font-body">
+          <div className="p-3 bg-red-950/80 border border-red-500/70 rounded-xl text-red-200 text-xs font-body backdrop-blur-md shadow-md">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-body">
           <div>
-            <label className="block text-[#E6DAC8] font-medium text-xs mb-1.5 tracking-wide">
+            <label className="block text-[#FFF5D6] font-semibold text-xs mb-1.5 tracking-wide">
               Admin Email or Username
             </label>
             <input
@@ -258,13 +259,13 @@ export const AdminLogin = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. admin or admin@bljewels.com"
-              className="w-full px-4 py-3 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 text-xs font-body focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50 transition-all shadow-inner"
+              className="w-full px-4 py-3 bg-black/60 backdrop-blur-md border border-[#C9A44A]/60 rounded-xl text-white placeholder-stone-400 text-xs font-body focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#C9A44A]/40 focus:bg-black/80 transition-all shadow-inner"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-[#E6DAC8] font-medium text-xs tracking-wide">
+              <label className="block text-[#FFF5D6] font-semibold text-xs tracking-wide">
                 Admin Password
               </label>
               <button
@@ -275,7 +276,7 @@ export const AdminLogin = () => {
                   setForgotStep('email');
                   setForgotError('');
                 }}
-                className="text-[11px] text-[#DFBF68] hover:text-[#FFF5D6] transition-colors font-medium cursor-pointer"
+                className="text-[11px] text-[#DFBF68] hover:text-[#FFF5D6] transition-colors font-semibold cursor-pointer underline decoration-[#DFBF68]/40 underline-offset-2"
               >
                 Forgot Password?
               </button>
@@ -289,12 +290,12 @@ export const AdminLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your admin password"
-                className="w-full pl-4 pr-10 py-3 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 text-xs font-body focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50 transition-all shadow-inner"
+                className="w-full pl-4 pr-10 py-3 bg-black/60 backdrop-blur-md border border-[#C9A44A]/60 rounded-xl text-white placeholder-stone-400 text-xs font-body focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#C9A44A]/40 focus:bg-black/80 transition-all shadow-inner"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#DFBF68] transition-colors cursor-pointer p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 hover:text-[#FFD700] transition-colors cursor-pointer p-0.5"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -306,20 +307,20 @@ export const AdminLogin = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-gradient-to-r from-[#930303] via-[#AB1212] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-[0_4px_25px_rgba(147,3,3,0.55)] flex items-center justify-center gap-2 border border-[#C9A44A]/50 cursor-pointer"
+            className="w-full py-3.5 bg-gradient-to-r from-[#930303] via-[#BA1616] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] disabled:opacity-50 text-white rounded-xl text-xs font-bold tracking-wider transition-all shadow-[0_4px_25px_rgba(147,3,3,0.65)] flex items-center justify-center gap-2 border border-[#C9A44A]/60 cursor-pointer hover:shadow-[0_4px_30px_rgba(201,164,74,0.4)]"
           >
             <span>Authorize & Enter Admin Suite</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="pt-2 text-center text-[11px] text-stone-400 flex items-center justify-center gap-1.5 font-body">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#C9A44A]" />
+        <div className="pt-2 text-center text-[11px] text-stone-300 flex items-center justify-center gap-1.5 font-body">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#FFD700]" />
           <span>Restricted to BL Jewels Authorized Personnel Only</span>
         </div>
 
         <div className="text-center pt-2">
-          <Link to="/" className="text-xs text-stone-400 hover:text-[#DFBF68] transition-colors">
+          <Link to="/" className="text-xs text-stone-300 hover:text-[#FFD700] transition-colors font-medium">
             ← Return to Customer Storefront
           </Link>
         </div>
