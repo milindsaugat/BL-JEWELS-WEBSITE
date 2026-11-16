@@ -12,12 +12,17 @@ const fileFilter = (req, file, cb) => {
     'image/svg+xml',
     'image/gif',
     'image/avif',
+    'video/mp4',
+    'video/webm',
+    'video/quicktime',
+    'video/x-matroska',
+    'video/avi',
   ];
 
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  if (allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('video/') || file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error(`Unsupported file type: ${file.mimetype}. Only JPEG, PNG, WEBP, SVG, and AVIF are allowed.`), false);
+    cb(new Error(`Unsupported file type: ${file.mimetype}. Only images (JPEG, PNG, WEBP) and videos (MP4, WEBM, MOV) are allowed.`), false);
   }
 };
 
@@ -25,7 +30,7 @@ export const upload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max limit
+    fileSize: 50 * 1024 * 1024, // 50MB max limit (supports clear phone unboxing videos)
   },
 });
 

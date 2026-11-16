@@ -124,6 +124,22 @@ export const createMyTicket = async (req, res) => {
     const message = cleanStr(req.body.message, 3000);
     const priority = VALID_PRIORITIES.includes(req.body.priority) ? req.body.priority : 'normal';
 
+    const returnReasons = Array.isArray(req.body.returnReasons)
+      ? req.body.returnReasons.map((r) => cleanStr(r, 200)).filter(Boolean)
+      : [];
+
+    const attachments = Array.isArray(req.body.attachments)
+      ? req.body.attachments
+          .filter((a) => a && a.url)
+          .map((a) => ({
+            url: cleanStr(a.url, 1000),
+            publicId: cleanStr(a.publicId || '', 200),
+            fileType: a.fileType === 'video' ? 'video' : 'image',
+            originalName: cleanStr(a.originalName || a.name || '', 200),
+            size: Number(a.size) || 0,
+          }))
+      : [];
+
     if (!subject || !message) {
       return res.status(400).json({
         success: false,
@@ -146,6 +162,8 @@ export const createMyTicket = async (req, res) => {
       message,
       status: 'open',
       priority,
+      returnReasons,
+      attachments,
       replies: [],
       lastRepliedAt: null,
     };
@@ -212,8 +230,23 @@ export const getMyTickets = async (req, res) => {
 export const replyToMyTicket = async (req, res) => {
   try {
     const message = cleanStr(req.body.message, 3000);
-    if (!message) {
-      return res.status(400).json({ success: false, message: 'Reply message cannot be empty.' });
+    const attachments = Array.isArray(req.body.attachments)
+      ? req.body.attachments
+          .filter((a) => a && a.url)
+          .map((a) => ({
+            url: cleanStr(a.url, 1000),
+            publicId: cleanStr(a.publicId || '', 200),
+            fileType: a.fileType === 'video' ? 'video' : 'image',
+            originalName: cleanStr(a.originalName || a.name || '', 200),
+            size: Number(a.size) || 0,
+          }))
+      : [];
+
+    if (!message && attachments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reply cannot be empty. Please enter a message or attach photos/videos.',
+      });
     }
 
     const userId = String(req.user._id);
@@ -221,7 +254,8 @@ export const replyToMyTicket = async (req, res) => {
     const replyEntry = {
       senderRole: 'customer',
       senderName: cleanStr(req.user.name || 'Customer', 120),
-      message,
+      message: message || (attachments.length ? `[Attached ${attachments.length} file(s)]` : ''),
+      attachments,
       createdAt: new Date(),
     };
 
@@ -325,14 +359,27 @@ export const replyTicket = async (req, res) => {
     const message = cleanStr(req.body.message, 4000);
     const nextStatus = VALID_STATUSES.includes(req.body.status) ? req.body.status : 'replied';
 
-    if (!message) {
-      return res.status(400).json({ success: false, message: 'Reply message is required.' });
+    const attachments = Array.isArray(req.body.attachments)
+      ? req.body.attachments
+          .filter((a) => a && a.url)
+          .map((a) => ({
+            url: cleanStr(a.url, 1000),
+            publicId: cleanStr(a.publicId || '', 200),
+            fileType: a.fileType === 'video' ? 'video' : 'image',
+            originalName: cleanStr(a.originalName || a.name || '', 200),
+            size: Number(a.size) || 0,
+          }))
+      : [];
+
+    if (!message && attachments.length === 0) {
+      return res.status(400).json({ success: false, message: 'Reply message or attachment is required.' });
     }
 
     const replyEntry = {
       senderRole: 'admin',
       senderName: cleanStr(req.user?.name || 'BL Jewels Concierge', 120),
-      message,
+      message: message || (attachments.length ? `[Attached ${attachments.length} file(s)]` : ''),
+      attachments,
       createdAt: new Date(),
     };
 

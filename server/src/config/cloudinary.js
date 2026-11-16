@@ -26,13 +26,15 @@ export const uploadBufferToCloudinary = (buffer, originalname, folder = 'bl-jewe
       .replace(/[^a-zA-Z0-9-]/g, '')
       .toLowerCase() || 'asset';
 
+    const isVideo = /\.(mp4|webm|mov|mkv|avi)$/i.test(originalname);
+    const uniqueId = `${sanitizedBaseName}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
     const uploadOptions = {
       folder,
-      public_id: sanitizedBaseName,
+      public_id: uniqueId,
       use_filename: true,
       unique_filename: false,
-      overwrite: true,
-      resource_type: 'image',
+      resource_type: 'auto', // Cloudinary automatically detects image vs video
     };
 
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -47,6 +49,7 @@ export const uploadBufferToCloudinary = (buffer, originalname, folder = 'bl-jewe
           public_id: result.public_id,
           original_filename: originalname,
           format: result.format,
+          resource_type: result.resource_type || (isVideo ? 'video' : 'image'),
           width: result.width,
           height: result.height,
           bytes: result.bytes,
@@ -59,14 +62,15 @@ export const uploadBufferToCloudinary = (buffer, originalname, folder = 'bl-jewe
 };
 
 /**
- * Deletes an image from Cloudinary by its public_id.
+ * Deletes an image or video from Cloudinary by its public_id.
  * @param {string} publicId - Cloudinary public_id (e.g., 'bl-jewels/banners/festive-hero')
+ * @param {string} resourceType - 'image' or 'video'
  * @returns {Promise<any>}
  */
-export const deleteFromCloudinary = async (publicId) => {
+export const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
   if (!publicId) return { result: 'noop', message: 'No publicId provided' };
   try {
-    const res = await cloudinary.uploader.destroy(publicId);
+    const res = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
     console.log(`✦ Cloudinary Asset Purged: [${publicId}] -> Status: ${res.result}`);
     return res;
   } catch (error) {

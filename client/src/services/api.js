@@ -176,7 +176,10 @@ export const ticketService = {
   submitContact: (data) => api.post('/tickets/contact', data).then(res => res.data),
   getMyTickets: () => api.get('/tickets/my').then(res => res.data),
   createMyTicket: (data) => api.post('/tickets/my', data).then(res => res.data),
-  replyMyTicket: (id, message) => api.post(`/tickets/my/${id}/reply`, { message }).then(res => res.data),
+  replyMyTicket: (id, payload) => {
+    const body = typeof payload === 'string' ? { message: payload } : payload;
+    return api.post(`/tickets/my/${id}/reply`, body).then(res => res.data);
+  },
 };
 
 export const checkoutUploadService = {

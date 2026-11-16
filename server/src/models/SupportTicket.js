@@ -1,5 +1,35 @@
 import mongoose from 'mongoose';
 
+const attachmentSchema = new mongoose.Schema(
+  {
+    url: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    publicId: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    fileType: {
+      type: String,
+      enum: ['image', 'video'],
+      default: 'image',
+    },
+    originalName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    size: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { _id: false }
+);
+
 const replySchema = new mongoose.Schema(
   {
     senderRole: {
@@ -14,8 +44,12 @@ const replySchema = new mongoose.Schema(
     },
     message: {
       type: String,
-      required: true,
+      default: '',
       trim: true,
+    },
+    attachments: {
+      type: [attachmentSchema],
+      default: [],
     },
     createdAt: {
       type: Date,
@@ -97,6 +131,14 @@ const supportTicketSchema = new mongoose.Schema(
       type: String,
       enum: ['normal', 'high', 'urgent'],
       default: 'normal',
+    },
+    returnReasons: {
+      type: [String],
+      default: [],
+    },
+    attachments: {
+      type: [attachmentSchema],
+      default: [],
     },
     replies: {
       type: [replySchema],

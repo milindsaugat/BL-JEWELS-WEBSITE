@@ -212,49 +212,35 @@ export const AdminGoldRates = () => {
 
             {/* Active Key Status Card */}
             {settings.keyConfigured && (
-              <div className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs ${
-                cache?.primaryQuotaExceeded
-                  ? 'bg-amber-50/90 border-amber-300'
-                  : 'bg-emerald-50 border-emerald-200'
-              }`}>
+              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${
-                    cache?.primaryQuotaExceeded
-                      ? 'bg-amber-100 border-amber-300 text-amber-800'
-                      : 'bg-emerald-100 border-emerald-300 text-emerald-800'
-                  }`}>
-                    {cache?.primaryQuotaExceeded ? <AlertTriangle size={20} /> : <CheckCircle2 size={20} />}
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-300 flex items-center justify-center text-emerald-800 shrink-0">
+                    <CheckCircle2 size={20} />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-stone-900">
-                        {cache?.primaryQuotaExceeded
-                          ? 'GoldAPI Free Quota Limit Reached (Auto-Failover Active)'
-                          : 'Aapki API Key Database Mein Saved Aur Active Hai!'}
+                      <span className="text-xs font-bold text-emerald-950">
+                        Aapki API Key Database Mein Saved Aur Active Hai!
                       </span>
-                      <span className={`text-[10px] text-white font-bold px-2 py-0.5 rounded-full font-mono ${
-                        cache?.primaryQuotaExceeded ? 'bg-amber-700' : 'bg-emerald-700'
-                      }`}>
-                        {cache?.primaryQuotaExceeded ? 'AUTO FAILOVER ON' : 'LIVE CONNECTED'}
+                      <span className="text-[10px] bg-emerald-700 text-white font-bold px-2 py-0.5 rounded-full font-mono">
+                        LIVE CONNECTED
                       </span>
                     </div>
-                    <span className="text-xs font-mono font-bold text-stone-800 block mt-0.5 tracking-wider">
+                    <span className="text-xs font-mono font-bold text-emerald-800 block mt-0.5 tracking-wider">
                       {settings.keyMasked || 'goldapi-••••••••••••-io'}
                     </span>
-                    <span className="text-[10px] text-stone-600 block mt-0.5">
-                      {cache?.primaryQuotaExceeded
-                        ? 'GoldAPI monthly quota (100/500 requests) exceed ho gaya hai. Website par live rates Free Open Bullion Feed se uninterrupted chal rahe hain!'
-                        : `Source: ${settings.keySource === 'admin' ? 'Admin Custom Saved Key (Database Encrypted)' : 'Server .env File'}`}
+                    <span className="text-[10px] text-emerald-700">
+                      Source: {settings.keySource === 'admin' ? 'Admin Custom Saved Key (Database Encrypted)' : 'Server .env File'}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-left sm:text-right shrink-0">
-                  <span className="text-[11px] font-semibold block text-stone-800">
-                    Live Feed: <strong className="text-emerald-700">Active & Ticking</strong>
+                <div className="text-left sm:text-right">
+                  <span className="text-[11px] text-emerald-900 font-semibold block">
+                    Status: <strong>Active (200 OK)</strong>
                   </span>
-                  <span className="text-[10px] text-stone-500">
-                    Feed: {cache?.feedSource || 'Live Market Stream'}
+                  <span className="text-[10px] text-emerald-700">
+                    Security: Server AES-256 encrypted
                   </span>
                 </div>
               </div>

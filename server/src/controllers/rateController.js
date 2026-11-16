@@ -33,55 +33,20 @@ export const getLiveRates = async (req, res) => {
   const { goldDelta, silverDelta, goldTrend, silverTrend } = getMarketFluctuation();
 
   try {
-    let result = null;
-    let isDisabled = false;
-
-    try {
-      result = await goldRateService.getRates();
-    } catch (err) {
-      if (err?.code === 'RATE_PROVIDER_DISABLED') {
-        isDisabled = true;
-      }
+    const result = await goldRateService.getRates();
+    if (result?.meta?.reason === 'RATE_PROVIDER_QUOTA' || result?.meta?.disabled || !result?.data?.goldRate) {
+      throw Object.assign(new Error('Rate provider quota limit reached or unavailable'), { code: 'RATE_PROVIDER_QUOTA' });
     }
 
-    if (isDisabled) {
-      return res.json({
-        success: true,
-        liveAvailable: false,
-        ratesAvailable: false,
-        cached: false,
-        stale: true,
-        source: 'Live Rates Paused in Store Administration',
-        lastUpdated: new Date().toISOString(),
-        numericRates: {},
-        goldSpotAsk: null,
-        silverSpotAsk: null,
-        inrSpotAsk: null,
-        goldRates: [],
-        silverRates: [],
-        meta: {
-          ratesAvailable: false,
-          disabled: true,
-          message: 'Live bullion spot rates are currently paused by the administrator.',
-          lastUpdated: new Date().toISOString(),
-        },
-      });
-    }
-
-    const rateData = result?.data || {};
-    const rawGoldRate = rateData.goldRate || 11728; // ~₹13,595 landed 24K per gram
-    const rawSilverRate = rateData.silverRate || 144; // ~₹169 landed silver per gram
-    const usdInr = rateData.usdInr || 94.4;
-    const feedSource = rateData.feedSource || 'live';
-    const isQuotaNotice = Boolean(rateData.primaryQuotaExceeded);
+    const { goldRate, silverRate, usdInr } = result.data;
 
     // Indian Landed Bullion Benchmark Multipliers (India Customs Duty 15% + Agriculture Cess + IBJA/MCX Landing Premium)
     // Converts raw international LBMA spot price into Indian Retail & MCX Benchmark (exact RightGold formula)
     const GOLD_LANDED_FACTOR = 1.15915;
     const SILVER_LANDED_FACTOR = 1.1743;
 
-    const landedGoldPerGram = (rawGoldRate * GOLD_LANDED_FACTOR) + (goldDelta / 10);
-    const landedSilverPerGram = (rawSilverRate * SILVER_LANDED_FACTOR) + (silverDelta / 1000);
+    const landedGoldPerGram = (goldRate * GOLD_LANDED_FACTOR) + (goldDelta / 10);
+    const landedSilverPerGram = (silverRate * SILVER_LANDED_FACTOR) + (silverDelta / 1000);
     const landedMCX10g = Math.round(landedGoldPerGram * 10) + Math.round(goldDelta);
     const landedSilverKg = Math.round(landedSilverPerGram * 1000) + Math.round(silverDelta);
 
@@ -138,11 +103,9 @@ export const getLiveRates = async (req, res) => {
       success: true,
       liveAvailable: true,
       ratesAvailable: true,
-      cached: result?.meta?.cached ?? false,
+      cached: result.meta?.cached ?? false,
       stale: false,
-      source: isQuotaNotice
-        ? 'MCX Indian Bullion Spot Rates (Open Live Stream Failover)'
-        : 'MCX Indian Bullion spot rates with live market ticker',
+      source: 'MCX Indian Bullion spot rates with live market ticker',
       lastUpdated: new Date().toISOString(),
       numericRates,
       goldSpotAsk: landedMCX10g,
@@ -206,65 +169,75 @@ export const getLiveRates = async (req, res) => {
         },
       ],
       meta: {
-        cached: result?.meta?.cached ?? false,
+        cached: result.meta?.cached ?? false,
         stale: false,
         ratesAvailable: true,
         disabled: false,
-        feedSource,
-        quotaNotice: isQuotaNotice,
         lastUpdated: new Date().toISOString(),
       },
     });
   } catch (error) {
-    console.error('getLiveRates top-level error:', error);
-    // Even if an unexpected error occurs, provide reliable Indian MCX benchmark rates so the customer never sees "Not Available"
-    const fallbackGoldPerGram = 13580 + (goldDelta / 10);
-    const fallbackSilverPerGram = 169 + (silverDelta / 1000);
-    const fallbackMCX10g = Math.round(fallbackGoldPerGram * 10);
-    const fallbackSilverKg = Math.round(fallbackSilverPerGram * 1000);
+    const isLimit = error?.code === 'RATE_PROVIDER_QUOTA' || /limit|quota/i.test(error?.message || '');
 
-    const numericRates = {
-      '24K': Math.round(fallbackGoldPerGram),
-      '22K': Math.round(fallbackGoldPerGram * 0.92),
-      '18K': Math.round(fallbackGoldPerGram * 0.76),
-      '14K': Math.round(fallbackGoldPerGram * 0.60),
-      '9K': Math.round(fallbackGoldPerGram * 0.375),
-      silverPerGram: Math.round(fallbackSilverPerGram * 10) / 10,
-    };
+    const naSpot = (label) => ({
+      type: 'spot',
+      label,
+      ask: 'Not Available',
+      high: 'Not Available',
+      low: 'Not Available',
+      trend: 'none',
+      icon: 'fa-solid fa-chart-line',
+      isUnavailable: true,
+    });
+
+    const naRate = (label, purity = '', unit = '', icon = 'uil uil-gold') => ({
+      type: 'rate',
+      label,
+      purity,
+      rate: 'Not Available',
+      numeric: null,
+      unit,
+      icon,
+      isUnavailable: true,
+      trend: 'none',
+    });
 
     res.json({
       success: true,
-      liveAvailable: true,
-      ratesAvailable: true,
-      cached: true,
-      stale: false,
-      source: 'Indian Bullion Spot Benchmark',
+      liveAvailable: false,
+      ratesAvailable: false,
+      cached: false,
+      stale: true,
+      source: isLimit ? 'Rate API Limit Reached' : 'Live Rate Feed Updating',
       lastUpdated: new Date().toISOString(),
-      numericRates,
-      goldSpotAsk: fallbackMCX10g,
-      silverSpotAsk: fallbackSilverKg,
-      inrSpotAsk: 94.4,
+      numericRates: {},
+      goldSpotAsk: null,
+      silverSpotAsk: null,
+      inrSpotAsk: null,
       goldRates: [
-        { type: 'spot', label: 'GOLD MCX (10g)', ask: fallbackMCX10g.toLocaleString('en-IN'), high: (fallbackMCX10g + 600).toLocaleString('en-IN'), low: (fallbackMCX10g - 500).toLocaleString('en-IN'), trend: goldTrend, change: `+${goldDelta}`, unit: '/10g', icon: 'fa-solid fa-chart-line' },
-        { type: 'rate', label: 'GOLD MCX (10g)', purity: '99.9% MCX Benchmark', rate: money(fallbackMCX10g), numeric: fallbackMCX10g, unit: '/10g', change: `+₹${Math.round(goldDelta)}`, trend: goldTrend, icon: 'uil uil-gold', isBold: true },
-        { type: 'rate', label: '22KT BL RATE', purity: '91.6% BIS 916', rate: money(numericRates['22K']), numeric: numericRates['22K'], unit: '/g', change: `+₹${Math.round(goldDelta * 0.92)}`, trend: goldTrend, icon: 'uil uil-gold' },
-        { type: 'rate', label: '18KT BL RATE', purity: '75.0% Diamond Grade', rate: money(numericRates['18K']), numeric: numericRates['18K'], unit: '/g', change: `+₹${Math.round(goldDelta * 0.76)}`, trend: goldTrend, icon: 'uil uil-gold' },
-        { type: 'rate', label: '14KT BL RATE', purity: '58.5% Everyday Wear', rate: money(numericRates['14K']), numeric: numericRates['14K'], unit: '/g', change: `+₹${Math.round(goldDelta * 0.60)}`, trend: goldTrend, icon: 'uil uil-gold' },
-        { type: 'rate', label: '9KT BL RATE', purity: '37.5% Modern Lustre', rate: money(numericRates['9K']), numeric: numericRates['9K'], unit: '/g', change: `+₹${Math.round(goldDelta * 0.375)}`, trend: goldTrend, icon: 'uil uil-gold' },
-        { type: 'spot', label: 'USD / INR', ask: '94.40', high: '94.55', low: '94.25', trend: 'up', change: '0.1', unit: '', icon: 'fa-solid fa-chart-line' },
+        naSpot('GOLD MCX (10g)'),
+        naRate('GOLD MCX (10g)', '99.9% MCX Benchmark', '/10g', 'uil uil-gold'),
+        naRate('22KT BL RATE', '91.6% BIS 916', '/g', 'uil uil-gold'),
+        naRate('18KT BL RATE', '75.0% Diamond Grade', '/g', 'uil uil-gold'),
+        naRate('14KT BL RATE', '58.5% Everyday Wear', '/g', 'uil uil-gold'),
+        naRate('9KT BL RATE', '37.5% Modern Lustre', '/g', 'uil uil-gold'),
+        naSpot('USD / INR'),
       ],
       silverRates: [
-        { type: 'spot', label: '999 SILVER MCX', ask: fallbackSilverKg.toLocaleString('en-IN'), high: (fallbackSilverKg + 1100).toLocaleString('en-IN'), low: (fallbackSilverKg - 900).toLocaleString('en-IN'), trend: silverTrend, change: `+${silverDelta}`, unit: '/Kg', icon: 'fa-solid fa-chart-line' },
-        { type: 'rate', label: '999 SILVER', purity: '99.9% Fine Silver', rate: money(fallbackSilverKg), numeric: fallbackSilverKg, unit: '/Kg', change: `+₹${Math.round(silverDelta)}`, trend: silverTrend, icon: 'uil uil-coins', isBold: true },
-        { type: 'rate', label: '925 STERLING', purity: '92.5% Sterling Silver', rate: money(Math.round(fallbackSilverKg * 0.925)), numeric: Math.round(fallbackSilverKg * 0.925), unit: '/Kg', change: `+₹${Math.round(silverDelta * 0.925)}`, trend: silverTrend, icon: 'uil uil-coins' },
-        { type: 'rate', label: 'SILVER COIN (10g)', purity: '99.9% Auspicious Coin', rate: money(Math.round(fallbackSilverPerGram * 10)), numeric: Math.round(fallbackSilverPerGram * 10), unit: '/coin', change: `+₹${Math.round(silverDelta / 100)}`, trend: silverTrend, icon: 'uil uil-coins' },
+        naSpot('999 SILVER MCX'),
+        naRate('999 SILVER', '99.9% Fine Silver', '/Kg', 'uil uil-coins'),
+        naRate('925 STERLING', '92.5% Sterling Silver', '/Kg', 'uil uil-coins'),
+        naRate('SILVER COIN (10g)', '99.9% Auspicious Coin', '/coin', 'uil uil-coins'),
       ],
       meta: {
-        cached: true,
-        stale: false,
-        ratesAvailable: true,
+        cached: false,
+        stale: true,
+        ratesAvailable: false,
         disabled: false,
-        message: 'Indian Bullion Spot Benchmark active.',
+        reason: error?.code || 'RATE_PROVIDER_QUOTA',
+        message: isLimit
+          ? 'API rate limit reached. Rates currently not available.'
+          : 'Live market rates temporarily not available.',
         lastUpdated: new Date().toISOString(),
       },
     });

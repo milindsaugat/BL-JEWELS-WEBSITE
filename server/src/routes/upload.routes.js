@@ -48,10 +48,12 @@ router.post('/single', handleSingleUpload, async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Image successfully uploaded to Cloudinary',
+      message: 'File successfully uploaded to Cloudinary',
       url: result.secure_url,
       publicId: result.public_id,
       originalName: result.original_filename,
+      resourceType: result.resource_type || 'image',
+      fileType: (result.resource_type === 'video' || /\.(mp4|webm|mov|mkv|avi)$/i.test(result.original_filename || '')) ? 'video' : 'image',
       format: result.format,
       width: result.width,
       height: result.height,

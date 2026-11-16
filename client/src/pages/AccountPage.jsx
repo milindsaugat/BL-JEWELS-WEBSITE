@@ -3,14 +3,35 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Heart, MapPin, User, LogOut, ArrowUpRight, LifeBuoy, Plus, Send,
   UploadCloud, Camera, Trash2, Loader2, CheckCircle2, Lock, ShieldCheck,
-  FileText, ExternalLink, Eye, AlertCircle
+  FileText, ExternalLink, Eye, AlertCircle, Video, Image as ImageIcon, Paperclip,
+  X, ShieldAlert
 } from 'lucide-react';
 import { api, orderService, authService, ticketService, uploadService } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
 const emptyAddress = { label: 'Home', name: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '' };
-const emptyTicket = { category: 'Order & Delivery', orderNumber: '', priority: 'normal', subject: '', message: '' };
+const emptyTicket = {
+  category: 'Order & Delivery',
+  orderNumber: '',
+  priority: 'normal',
+  subject: '',
+  message: '',
+  returnReasons: [],
+  otherReasonText: '',
+  attachments: [],
+};
 const money = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
+
+const RETURN_REASONS = [
+  { id: 'damaged', label: 'Item arrived damaged or broken', hindi: 'टूटा हुआ या क्षतिग्रस्त आभूषण' },
+  { id: 'defective', label: 'Defective clasp / loose gemstone or pearl', hindi: 'नगीना ढीला या लॉक खराब' },
+  { id: 'wrong_item', label: 'Wrong item or different design received', hindi: 'गलत सामान या दूसरा डिज़ाइन मिला' },
+  { id: 'mismatch_photo', label: 'Item does not match website pictures / finish issue', hindi: 'वेबसाइट फोटो से मेल नहीं खाता' },
+  { id: 'size_fit', label: 'Size or fitting does not fit', hindi: 'नाप या साइज़ की समस्या' },
+  { id: 'missing_hallmark', label: 'Missing BIS hallmark certificate or invoice bill', hindi: 'हॉलमार्क सर्टिफिकेट या बिल नहीं मिला' },
+  { id: 'tampered_parcel', label: 'Outer parcel packaging was tampered / unsealed', hindi: 'पार्सल की सील टूटी या खुली हुई मिली' },
+  { id: 'other', label: 'Other issue', hindi: 'अन्य कारण' },
+];
 
 const STATUS_BADGE = {
   open: 'bg-amber-50 text-amber-800 border-amber-200',
@@ -25,21 +46,57 @@ export const AccountPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTab = searchParams.get('tab');
   const validTabs = ['orders', 'support', 'addresses', 'profile'];
-  const [tab, setTab] = useState(
-    urlTab && validTabs.includes(urlTab) ? urlTab : 'orders'
-  );
+
+  const [tab, setTab] = useState(() => {
+    if (urlTab && validTabs.includes(urlTab)) return urlTab;
+    try {
+      const saved = localStorage.getItem('bl_account_active_tab');
+      if (saved && validTabs.includes(saved)) return saved;
+    } catch {}
+    return 'orders';
+  });
+
+  const handleTabChange = (nextTab) => {
+    if (!validTabs.includes(nextTab)) return;
+    setTab(nextTab);
+    setSearchParams({ tab: nextTab }, { replace: true });
+    try {
+      localStorage.setItem('bl_account_active_tab', nextTab);
+    } catch {}
+  };
 
   useEffect(() => {
-    if (urlTab && validTabs.includes(urlTab)) {
+    if (urlTab && validTabs.includes(urlTab) && urlTab !== tab) {
       setTab(urlTab);
+      try {
+        localStorage.setItem('bl_account_active_tab', urlTab);
+      } catch {}
     }
   }, [urlTab]);
+
+  useEffect(() => {
+    if (tab && validTabs.includes(tab)) {
+      if (searchParams.get('tab') !== tab) {
+        setSearchParams({ tab }, { replace: true });
+      }
+      try {
+        localStorage.setItem('bl_account_active_tab', tab);
+      } catch {}
+    }
+  }, [tab]);
 
   const [orders, setOrders] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [showNewTicket, setShowNewTicket] = useState(false);
   const [ticketForm, setTicketForm] = useState(emptyTicket);
+  const [ticketUploadBusy, setTicketUploadBusy] = useState(false);
+  const [ticketUploadError, setTicketUploadError] = useState('');
   const [replyDrafts, setReplyDrafts] = useState({});
+  const [replyAttachments, setReplyAttachments] = useState({});
+  const [replyUploadBusy, setReplyUploadBusy] = useState({});
+  const [replyUploadError, setReplyUploadError] = useState({});
+  const [showReplyUpload, setShowReplyUpload] = useState({});
+  const [lightboxImage, setLightboxImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -95,6 +152,33 @@ export const AccountPage = () => {
     };
   }, [isAuthenticated]);
 
+  // Live Real-Time Chat Sync for Support Tickets (updates live without page refresh)
+  useEffect(() => {
+    if (tab !== 'support' || !isAuthenticated) return;
+    let isMounted = true;
+
+    const syncInterval = setInterval(async () => {
+      if (document.hidden) return;
+      try {
+        const res = await ticketService.getMyTickets();
+        if (isMounted && res?.data) {
+          setTickets((prev) => {
+            const prevStr = JSON.stringify(prev.map(t => ({ id: t._id, rCount: t.replies?.length, status: t.status, updatedAt: t.updatedAt })));
+            const newStr = JSON.stringify(res.data.map(t => ({ id: t._id, rCount: t.replies?.length, status: t.status, updatedAt: t.updatedAt })));
+            return prevStr !== newStr ? res.data : prev;
+          });
+        }
+      } catch {
+        // Silent background poll
+      }
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(syncInterval);
+    };
+  }, [tab, isAuthenticated]);
+
   const run = async (fn) => {
     setBusy(true);
     setError('');
@@ -123,15 +207,169 @@ export const AccountPage = () => {
       setNotice('Request recorded. Contact us for refund or return assistance.');
     });
 
+  const uploadMediaFile = async (file) => {
+    const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi)$/i.test(file.name);
+    const maxBytes = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      throw new Error(
+        isVideo
+          ? `Video "${file.name}" exceeds 50MB limit.`
+          : `Photo "${file.name}" exceeds 10MB limit.`
+      );
+    }
+    const res = await uploadService.uploadImage(file, 'bl-jewels/tickets');
+    const url = res?.url || res?.secure_url;
+    if (!url) throw new Error('Upload failed to return file URL.');
+    return {
+      url,
+      publicId: res?.publicId || res?.public_id || '',
+      fileType: (res?.fileType === 'video' || isVideo) ? 'video' : 'image',
+      originalName: file.name,
+      size: file.size,
+    };
+  };
+
+  const handleTicketFilesSelected = async (fileList) => {
+    if (!fileList || !fileList.length) return;
+    setTicketUploadError('');
+    const curAttachments = ticketForm.attachments || [];
+    let curPhotos = curAttachments.filter(a => a.fileType === 'image').length;
+    let curVideos = curAttachments.filter(a => a.fileType === 'video').length;
+
+    const files = Array.from(fileList);
+    const toUpload = [];
+    for (const f of files) {
+      const isVid = f.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi)$/i.test(f.name);
+      if (isVid) {
+        if (curVideos >= 2) {
+          setTicketUploadError('Maximum 2 videos allowed (अधिकतम 2 वीडियो की अनुमति है).');
+          continue;
+        }
+        curVideos++;
+        toUpload.push(f);
+      } else {
+        if (curPhotos >= 4) {
+          setTicketUploadError('Maximum 4 photos allowed (अधिकतम 4 फोटो की अनुमति है).');
+          continue;
+        }
+        curPhotos++;
+        toUpload.push(f);
+      }
+    }
+
+    if (!toUpload.length) return;
+
+    setTicketUploadBusy(true);
+    try {
+      for (const f of toUpload) {
+        const uploaded = await uploadMediaFile(f);
+        setTicketForm(prev => ({
+          ...prev,
+          attachments: [...(prev.attachments || []), uploaded],
+        }));
+      }
+    } catch (err) {
+      setTicketUploadError(err.message || 'Failed to upload media. Please try again.');
+    } finally {
+      setTicketUploadBusy(false);
+    }
+  };
+
+  const handleRemoveTicketAttachment = (idx) => {
+    setTicketForm(prev => ({
+      ...prev,
+      attachments: (prev.attachments || []).filter((_, i) => i !== idx),
+    }));
+  };
+
+  const handleToggleReturnReason = (reasonId) => {
+    setTicketForm(prev => {
+      const existing = prev.returnReasons || [];
+      const next = existing.includes(reasonId)
+        ? existing.filter(r => r !== reasonId)
+        : [...existing, reasonId];
+      return { ...prev, returnReasons: next };
+    });
+  };
+
+  const handleReplyFilesSelected = async (ticketId, fileList) => {
+    if (!fileList || !fileList.length) return;
+    setReplyUploadError(prev => ({ ...prev, [ticketId]: '' }));
+    const curAttachments = replyAttachments[ticketId] || [];
+    let curPhotos = curAttachments.filter(a => a.fileType === 'image').length;
+    let curVideos = curAttachments.filter(a => a.fileType === 'video').length;
+
+    const files = Array.from(fileList);
+    const toUpload = [];
+    for (const f of files) {
+      const isVid = f.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi)$/i.test(f.name);
+      if (isVid) {
+        if (curVideos >= 2) {
+          setReplyUploadError(prev => ({ ...prev, [ticketId]: 'Maximum 2 videos allowed (अधिकतम 2 वीडियो की अनुमति है).' }));
+          continue;
+        }
+        curVideos++;
+        toUpload.push(f);
+      } else {
+        if (curPhotos >= 4) {
+          setReplyUploadError(prev => ({ ...prev, [ticketId]: 'Maximum 4 photos allowed (अधिकतम 4 फोटो की अनुमति है).' }));
+          continue;
+        }
+        curPhotos++;
+        toUpload.push(f);
+      }
+    }
+
+    if (!toUpload.length) return;
+
+    setReplyUploadBusy(prev => ({ ...prev, [ticketId]: true }));
+    try {
+      for (const f of toUpload) {
+        const uploaded = await uploadMediaFile(f);
+        setReplyAttachments(prev => ({
+          ...prev,
+          [ticketId]: [...(prev[ticketId] || []), uploaded],
+        }));
+      }
+    } catch (err) {
+      setReplyUploadError(prev => ({ ...prev, [ticketId]: err.message || 'Upload failed.' }));
+    } finally {
+      setReplyUploadBusy(prev => ({ ...prev, [ticketId]: false }));
+    }
+  };
+
+  const handleRemoveReplyAttachment = (ticketId, idx) => {
+    setReplyAttachments(prev => ({
+      ...prev,
+      [ticketId]: (prev[ticketId] || []).filter((_, i) => i !== idx),
+    }));
+  };
+
   const handleCreateTicket = (e) => {
     e.preventDefault();
+    let finalReasons = ticketForm.returnReasons || [];
+    if (ticketForm.category === 'Return & Refund') {
+      if (finalReasons.length === 0) {
+        setError('Please select at least one return reason (कृपया वापसी का कारण चुनें).');
+        return;
+      }
+      if (finalReasons.includes('other') && ticketForm.otherReasonText?.trim()) {
+        finalReasons = finalReasons.map(r => r === 'other' ? `Other: ${ticketForm.otherReasonText.trim()}` : r);
+      }
+    }
+
     run(async () => {
-      const res = await ticketService.createMyTicket(ticketForm);
+      const payload = {
+        ...ticketForm,
+        returnReasons: finalReasons,
+        attachments: ticketForm.attachments || [],
+      };
+      const res = await ticketService.createMyTicket(payload);
       if (res?.data) {
         setTickets((prev) => [res.data, ...prev]);
         setTicketForm(emptyTicket);
         setShowNewTicket(false);
-        setNotice(`Support ticket ${res.data.ticketNumber} created. Our concierge will respond shortly.`);
+        setNotice(`Support ticket ${res.data.ticketNumber} created successfully. Our concierge will review your claim and attachments.`);
       }
     });
   };
@@ -139,13 +377,22 @@ export const AccountPage = () => {
   const handleCustomerReply = (e, ticketId) => {
     e.preventDefault();
     const msg = (replyDrafts[ticketId] || '').trim();
-    if (!msg) return;
+    const atts = replyAttachments[ticketId] || [];
+    if (!msg && atts.length === 0) {
+      setError('Please enter a message or attach photos/unboxing videos.');
+      return;
+    }
     run(async () => {
-      const res = await ticketService.replyMyTicket(ticketId, msg);
+      const res = await ticketService.replyMyTicket(ticketId, {
+        message: msg,
+        attachments: atts,
+      });
       if (res?.data) {
         setTickets((prev) => prev.map((t) => (t._id === ticketId ? res.data : t)));
         setReplyDrafts((prev) => ({ ...prev, [ticketId]: '' }));
-        setNotice('Your reply has been sent to our concierge team.');
+        setReplyAttachments((prev) => ({ ...prev, [ticketId]: [] }));
+        setShowReplyUpload((prev) => ({ ...prev, [ticketId]: false }));
+        setNotice('Your reply with attachments has been sent to our concierge team.');
       }
     });
   };
@@ -331,7 +578,7 @@ export const AccountPage = () => {
               <button
                 type="button"
                 key={id}
-                onClick={() => setTab(id)}
+                onClick={() => handleTabChange(id)}
                 className={`flex items-center gap-3 p-3 text-sm rounded-xl text-left cursor-pointer ${
                   tab === id ? 'bg-[#930303] text-white' : 'hover:bg-stone-50'
                 }`}
@@ -423,7 +670,7 @@ export const AccountPage = () => {
                                 subject: `Help with Order ${o.orderNumber}`,
                               });
                               setShowNewTicket(true);
-                              setTab('support');
+                              handleTabChange('support');
                             }}
                             className="cursor-pointer hover:underline"
                           >
@@ -435,7 +682,23 @@ export const AccountPage = () => {
                             </button>
                           )}
                           {o.status === 'delivered' && (
-                            <button type="button" disabled={busy} onClick={() => action(o._id, 'return')}>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => {
+                                setTicketForm({
+                                  ...emptyTicket,
+                                  category: 'Return & Refund',
+                                  orderNumber: o.orderNumber || '',
+                                  subject: `Return & Refund Request for Order ${o.orderNumber}`,
+                                  returnReasons: [],
+                                  attachments: [],
+                                });
+                                setShowNewTicket(true);
+                                handleTabChange('support');
+                              }}
+                              className="cursor-pointer hover:underline font-medium text-[#930303]"
+                            >
                               Request a return
                             </button>
                           )}
@@ -450,9 +713,15 @@ export const AccountPage = () => {
                   <div className="space-y-4">
                     <div className="flex flex-wrap justify-between items-center gap-3">
                       <div>
-                        <h2 className="text-xl font-semibold">Support Tickets & Inquiries</h2>
+                        <div className="flex items-center gap-2.5">
+                          <h2 className="text-xl font-semibold">Support Tickets & Inquiries</h2>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Live Chat</span>
+                          </span>
+                        </div>
                         <p className="text-xs text-stone-500 mt-0.5">
-                          Raise a ticket or track responses to your contact form inquiries in one place.
+                          Raise a ticket or track responses to your contact form inquiries live in real-time.
                         </p>
                       </div>
                       <button
@@ -487,9 +756,9 @@ export const AccountPage = () => {
                               className="w-full border border-stone-300 rounded-xl p-2.5 text-base sm:text-sm bg-white"
                             >
                               <option value="Order & Delivery">Order & Delivery</option>
+                              <option value="Return & Refund">Return & Refund Assistance</option>
                               <option value="BIS Hallmark & Purity">BIS Hallmark & Purity</option>
                               <option value="Sizing & Custom Jewellery">Sizing & Custom Jewellery</option>
-                              <option value="Return / Exchange / Refund">Return / Exchange / Refund</option>
                               <option value="General Concierge">General Concierge</option>
                             </select>
                           </div>
@@ -530,6 +799,63 @@ export const AccountPage = () => {
                           </div>
                         </div>
 
+                        {/* E-Commerce Style Return Reasons Checkboxes */}
+                        {ticketForm.category === 'Return & Refund' && (
+                          <div className="rounded-2xl border border-red-200 bg-[#FFF9F6] p-4 sm:p-5 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <ShieldAlert className="w-5 h-5 text-[#930303]" />
+                                <span className="text-sm font-bold text-stone-900">
+                                  Select Return Issue / Reason (वापसी का कारण चुनें)
+                                </span>
+                              </div>
+                              <span className="text-[11px] font-semibold text-[#930303] bg-red-100 px-2.5 py-0.5 rounded-full">
+                                Required for Return
+                              </span>
+                            </div>
+                            <p className="text-xs text-stone-600">
+                              Please select the exact issue with your fine jewellery item. This directly speeds up the inspection and refund approval process.
+                            </p>
+                            <div className="grid sm:grid-cols-2 gap-2.5 pt-1">
+                              {RETURN_REASONS.map((r) => {
+                                const isChecked = (ticketForm.returnReasons || []).includes(r.id);
+                                return (
+                                  <label
+                                    key={r.id}
+                                    className={`flex items-start gap-2.5 p-3 rounded-xl border text-xs cursor-pointer transition-all select-none ${
+                                      isChecked
+                                        ? 'bg-white border-[#930303] text-stone-900 shadow-xs ring-1 ring-[#930303]/30 font-medium'
+                                        : 'bg-white/70 border-stone-200 text-stone-700 hover:bg-white'
+                                    }`}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => handleToggleReturnReason(r.id)}
+                                      className="mt-0.5 accent-[#930303] w-4 h-4 rounded shrink-0 cursor-pointer"
+                                    />
+                                    <div className="leading-snug">
+                                      <div className="text-stone-900 font-semibold">{r.label}</div>
+                                      <div className="text-[11px] text-stone-500 font-normal mt-0.5">{r.hindi}</div>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                            {(ticketForm.returnReasons || []).includes('other') && (
+                              <div className="pt-1">
+                                <input
+                                  type="text"
+                                  value={ticketForm.otherReasonText || ''}
+                                  onChange={(e) => setTicketForm({ ...ticketForm, otherReasonText: e.target.value })}
+                                  placeholder="Please describe other return issue in detail..."
+                                  className="w-full border border-stone-300 rounded-xl p-2.5 text-xs bg-white"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
                         <div>
                           <label htmlFor="tkt-subject" className="block text-xs font-medium text-stone-700 mb-1">
                             Subject <span aria-hidden="true">*</span>
@@ -553,7 +879,7 @@ export const AccountPage = () => {
                           <textarea
                             id="tkt-message"
                             name="message"
-                            rows={4}
+                            rows={3}
                             required
                             value={ticketForm.message}
                             onChange={(e) => setTicketForm({ ...ticketForm, message: e.target.value })}
@@ -562,11 +888,145 @@ export const AccountPage = () => {
                           />
                         </div>
 
+                        {/* E-Commerce Media Upload Box (Max 4 Photos + 2 Videos) */}
+                        {(() => {
+                          const ticketPhotos = (ticketForm.attachments || []).filter((a) => a.fileType === 'image');
+                          const ticketVideos = (ticketForm.attachments || []).filter((a) => a.fileType === 'video');
+                          return (
+                            <div className="rounded-2xl border border-stone-200 bg-[#FAF7F2] p-4 sm:p-5 space-y-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <Camera className="w-4 h-4 text-[#930303]" />
+                                    <span className="text-xs font-bold uppercase tracking-wider text-stone-800">
+                                      Attach Proof: Photos & Unboxing Video (प्रमाण अपलोड करें)
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-stone-500 mt-0.5">
+                                    Upload clear photos of defect/hallmark and 360° unboxing video for instant claim processing.
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                                      ticketPhotos.length >= 4
+                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                        : 'bg-white text-stone-700 border-stone-200'
+                                    }`}
+                                  >
+                                    Photos: {ticketPhotos.length} / 4
+                                  </span>
+                                  <span
+                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                                      ticketVideos.length >= 2
+                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                        : 'bg-white text-stone-700 border-stone-200'
+                                    }`}
+                                  >
+                                    Videos: {ticketVideos.length} / 2
+                                  </span>
+                                </div>
+                              </div>
+
+                              <label
+                                className={`block border-2 border-dashed rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-colors ${
+                                  ticketPhotos.length >= 4 && ticketVideos.length >= 2
+                                    ? 'border-stone-200 bg-stone-100 opacity-60 cursor-not-allowed'
+                                    : 'border-[#C9A44A]/50 hover:border-[#930303] bg-white/70 hover:bg-white'
+                                }`}
+                              >
+                                <input
+                                  type="file"
+                                  multiple
+                                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                                  disabled={ticketUploadBusy || (ticketPhotos.length >= 4 && ticketVideos.length >= 2)}
+                                  onChange={(e) => handleTicketFilesSelected(e.target.files)}
+                                  className="hidden"
+                                />
+                                {ticketUploadBusy ? (
+                                  <div className="flex items-center justify-center gap-2 text-stone-600 text-xs py-2">
+                                    <Loader2 className="w-5 h-5 animate-spin text-[#930303]" />
+                                    <span>Uploading files to secure vault... please wait</span>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-1.5 py-1">
+                                    <div className="flex items-center justify-center gap-3 text-[#930303]">
+                                      <ImageIcon size={22} />
+                                      <span className="text-stone-300">|</span>
+                                      <Video size={22} />
+                                    </div>
+                                    <p className="text-xs font-semibold text-stone-800">
+                                      Click to select or drag & drop files here
+                                    </p>
+                                    <p className="text-[11px] text-stone-500">
+                                      Up to 4 Photos (JPG, PNG, WEBP max 10MB) · Up to 2 Videos (MP4, WEBM, MOV max 50MB)
+                                    </p>
+                                  </div>
+                                )}
+                              </label>
+
+                              {ticketUploadError && (
+                                <p className="text-xs text-red-700 bg-red-50 p-2.5 rounded-lg border border-red-200 flex items-center gap-1.5">
+                                  <AlertCircle size={14} className="shrink-0" />
+                                  <span>{ticketUploadError}</span>
+                                </p>
+                              )}
+
+                              {ticketForm.attachments?.length > 0 && (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                                  {ticketForm.attachments.map((att, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="relative group rounded-xl overflow-hidden border border-stone-200 bg-white shadow-xs"
+                                    >
+                                      {att.fileType === 'video' ? (
+                                        <div className="relative aspect-video bg-black flex items-center justify-center">
+                                          <video src={att.url} className="w-full h-full object-cover" />
+                                          <span className="absolute bottom-1.5 left-1.5 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1">
+                                            <Video size={10} /> Video
+                                          </span>
+                                        </div>
+                                      ) : (
+                                        <div
+                                          onClick={() => setLightboxImage(att.url)}
+                                          className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden"
+                                        >
+                                          <img
+                                            src={att.url}
+                                            alt={att.originalName || 'Attachment'}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                          />
+                                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <Eye className="w-5 h-5 text-white drop-shadow" />
+                                          </div>
+                                        </div>
+                                      )}
+                                      <div className="p-2 flex items-center justify-between gap-1 text-[11px]">
+                                        <span className="truncate text-stone-700 font-medium" title={att.originalName || 'File'}>
+                                          {att.originalName || (att.fileType === 'video' ? 'Video' : 'Photo')}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveTicketAttachment(idx)}
+                                          className="text-stone-400 hover:text-red-700 p-1 cursor-pointer shrink-0"
+                                          title="Remove file"
+                                        >
+                                          <Trash2 size={13} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         <div className="flex flex-wrap gap-3">
                           <button
                             type="submit"
-                            disabled={busy}
-                            className="bg-[#930303] hover:bg-[#7A0303] disabled:opacity-60 text-white text-xs font-semibold px-5 py-2.5 rounded-xl cursor-pointer"
+                            disabled={busy || ticketUploadBusy}
+                            className="bg-[#930303] hover:bg-[#7A0303] disabled:opacity-60 text-white text-xs font-semibold px-5 py-2.5 rounded-xl cursor-pointer shadow-xs"
                           >
                             {busy ? 'Submitting…' : 'Submit Ticket'}
                           </button>
@@ -586,7 +1046,7 @@ export const AccountPage = () => {
                         <LifeBuoy className="mx-auto text-[#930303]" size={28} />
                         <h3 className="text-lg font-medium">No support tickets or inquiries yet</h3>
                         <p className="text-stone-500 text-sm max-w-md mx-auto">
-                          Have a question about an order, custom sizing, or hallmarking? Raise a ticket and our concierge team will respond directly here.
+                          Have a question about an order, custom sizing, hallmarking, or return? Raise a ticket and our concierge team will respond directly here.
                         </p>
                         <button
                           type="button"
@@ -599,88 +1059,345 @@ export const AccountPage = () => {
                       </div>
                     ) : (
                       <div className="space-y-4">
-                        {tickets.map((t) => (
-                          <article key={t._id} className="bg-white border border-stone-200 rounded-2xl p-5 space-y-4">
-                            <div className="flex flex-wrap justify-between items-start gap-3">
-                              <div className="space-y-1">
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="text-xs font-mono font-semibold text-[#930303]">{t.ticketNumber}</span>
-                                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium">
-                                    {t.type === 'contact' ? 'Contact Inquiry' : 'Support Ticket'}
-                                  </span>
-                                  {t.orderNumber && (
-                                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FAF7F2] border border-[#E9DED2] text-stone-700">
-                                      Order: {t.orderNumber}
+                        {tickets.map((t) => {
+                          const replyPhotos = (replyAttachments[t._id] || []).filter((a) => a.fileType === 'image');
+                          const replyVideos = (replyAttachments[t._id] || []).filter((a) => a.fileType === 'video');
+
+                          return (
+                            <article key={t._id} className="bg-white border border-stone-200 rounded-2xl p-5 space-y-4 shadow-xs">
+                              <div className="flex flex-wrap justify-between items-start gap-3">
+                                <div className="space-y-1">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-xs font-mono font-semibold text-[#930303] bg-red-50 px-2 py-0.5 rounded-md border border-red-100">
+                                      {t.ticketNumber}
                                     </span>
-                                  )}
-                                </div>
-                                <h3 className="font-semibold text-stone-900">{t.subject}</h3>
-                                <p className="text-xs text-stone-500">
-                                  {t.category} · {new Date(t.createdAt).toLocaleString('en-IN')}
-                                </p>
-                              </div>
-                              <span
-                                className={`text-xs capitalize font-medium px-2.5 py-1 rounded-full border ${
-                                  STATUS_BADGE[t.status] || STATUS_BADGE.open
-                                }`}
-                              >
-                                {t.status?.replaceAll('_', ' ')}
-                              </span>
-                            </div>
-
-                            <div className="rounded-xl bg-[#FAF7F2] border border-[#E9DED2] p-3.5 text-sm text-stone-800 whitespace-pre-line">
-                              {t.message}
-                            </div>
-
-                            {Array.isArray(t.replies) && t.replies.length > 0 && (
-                              <div className="space-y-2.5 pl-3 border-l-2 border-[#D4AF66]">
-                                {t.replies.map((rep, idx) => (
-                                  <div
-                                    key={rep._id || idx}
-                                    className={`rounded-xl p-3 text-sm ${
-                                      rep.senderRole === 'admin'
-                                        ? 'bg-[#FFF6F2] border border-[#EADBD4]'
-                                        : 'bg-stone-50 border border-stone-200'
-                                    }`}
-                                  >
-                                    <div className="flex flex-wrap justify-between gap-2 text-xs mb-1">
-                                      <span className={`font-semibold ${rep.senderRole === 'admin' ? 'text-[#930303]' : 'text-stone-800'}`}>
-                                        {rep.senderRole === 'admin' ? `${rep.senderName || 'BL Jewels Concierge'} (Admin)` : 'You'}
+                                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 font-medium">
+                                      {t.type === 'contact' ? 'Contact Inquiry' : 'Support Ticket'}
+                                    </span>
+                                    {t.orderNumber && (
+                                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#FAF7F2] border border-[#E9DED2] text-stone-700 font-medium">
+                                        Order: {t.orderNumber}
                                       </span>
-                                      <span className="text-stone-400">
-                                        {rep.createdAt ? new Date(rep.createdAt).toLocaleString('en-IN') : ''}
-                                      </span>
-                                    </div>
-                                    <p className="text-stone-700 whitespace-pre-line">{rep.message}</p>
+                                    )}
                                   </div>
-                                ))}
+                                  <h3 className="font-semibold text-stone-900">{t.subject}</h3>
+                                  <p className="text-xs text-stone-500">
+                                    {t.category} · {new Date(t.createdAt).toLocaleString('en-IN')}
+                                  </p>
+                                </div>
+                                <span
+                                  className={`text-xs capitalize font-medium px-2.5 py-1 rounded-full border ${
+                                    STATUS_BADGE[t.status] || STATUS_BADGE.open
+                                  }`}
+                                >
+                                  {t.status?.replaceAll('_', ' ')}
+                                </span>
                               </div>
-                            )}
 
-                            <form onSubmit={(e) => handleCustomerReply(e, t._id)} className="flex flex-col sm:flex-row gap-2 pt-1">
-                              <label htmlFor={`reply-${t._id}`} className="sr-only">
-                                Follow-up reply
-                              </label>
-                              <input
-                                id={`reply-${t._id}`}
-                                name="reply"
-                                type="text"
-                                value={replyDrafts[t._id] || ''}
-                                onChange={(e) => setReplyDrafts({ ...replyDrafts, [t._id]: e.target.value })}
-                                placeholder="Write a follow-up message..."
-                                className="flex-1 border border-stone-300 rounded-xl px-3.5 py-2 text-base sm:text-sm"
-                              />
-                              <button
-                                type="submit"
-                                disabled={busy || !(replyDrafts[t._id] || '').trim()}
-                                className="inline-flex items-center justify-center gap-1.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
-                              >
-                                <Send size={13} />
-                                <span>Send Reply</span>
-                              </button>
-                            </form>
-                          </article>
-                        ))}
+                              {/* Selected Return Reasons Tags */}
+                              {Array.isArray(t.returnReasons) && t.returnReasons.length > 0 && (
+                                <div className="p-3 bg-red-50/60 border border-red-200/80 rounded-xl space-y-1.5">
+                                  <p className="text-[11px] font-bold uppercase tracking-wider text-red-900 flex items-center gap-1.5">
+                                    <ShieldAlert size={13} className="text-[#930303]" />
+                                    <span>Return Issues Reported:</span>
+                                  </p>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {t.returnReasons.map((r, i) => (
+                                      <span
+                                        key={i}
+                                        className="text-[11px] px-2.5 py-0.5 rounded-md bg-white text-red-900 font-medium border border-red-200 shadow-2xs"
+                                      >
+                                        {RETURN_REASONS.find((opt) => opt.id === r)?.label || r}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Initial Customer Message & Attached Proof */}
+                              <div className="rounded-xl bg-[#FAF7F2] border border-[#E9DED2] p-4 text-sm text-stone-800 space-y-3">
+                                <p className="whitespace-pre-line leading-relaxed">{t.message}</p>
+
+                                {Array.isArray(t.attachments) && t.attachments.length > 0 && (
+                                  <div className="pt-2 border-t border-[#E9DED2]/60 space-y-2">
+                                    <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                                      Attached Proof ({t.attachments.length} files)
+                                    </p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                      {t.attachments.map((att, aIdx) => (
+                                        <div
+                                          key={aIdx}
+                                          className="rounded-xl overflow-hidden border border-stone-200 bg-white shadow-2xs"
+                                        >
+                                          {att.fileType === 'video' ? (
+                                            <div className="space-y-1">
+                                              <video
+                                                src={att.url}
+                                                controls
+                                                className="w-full aspect-video object-cover bg-black"
+                                                preload="metadata"
+                                              />
+                                              <p className="text-[10px] text-stone-600 px-1.5 py-1 truncate">
+                                                {att.originalName || 'Unboxing Video'}
+                                              </p>
+                                            </div>
+                                          ) : (
+                                            <div
+                                              onClick={() => setLightboxImage(att.url)}
+                                              className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden group"
+                                            >
+                                              <img
+                                                src={att.url}
+                                                alt=""
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                              />
+                                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Eye className="w-5 h-5 text-white drop-shadow" />
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Conversation History */}
+                              {Array.isArray(t.replies) && t.replies.length > 0 && (
+                                <div className="space-y-3 pl-3 border-l-2 border-[#D4AF66]">
+                                  {t.replies.map((rep, idx) => (
+                                    <div
+                                      key={rep._id || idx}
+                                      className={`rounded-2xl p-4 text-sm space-y-2 ${
+                                        rep.senderRole === 'admin'
+                                          ? 'bg-[#FFF6F2] border border-[#EADBD4]'
+                                          : 'bg-stone-50 border border-stone-200'
+                                      }`}
+                                    >
+                                      <div className="flex flex-wrap justify-between gap-2 text-xs">
+                                        <span
+                                          className={`font-semibold ${
+                                            rep.senderRole === 'admin' ? 'text-[#930303]' : 'text-stone-800'
+                                          }`}
+                                        >
+                                          {rep.senderRole === 'admin'
+                                            ? `${rep.senderName || 'BL Jewels Concierge'} (Admin)`
+                                            : 'You'}
+                                        </span>
+                                        <span className="text-stone-400">
+                                          {rep.createdAt ? new Date(rep.createdAt).toLocaleString('en-IN') : ''}
+                                        </span>
+                                      </div>
+                                      <p className="text-stone-700 whitespace-pre-line leading-relaxed">{rep.message}</p>
+
+                                      {/* Attached media in reply */}
+                                      {Array.isArray(rep.attachments) && rep.attachments.length > 0 && (
+                                        <div className="pt-2 border-t border-stone-200/60 space-y-1.5">
+                                          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                                            Attached Files ({rep.attachments.length})
+                                          </p>
+                                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                            {rep.attachments.map((att, aIdx) => (
+                                              <div
+                                                key={aIdx}
+                                                className="rounded-lg overflow-hidden border border-stone-200 bg-white shadow-2xs"
+                                              >
+                                                {att.fileType === 'video' ? (
+                                                  <video
+                                                    src={att.url}
+                                                    controls
+                                                    className="w-full aspect-video object-cover bg-black"
+                                                    preload="metadata"
+                                                  />
+                                                ) : (
+                                                  <div
+                                                    onClick={() => setLightboxImage(att.url)}
+                                                    className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden group"
+                                                  >
+                                                    <img
+                                                      src={att.url}
+                                                      alt=""
+                                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                    />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                      <Eye className="w-4 h-4 text-white" />
+                                                    </div>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Follow-up Reply Form with E-Commerce Media Box */}
+                              <div className="pt-2 border-t border-stone-100 space-y-2.5">
+                                <form onSubmit={(e) => handleCustomerReply(e, t._id)} className="space-y-2.5">
+                                  <div className="flex flex-col sm:flex-row gap-2">
+                                    <label htmlFor={`reply-${t._id}`} className="sr-only">
+                                      Follow-up reply
+                                    </label>
+                                    <input
+                                      id={`reply-${t._id}`}
+                                      name="reply"
+                                      type="text"
+                                      value={replyDrafts[t._id] || ''}
+                                      onChange={(e) => setReplyDrafts({ ...replyDrafts, [t._id]: e.target.value })}
+                                      placeholder="Write a follow-up message..."
+                                      className="flex-1 border border-stone-300 rounded-xl px-3.5 py-2 text-base sm:text-sm bg-white"
+                                    />
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setShowReplyUpload((prev) => ({ ...prev, [t._id]: !prev[t._id] }))
+                                        }
+                                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer transition-colors ${
+                                          (replyAttachments[t._id] || []).length > 0 || showReplyUpload[t._id]
+                                            ? 'bg-[#FFF6F2] border-[#EADBD4] text-[#930303]'
+                                            : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                                        }`}
+                                        title="Attach photos and unboxing video"
+                                      >
+                                        <Paperclip size={14} />
+                                        <span>Attach Proof</span>
+                                        {(replyAttachments[t._id] || []).length > 0 && (
+                                          <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#930303] text-white text-[10px]">
+                                            {(replyAttachments[t._id] || []).length}
+                                          </span>
+                                        )}
+                                      </button>
+
+                                      <button
+                                        type="submit"
+                                        disabled={
+                                          busy ||
+                                          (!(replyDrafts[t._id] || '').trim() &&
+                                            !(replyAttachments[t._id]?.length > 0))
+                                        }
+                                        className="inline-flex items-center justify-center gap-1.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                                      >
+                                        <Send size={13} />
+                                        <span>Send Reply</span>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  {/* Toggleable / Active Reply Attachment Box (Photos up to 4, Videos up to 2) */}
+                                  {(showReplyUpload[t._id] || (replyAttachments[t._id]?.length > 0)) && (
+                                    <div className="p-3.5 bg-[#FAF7F2] border border-[#E9DED2] rounded-xl space-y-2.5">
+                                      <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                          <Camera size={14} className="text-[#930303]" />
+                                          <span className="text-xs font-bold text-stone-800">
+                                            Attach Proof for Concierge (Photos: {replyPhotos.length}/4 · Videos: {replyVideos.length}/2)
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            setShowReplyUpload((prev) => ({ ...prev, [t._id]: false }))
+                                          }
+                                          className="text-stone-400 hover:text-stone-700 text-xs cursor-pointer"
+                                        >
+                                          <X size={14} />
+                                        </button>
+                                      </div>
+
+                                      <label
+                                        className={`block border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors ${
+                                          replyPhotos.length >= 4 && replyVideos.length >= 2
+                                            ? 'border-stone-200 bg-stone-100 opacity-60 cursor-not-allowed'
+                                            : 'border-[#C9A44A]/50 hover:border-[#930303] bg-white'
+                                        }`}
+                                      >
+                                        <input
+                                          type="file"
+                                          multiple
+                                          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                                          disabled={
+                                            replyUploadBusy[t._id] ||
+                                            (replyPhotos.length >= 4 && replyVideos.length >= 2)
+                                          }
+                                          onChange={(e) => handleReplyFilesSelected(t._id, e.target.files)}
+                                          className="hidden"
+                                        />
+                                        {replyUploadBusy[t._id] ? (
+                                          <div className="flex items-center justify-center gap-2 text-stone-600 text-xs py-1">
+                                            <Loader2 className="w-4 h-4 animate-spin text-[#930303]" />
+                                            <span>Uploading proof to BL Jewels vault...</span>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center justify-center gap-2 text-xs text-stone-600">
+                                            <UploadCloud size={16} className="text-[#930303]" />
+                                            <span>
+                                              Click to add photos (max 4, 10MB) or unboxing video (max 2, 50MB)
+                                            </span>
+                                          </div>
+                                        )}
+                                      </label>
+
+                                      {replyUploadError[t._id] && (
+                                        <p className="text-[11px] text-red-700 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-1.5">
+                                          <AlertCircle size={13} />
+                                          <span>{replyUploadError[t._id]}</span>
+                                        </p>
+                                      )}
+
+                                      {/* Attached files preview */}
+                                      {replyAttachments[t._id]?.length > 0 && (
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                                          {replyAttachments[t._id].map((att, aIdx) => (
+                                            <div
+                                              key={aIdx}
+                                              className="relative group rounded-lg overflow-hidden border border-stone-200 bg-white shadow-2xs"
+                                            >
+                                              {att.fileType === 'video' ? (
+                                                <div className="relative aspect-video bg-black flex items-center justify-center">
+                                                  <video src={att.url} className="w-full h-full object-cover" />
+                                                  <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1 py-0.5 rounded font-mono">
+                                                    VIDEO
+                                                  </span>
+                                                </div>
+                                              ) : (
+                                                <div
+                                                  onClick={() => setLightboxImage(att.url)}
+                                                  className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden"
+                                                >
+                                                  <img src={att.url} alt="" className="w-full h-full object-cover" />
+                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    <Eye className="w-4 h-4 text-white" />
+                                                  </div>
+                                                </div>
+                                              )}
+                                              <div className="p-1.5 flex items-center justify-between text-[10px]">
+                                                <span className="truncate text-stone-700 font-medium">
+                                                  {att.originalName || 'Proof'}
+                                                </span>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => handleRemoveReplyAttachment(t._id, aIdx)}
+                                                  className="text-stone-400 hover:text-red-700 p-0.5 cursor-pointer"
+                                                >
+                                                  <Trash2 size={12} />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </form>
+                              </div>
+                            </article>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -774,7 +1491,7 @@ export const AccountPage = () => {
                             message: `Hello Support Team,\n\nI would like to request an official update to my registered account details:\n\n• Current Registered Name: ${user.name}\n• Current Registered Phone: ${user.phone || 'Not added'}\n• Registered Email: ${user.email}\n\nRequested Updates:\n• New Full Name: \n• New Phone Number: \n• Reason for Change: \n\nPlease verify and update my account details.\nThank you!`,
                           });
                           setShowNewTicket(true);
-                          setTab('support');
+                          handleTabChange('support');
                           window.scrollTo({ top: 300, behavior: 'smooth' });
                         }}
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white text-xs font-semibold rounded-xl cursor-pointer transition-colors shadow-xs shrink-0"
@@ -1129,6 +1846,57 @@ export const AccountPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Lightbox Modal for Full Resolution Photo Inspection */}
+      {lightboxImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] bg-stone-900 rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-3 bg-stone-900/90 border-b border-stone-800 flex justify-between items-center text-xs text-stone-300">
+              <span className="font-semibold text-stone-200">Attached Proof Preview</span>
+              <button
+                type="button"
+                onClick={() => setLightboxImage(null)}
+                className="text-stone-400 hover:text-white p-1 cursor-pointer"
+                aria-label="Close image preview"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-2 flex items-center justify-center bg-black/40">
+              <img
+                src={lightboxImage}
+                alt="Enlarged proof"
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-lg"
+              />
+            </div>
+            <div className="p-3 bg-stone-900 border-t border-stone-800 flex justify-between items-center text-xs text-stone-300">
+              <a
+                href={lightboxImage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white flex items-center gap-1.5 underline"
+              >
+                <ExternalLink size={14} /> Open original full resolution
+              </a>
+              <button
+                type="button"
+                onClick={() => setLightboxImage(null)}
+                className="px-3.5 py-1.5 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs cursor-pointer"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
