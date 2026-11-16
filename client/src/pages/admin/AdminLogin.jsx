@@ -188,15 +188,15 @@ export const AdminLogin = () => {
       {/* Subtle royal ambient vignette overlay */}
       <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/50 pointer-events-none z-1" />
 
-      {/* Floating Login Card: Luxury Transparent Frosted Glassmorphism */}
-      <div className="relative z-10 w-full max-w-md bg-black/30 backdrop-blur-xl border border-white/15 border-t-[#C9A44A]/60 rounded-3xl p-8 sm:p-10 shadow-[0_30px_70px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.2)] space-y-6 text-stone-100 relative overflow-hidden">
+      {/* Floating Login Card: Luxury Transparent (No Blur) */}
+      <div className="relative z-10 w-full max-w-md bg-black/25 sm:bg-black/30 border border-[#C9A44A]/60 rounded-3xl p-8 sm:p-10 shadow-[0_30px_70px_rgba(0,0,0,0.85)] space-y-6 text-stone-100 relative overflow-hidden">
         
         {/* Subtle top gold rim accent */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/70 to-transparent pointer-events-none" />
 
         {/* Emblem */}
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-black/40 backdrop-blur-md p-3 border border-[#C9A44A]/60 flex items-center justify-center shadow-[0_0_25px_rgba(201,164,74,0.3)]">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-[#140404]/85 p-3 border border-[#C9A44A]/70 flex items-center justify-center shadow-[0_0_25px_rgba(201,164,74,0.3)]">
             <img
               src="/images/bl-jewels-icon.png"
               alt="BL Jewels Royal Monogram"
@@ -214,7 +214,7 @@ export const AdminLogin = () => {
         </div>
 
         {/* 1-Click Instant Demo Admin Access */}
-        <div className="p-3.5 rounded-2xl bg-black/50 backdrop-blur-md border border-[#C9A44A]/50 flex items-center justify-between gap-3 shadow-md">
+        <div className="p-3.5 rounded-2xl bg-[#140404]/85 border border-[#C9A44A]/60 flex items-center justify-between gap-3 shadow-md">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2 shrink-0">
@@ -242,14 +242,14 @@ export const AdminLogin = () => {
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-950/80 border border-red-500/70 rounded-xl text-red-200 text-xs font-body backdrop-blur-md shadow-md">
+          <div className="p-3 bg-red-950/90 border border-red-500/80 rounded-xl text-red-200 text-xs font-body shadow-md">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-body">
           <div>
-            <label className="block text-[#FFF5D6] font-semibold text-xs mb-1.5 tracking-wide">
+            <label className="block text-[#FFF5D6] font-semibold text-xs mb-1.5 tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
               Admin Email or Username
             </label>
             <input
@@ -259,13 +259,13 @@ export const AdminLogin = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. admin or admin@bljewels.com"
-              className="w-full px-4 py-3 bg-black/60 backdrop-blur-md border border-[#C9A44A]/60 rounded-xl text-white placeholder-stone-400 text-xs font-body focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#C9A44A]/40 focus:bg-black/80 transition-all shadow-inner"
+              className="w-full px-4 py-3 bg-[#120404]/85 border-2 border-[#C9A44A]/70 rounded-xl text-white placeholder-stone-400 text-xs font-body focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#C9A44A]/50 focus:bg-[#0E0303] transition-all shadow-md"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-[#FFF5D6] font-semibold text-xs tracking-wide">
+              <label className="block text-[#FFF5D6] font-semibold text-xs tracking-wide drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                 Admin Password
               </label>
               <button
@@ -290,12 +290,12 @@ export const AdminLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your admin password"
-                className="w-full pl-4 pr-10 py-3 bg-black/60 backdrop-blur-md border border-[#C9A44A]/60 rounded-xl text-white placeholder-stone-400 text-xs font-body focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#C9A44A]/40 focus:bg-black/80 transition-all shadow-inner"
+                className="w-full pl-4 pr-10 py-3 bg-[#120404]/85 border-2 border-[#C9A44A]/70 rounded-xl text-white placeholder-stone-400 text-xs font-body focus:outline-none focus:border-[#FFD700] focus:ring-2 focus:ring-[#C9A44A]/50 focus:bg-[#0E0303] transition-all shadow-md"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-300 hover:text-[#FFD700] transition-colors cursor-pointer p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DFBF68] hover:text-[#FFD700] transition-colors cursor-pointer p-0.5"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -329,7 +329,7 @@ export const AdminLogin = () => {
 
       {/* ── FORGOT PASSWORD MODAL (EMAIL OTP FLOW VIA GOOGLE SMTP) ── */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 animate-in fade-in duration-200">
           <div className="relative w-full max-w-md bg-[#1C1410] border border-[#C9A44A]/50 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-white">
             
             {/* Close Modal Button */}
