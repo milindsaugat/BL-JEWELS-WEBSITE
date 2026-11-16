@@ -203,45 +203,51 @@ export const AdminLogin = () => {
       {/* Subtle royal ambient vignette overlay */}
       <div className="absolute inset-0 bg-radial from-transparent via-black/25 to-black/60 pointer-events-none z-1" />
 
-      {/* Floating Login Card with Gold Halo and Glassmorphism */}
-      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-md border border-[#C9A44A]/60 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/60 space-y-6 text-stone-900">
+      {/* Floating Login Card with Luxury Obsidian-Maroon Glassmorphism */}
+      <div className="relative z-10 w-full max-w-md bg-[#180808]/90 backdrop-blur-2xl border border-[#C9A44A]/40 rounded-3xl p-8 sm:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_40px_rgba(201,164,74,0.12)] space-y-6 text-stone-100 relative overflow-hidden">
         
+        {/* Subtle top gold rim accent */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/50 to-transparent pointer-events-none" />
+
         {/* Emblem */}
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-white p-2 border-2 border-gold-400 flex items-center justify-center shadow-gold">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#2D0F0F] via-[#1F0808] to-[#120404] p-3 border border-[#C9A44A]/60 flex items-center justify-center shadow-[0_0_20px_rgba(201,164,74,0.25)]">
             <img
               src="/images/bl-jewels-icon.png"
               alt="BL Jewels Royal Monogram"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain filter drop-shadow-md"
             />
           </div>
           <div>
-            <h1 className="font-accent text-xl sm:text-2xl font-bold tracking-cinzel text-[#930303]">
+            <h1 className="font-accent text-2xl sm:text-3xl font-bold tracking-cinzel bg-gradient-to-r from-[#FFF5D6] via-[#DFBF68] to-[#C9A44A] bg-clip-text text-transparent drop-shadow-sm">
               BL JEWELS
             </h1>
-            <p className="font-accent text-[11px] tracking-[0.25em] text-stone-500 uppercase mt-0.5">
+            <p className="font-accent text-[11px] tracking-[0.25em] text-[#C9A44A]/80 uppercase mt-1">
               Welcome Back • Store Administration
             </p>
           </div>
         </div>
 
         {isSessionExpired && !errorMsg && (
-          <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs font-body flex items-start gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+          <div className="p-3 bg-amber-950/60 border border-amber-600/50 rounded-xl text-amber-200 text-xs font-body flex items-start gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0" />
             <p>Your executive administrative session has expired. Please sign in to re-authenticate.</p>
           </div>
         )}
 
         {/* 1-Click Instant Demo Admin Access */}
-        <div className="p-3 rounded-2xl bg-[#FAF7F2] border border-gold-300/70 flex items-center justify-between gap-3">
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#240A0A]/90 to-[#180606]/90 border border-[#C9A44A]/30 flex items-center justify-between gap-3 shadow-inner">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-              <span className="font-accent text-[11px] font-bold text-gold-900 uppercase tracking-wider">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="font-accent text-[11px] font-bold text-[#DFBF68] uppercase tracking-wider">
                 1-Click Executive Admin
               </span>
             </div>
-            <p className="text-[11px] text-stone-500 font-body truncate mt-0.5">
+            <p className="text-[11px] text-stone-400 font-body truncate mt-0.5">
               admin or admin@bljewels.com • Pass: adminpassword123
             </p>
           </div>
@@ -250,7 +256,7 @@ export const AdminLogin = () => {
             type="button"
             onClick={handleQuickDemoAdminLogin}
             disabled={isLoading}
-            className="px-3 py-1.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold font-body shadow-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer disabled:opacity-50"
+            className="px-3 py-1.5 bg-gradient-to-r from-[#930303] to-[#B02828] hover:from-[#A81010] hover:to-[#930303] text-white rounded-xl text-xs font-semibold font-body shadow-[0_2px_10px_rgba(147,3,3,0.5)] flex items-center gap-1.5 shrink-0 transition-all border border-[#C9A44A]/40 cursor-pointer disabled:opacity-50"
           >
             <Zap className="w-3.5 h-3.5 text-gold-300" />
             <span>Instant Login</span>
@@ -258,14 +264,16 @@ export const AdminLogin = () => {
         </div>
 
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-500/50 rounded-xl text-red-800 text-xs font-body">
+          <div className="p-3 bg-red-950/70 border border-red-500/60 rounded-xl text-red-200 text-xs font-body">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-body">
           <div>
-            <label className="block text-stone-700 font-semibold mb-1">Admin Email or Username</label>
+            <label className="block text-[#E6DAC8] font-medium text-xs mb-1.5 tracking-wide">
+              Admin Email or Username
+            </label>
             <input
               type="text"
               autoComplete="username"
@@ -273,13 +281,15 @@ export const AdminLogin = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. admin or admin@bljewels.com"
-              className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
+              className="w-full px-4 py-3 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 text-xs font-body focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50 transition-all shadow-inner"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-stone-700 font-semibold">Admin Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[#E6DAC8] font-medium text-xs tracking-wide">
+                Admin Password
+              </label>
               <button
                 type="button"
                 onClick={() => {
@@ -288,7 +298,7 @@ export const AdminLogin = () => {
                   setForgotStep('email');
                   setForgotError('');
                 }}
-                className="text-[11px] text-[#930303] hover:text-[#930303] transition-colors font-medium cursor-pointer"
+                className="text-[11px] text-[#DFBF68] hover:text-[#FFF5D6] transition-colors font-medium cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -302,12 +312,12 @@ export const AdminLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your admin password"
-                className="w-full pl-3.5 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
+                className="w-full pl-4 pr-10 py-3 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 text-xs font-body focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50 transition-all shadow-inner"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-[#930303] transition-colors cursor-pointer p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#DFBF68] transition-colors cursor-pointer p-0.5"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -319,20 +329,20 @@ export const AdminLogin = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-2 border border-gold-400/40 cursor-pointer"
+            className="w-full py-3.5 bg-gradient-to-r from-[#930303] via-[#AB1212] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-[0_4px_25px_rgba(147,3,3,0.55)] flex items-center justify-center gap-2 border border-[#C9A44A]/50 cursor-pointer"
           >
             <span>Sign in to your store</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="pt-2 text-center text-[11px] text-stone-500 flex items-center justify-center gap-1.5 font-body">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#930303]" />
+        <div className="pt-2 text-center text-[11px] text-stone-400 flex items-center justify-center gap-1.5 font-body">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#C9A44A]" />
           <span>Restricted to BL Jewels Authorized Personnel Only</span>
         </div>
 
         <div className="text-center pt-2">
-          <a href="http://localhost:5173" className="text-xs text-stone-500 hover:text-[#930303] transition-colors">
+          <a href="http://localhost:5173" className="text-xs text-stone-400 hover:text-[#DFBF68] transition-colors">
             ← Return to Customer Storefront
           </a>
         </div>
@@ -341,27 +351,27 @@ export const AdminLogin = () => {
 
       {/* ── FORGOT PASSWORD MODAL (EMAIL OTP FLOW VIA GOOGLE SMTP) ── */}
       {showForgotModal && createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div role="dialog" aria-modal="true" className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto bg-white border border-[#C9A44A]/50 rounded-2xl p-5 sm:p-6 shadow-2xl space-y-4 text-stone-900 my-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div role="dialog" aria-modal="true" className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto bg-[#180808]/95 backdrop-blur-xl border border-[#C9A44A]/50 rounded-2xl p-5 sm:p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95)] space-y-4 text-stone-100 my-auto">
             
             {/* Close Modal Button */}
             <button
               aria-label="Close password recovery"
               onClick={closeForgotModal}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-stone-500 hover:text-stone-900 hover:bg-white/10 transition-colors"
+              className="absolute top-4 right-4 p-1.5 rounded-full text-stone-400 hover:text-white hover:bg-white/10 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             {/* Modal Header */}
             <div className="text-center space-y-1">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-stone-50 border border-gold-400/50 text-[#930303] flex items-center justify-center shadow-sm">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-[#2D0F0F] to-[#120404] border border-[#C9A44A]/50 text-[#DFBF68] flex items-center justify-center shadow-sm">
                 <KeyRound className="w-5 h-5" />
               </div>
-              <h2 className="text-base font-bold text-[#930303] font-accent tracking-wide pt-1">
+              <h2 className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5D6] to-[#DFBF68] font-accent tracking-wide pt-1">
                 Admin Password Recovery
               </h2>
-              <p className="text-[11px] text-stone-500">
+              <p className="text-[11px] text-stone-400">
                 {forgotStep === 'email' && 'Enter your registered email address to receive a 6-digit OTP verification code.'}
                 {forgotStep === 'otp' && `Enter the 6-digit verification code sent to ${forgotEmail}.`}
                 {forgotStep === 'newPassword' && 'Create a strong, new password for your administrator account.'}
@@ -371,14 +381,14 @@ export const AdminLogin = () => {
 
             {/* Error Message Notice */}
             {forgotError && (
-              <div className="p-3 bg-red-50 border border-red-500/60 rounded-xl text-red-800 text-xs font-body leading-relaxed">
+              <div className="p-3 bg-red-950/70 border border-red-500/60 rounded-xl text-red-200 text-xs font-body leading-relaxed">
                 {forgotError}
               </div>
             )}
 
             {/* Success Message Notice */}
             {forgotSuccessMsg && forgotStep === 'otp' && (
-              <div className="p-2.5 bg-emerald-50 border border-emerald-500/60 rounded-xl text-emerald-800 text-xs font-body flex items-center gap-2">
+              <div className="p-2.5 bg-emerald-950/60 border border-emerald-500/60 rounded-xl text-emerald-200 text-xs font-body flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
                 <span>{forgotSuccessMsg}</span>
               </div>
@@ -388,7 +398,7 @@ export const AdminLogin = () => {
             {forgotStep === 'email' && (
               <form onSubmit={handleRequestOtp} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Administrator Email</label>
+                  <label className="block text-[#E6DAC8] font-medium mb-1">Administrator Email</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -396,16 +406,16 @@ export const AdminLogin = () => {
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                       placeholder="e.g. admin@bljewels.com"
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50"
                     />
-                    <Mail className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full py-3 bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 hover:from-gold-500 hover:to-gold-400 text-charcoal font-bold text-xs rounded-xl shadow-gold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3 bg-gradient-to-r from-[#930303] via-[#AB1212] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] text-white font-bold text-xs rounded-xl shadow-md shadow-[#930303]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-[#C9A44A]/40 cursor-pointer"
                 >
                   {forgotLoading ? (
                     <>
@@ -423,7 +433,7 @@ export const AdminLogin = () => {
             {forgotStep === 'otp' && (
               <form onSubmit={handleVerifyOtp} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">6-Digit Verification Code</label>
+                  <label className="block text-[#E6DAC8] font-medium mb-1">6-Digit Verification Code</label>
                   <input
                     type="text"
                     required
@@ -431,9 +441,9 @@ export const AdminLogin = () => {
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                     placeholder="123456"
-                    className="w-full py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 text-center text-lg tracking-[8px] font-mono focus:outline-none focus:border-gold-400"
+                    className="w-full py-2.5 bg-[#0E0303]/85 border border-[#C9A44A]/40 rounded-xl text-[#FFD700] text-center text-lg tracking-[8px] font-mono focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50"
                   />
-                  <span className="block text-[10px] text-stone-500 text-center mt-1">
+                  <span className="block text-[10px] text-stone-400 text-center mt-1">
                     Valid for 10 minutes
                   </span>
                 </div>
@@ -441,7 +451,7 @@ export const AdminLogin = () => {
                 <button
                   type="submit"
                   disabled={forgotLoading || otp.length !== 6}
-                  className="w-full py-3 bg-gradient-to-r from-gold-600 via-gold-500 to-gold-600 hover:from-gold-500 hover:to-gold-400 text-charcoal font-bold text-xs rounded-xl shadow-gold transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3 bg-gradient-to-r from-[#930303] via-[#AB1212] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] text-white font-bold text-xs rounded-xl shadow-md shadow-[#930303]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-[#C9A44A]/40 cursor-pointer"
                 >
                   {forgotLoading ? (
                     <>
@@ -458,7 +468,7 @@ export const AdminLogin = () => {
                     type="button"
                     onClick={handleRequestOtp}
                     disabled={forgotLoading}
-                    className="text-[11px] text-stone-500 hover:text-[#930303] transition-colors"
+                    className="text-[11px] text-[#DFBF68] hover:text-[#FFF5D6] transition-colors"
                   >
                     Resend OTP Code
                   </button>
@@ -470,7 +480,7 @@ export const AdminLogin = () => {
             {forgotStep === 'newPassword' && (
               <form onSubmit={handleResetPassword} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">New Password (Min 6 chars)</label>
+                  <label className="block text-[#E6DAC8] font-medium mb-1">New Password (Min 6 chars)</label>
                   <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
@@ -478,13 +488,13 @@ export const AdminLogin = () => {
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="Enter new strong password"
-                      className="w-full pl-9 pr-10 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400"
+                      className="w-full pl-9 pr-10 py-2.5 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50"
                     />
-                    <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-[#930303] p-0.5"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#DFBF68] p-0.5"
                     >
                       {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -492,7 +502,7 @@ export const AdminLogin = () => {
                 </div>
 
                 <div>
-                  <label className="block text-stone-700 font-semibold mb-1">Confirm New Password</label>
+                  <label className="block text-[#E6DAC8] font-medium mb-1">Confirm New Password</label>
                   <div className="relative">
                     <input
                       type={showNewPassword ? 'text' : 'password'}
@@ -500,16 +510,16 @@ export const AdminLogin = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Re-enter new password"
-                      className="w-full pl-9 pr-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 placeholder-stone-500 focus:outline-none focus:border-gold-400"
+                      className="w-full pl-9 pr-3.5 py-2.5 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50"
                     />
-                    <Lock className="w-4 h-4 text-stone-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="w-full py-3 bg-[#930303] hover:bg-[#7A0303] text-white font-bold text-xs rounded-xl shadow-md shadow-[#930303]/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-gold-400/40 cursor-pointer"
+                  className="w-full py-3 bg-gradient-to-r from-[#930303] via-[#AB1212] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] text-white font-bold text-xs rounded-xl shadow-md shadow-[#930303]/30 transition-all flex items-center justify-center gap-2 disabled:opacity-50 border border-[#C9A44A]/40 cursor-pointer"
                 >
                   {forgotLoading ? (
                     <>
@@ -533,13 +543,13 @@ export const AdminLogin = () => {
                   <h3 className="text-sm font-bold text-emerald-300">
                     Password Reset Successfully!
                   </h3>
-                  <p className="text-[11px] text-stone-500 mt-1">
+                  <p className="text-[11px] text-stone-400 mt-1">
                     Your administrator credentials have been updated. You can now log in with your new password.
                   </p>
                 </div>
                 <button
                   onClick={closeForgotModal}
-                  className="w-full py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+                  className="w-full py-2.5 bg-gradient-to-r from-[#930303] to-[#B02828] text-white text-xs font-semibold rounded-xl transition-colors cursor-pointer border border-[#C9A44A]/40"
                 >
                   Proceed to Login
                 </button>

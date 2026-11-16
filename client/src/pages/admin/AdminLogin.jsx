@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldCheck, ArrowRight, Eye, EyeOff, KeyRound, Mail, Lock, X, CheckCircle2, RotateCw } from 'lucide-react';
+import { ShieldCheck, ArrowRight, Eye, EyeOff, KeyRound, Mail, Lock, X, CheckCircle2, RotateCw, Zap } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authService } from '../../services/api';
 import Lightfall from '../../components/Lightfall';
@@ -44,6 +44,18 @@ export const AdminLogin = () => {
     e.preventDefault();
     setErrorMsg('');
     const res = await login(email, password);
+    if (res.success) {
+      navigate('/admin');
+    } else {
+      setErrorMsg(res.message || 'Invalid administrator credentials.');
+    }
+  };
+
+  const handleQuickDemoAdminLogin = async () => {
+    setEmail('admin@bljewels.com');
+    setPassword('adminpassword123');
+    setErrorMsg('');
+    const res = await login('admin@bljewels.com', 'adminpassword123');
     if (res.success) {
       navigate('/admin');
     } else {
@@ -176,50 +188,85 @@ export const AdminLogin = () => {
       {/* Subtle royal ambient vignette overlay */}
       <div className="absolute inset-0 bg-radial from-transparent via-black/25 to-black/60 pointer-events-none z-1" />
 
-      <div className="relative z-10 w-full max-w-md bg-[#1C1410]/95 backdrop-blur-md border border-[#C9A44A]/50 rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/60 space-y-6 text-white">
+      <div className="relative z-10 w-full max-w-md bg-[#180808]/90 backdrop-blur-2xl border border-[#C9A44A]/40 rounded-3xl p-8 sm:p-10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_40px_rgba(201,164,74,0.12)] space-y-6 text-stone-100 relative overflow-hidden">
         
+        {/* Subtle top gold rim accent */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#FFD700]/50 to-transparent pointer-events-none" />
+
         {/* Emblem */}
         <div className="text-center space-y-3">
-          <div className="w-20 h-20 mx-auto rounded-3xl bg-white p-2 border-2 border-gold-400 flex items-center justify-center shadow-gold">
+          <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-[#2D0F0F] via-[#1F0808] to-[#120404] p-3 border border-[#C9A44A]/60 flex items-center justify-center shadow-[0_0_20px_rgba(201,164,74,0.25)]">
             <img
               src="/images/bl-jewels-icon.png"
               alt="BL Jewels Royal Monogram"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain filter drop-shadow-md"
             />
           </div>
           <div>
-            <h1 className="font-accent text-xl sm:text-2xl font-bold tracking-cinzel text-gold-300">
+            <h1 className="font-accent text-2xl sm:text-3xl font-bold tracking-cinzel bg-gradient-to-r from-[#FFF5D6] via-[#DFBF68] to-[#C9A44A] bg-clip-text text-transparent drop-shadow-sm">
               BL JEWELS
             </h1>
-            <p className="font-accent text-[11px] tracking-[0.25em] text-stone-400 uppercase mt-0.5">
-              Executive Portal Authentication
+            <p className="font-accent text-[11px] tracking-[0.25em] text-[#C9A44A]/80 uppercase mt-1">
+              Welcome Back • Store Administration
             </p>
           </div>
         </div>
 
+        {/* 1-Click Instant Demo Admin Access */}
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#240A0A]/90 to-[#180606]/90 border border-[#C9A44A]/30 flex items-center justify-between gap-3 shadow-inner">
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="font-accent text-[11px] font-bold text-[#DFBF68] uppercase tracking-wider">
+                1-Click Executive Admin
+              </span>
+            </div>
+            <p className="text-[11px] text-stone-400 font-body truncate mt-0.5">
+              admin or admin@bljewels.com • Pass: adminpassword123
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleQuickDemoAdminLogin}
+            disabled={isLoading}
+            className="px-3 py-1.5 bg-gradient-to-r from-[#930303] to-[#B02828] hover:from-[#A81010] hover:to-[#930303] text-white rounded-xl text-xs font-semibold font-body shadow-[0_2px_10px_rgba(147,3,3,0.5)] flex items-center gap-1.5 shrink-0 transition-all border border-[#C9A44A]/40 cursor-pointer disabled:opacity-50"
+          >
+            <Zap className="w-3.5 h-3.5 text-gold-300" />
+            <span>Instant Login</span>
+          </button>
+        </div>
+
         {errorMsg && (
-          <div className="p-3 bg-red-900/40 border border-red-500/50 rounded-xl text-red-200 text-xs font-body">
+          <div className="p-3 bg-red-950/70 border border-red-500/60 rounded-xl text-red-200 text-xs font-body">
             {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4 text-xs font-body">
           <div>
-            <label className="block text-stone-300 font-semibold mb-1">Admin Email Address</label>
+            <label className="block text-[#E6DAC8] font-medium text-xs mb-1.5 tracking-wide">
+              Admin Email or Username
+            </label>
             <input
-              type="email"
+              type="text"
               required
               autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. admin@bljewels.com"
-              className="w-full px-3.5 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
+              placeholder="e.g. admin or admin@bljewels.com"
+              className="w-full px-4 py-3 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 text-xs font-body focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50 transition-all shadow-inner"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-stone-300 font-semibold">Admin Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[#E6DAC8] font-medium text-xs tracking-wide">
+                Admin Password
+              </label>
               <button
                 type="button"
                 onClick={() => {
@@ -228,7 +275,7 @@ export const AdminLogin = () => {
                   setForgotStep('email');
                   setForgotError('');
                 }}
-                className="text-[11px] text-gold-400 hover:text-gold-300 transition-colors font-medium cursor-pointer"
+                className="text-[11px] text-[#DFBF68] hover:text-[#FFF5D6] transition-colors font-medium cursor-pointer"
               >
                 Forgot Password?
               </button>
@@ -242,12 +289,12 @@ export const AdminLogin = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your admin password"
-                className="w-full pl-3.5 pr-10 py-2.5 bg-white/5 border border-white/15 rounded-xl text-white placeholder-stone-500 focus:outline-none focus:border-gold-400 transition-colors"
+                className="w-full pl-4 pr-10 py-3 bg-[#0E0303]/85 border border-[#C9A44A]/30 rounded-xl text-stone-100 placeholder-stone-500 text-xs font-body focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50 transition-all shadow-inner"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-gold-300 transition-colors cursor-pointer p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-[#DFBF68] transition-colors cursor-pointer p-0.5"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -259,7 +306,7 @@ export const AdminLogin = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-2 border border-gold-400/40 cursor-pointer"
+            className="w-full py-3.5 bg-gradient-to-r from-[#930303] via-[#AB1212] to-[#7A0303] hover:from-[#A81010] hover:to-[#930303] disabled:opacity-50 text-white rounded-xl text-xs font-semibold tracking-wider transition-all shadow-[0_4px_25px_rgba(147,3,3,0.55)] flex items-center justify-center gap-2 border border-[#C9A44A]/50 cursor-pointer"
           >
             <span>Authorize & Enter Admin Suite</span>
             <ArrowRight className="w-4 h-4" />
@@ -267,12 +314,12 @@ export const AdminLogin = () => {
         </form>
 
         <div className="pt-2 text-center text-[11px] text-stone-400 flex items-center justify-center gap-1.5 font-body">
-          <ShieldCheck className="w-3.5 h-3.5 text-gold-400" />
+          <ShieldCheck className="w-3.5 h-3.5 text-[#C9A44A]" />
           <span>Restricted to BL Jewels Authorized Personnel Only</span>
         </div>
 
         <div className="text-center pt-2">
-          <Link to="/" className="text-xs text-stone-400 hover:text-gold-300 transition-colors">
+          <Link to="/" className="text-xs text-stone-400 hover:text-[#DFBF68] transition-colors">
             ← Return to Customer Storefront
           </Link>
         </div>
