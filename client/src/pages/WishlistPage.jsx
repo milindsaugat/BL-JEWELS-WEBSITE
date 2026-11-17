@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Heart, ShoppingBag, ArrowRight, Lock } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
@@ -11,6 +11,11 @@ export const WishlistPage = () => {
   const { openAuthModal } = useUIStore();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // If logged in, redirect seamlessly to the Wishlist tab inside User Dashboard
+  if (isAuthenticated) {
+    return <Navigate to="/account?tab=wishlist" replace />;
+  }
 
   useEffect(() => {
     if (!isAuthenticated) {

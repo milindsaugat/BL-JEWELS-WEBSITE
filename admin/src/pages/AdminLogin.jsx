@@ -5,6 +5,7 @@ import { ShieldCheck, ArrowRight, Eye, EyeOff, KeyRound, Mail, Lock, X, CheckCir
 import { useAuthStore } from '../store/authStore';
 import { authService } from '../services/api';
 import Lightfall from '../components/Lightfall';
+import OtpInput from '../components/OtpInput';
 
 export const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -433,17 +434,14 @@ export const AdminLogin = () => {
             {forgotStep === 'otp' && (
               <form onSubmit={handleVerifyOtp} className="space-y-4 text-xs font-body">
                 <div>
-                  <label className="block text-[#E6DAC8] font-medium mb-1">6-Digit Verification Code</label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
+                  <label className="block text-[#E6DAC8] font-medium mb-2.5 text-center">6-Digit Verification Code</label>
+                  <OtpInput
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="123456"
-                    className="w-full py-2.5 bg-[#0E0303]/85 border border-[#C9A44A]/40 rounded-xl text-[#FFD700] text-center text-lg tracking-[8px] font-mono focus:outline-none focus:border-[#DFBF68] focus:ring-1 focus:ring-[#C9A44A]/50"
+                    onChange={setOtp}
+                    variant="dark"
+                    autoFocus
                   />
-                  <span className="block text-[10px] text-stone-400 text-center mt-1">
+                  <span className="block text-[10px] text-stone-400 text-center mt-2">
                     Valid for 10 minutes
                   </span>
                 </div>

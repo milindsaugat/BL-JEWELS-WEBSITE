@@ -592,7 +592,7 @@ export const Navbar = () => {
 
             {/* Wishlist */}
             <Link
-              to="/wishlist"
+              to={isAuthenticated ? '/account?tab=wishlist' : '/wishlist'}
               className="p-2 text-stone-700 hover:text-[#930303] transition-colors relative"
               aria-label="View Saved Wishlist"
             >
@@ -702,7 +702,7 @@ export const Navbar = () => {
                         </Link>
 
                         <Link
-                          to="/wishlist"
+                          to={isAuthenticated ? '/account?tab=wishlist' : '/wishlist'}
                           onClick={() => setAccountDropdownOpen(false)}
                           className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#FAF7F2] hover:text-[#930303] transition-colors"
                         >

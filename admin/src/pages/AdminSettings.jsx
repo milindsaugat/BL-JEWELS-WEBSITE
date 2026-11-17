@@ -32,6 +32,7 @@ import {
 import { settingsService, legalService, authService } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { RichTextEditor } from '../components/RichTextEditor';
+import OtpInput from '../components/OtpInput';
 import { toast } from 'sonner';
 
 export const AdminSettings = () => {
@@ -1374,15 +1375,12 @@ export const AdminSettings = () => {
                         Code sent to <strong>{user?.email}</strong>. Enter code below:
                       </p>
 
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          maxLength={6}
-                          required
+                      <div className="space-y-3">
+                        <OtpInput
                           value={emailOtpCode}
-                          onChange={(e) => setEmailOtpCode(e.target.value.replace(/\D/g, ''))}
-                          placeholder="123456"
-                          className="w-full px-3.5 py-2.5 bg-white border border-[#930303]/40 rounded-xl font-mono text-center text-lg tracking-[.25em] font-bold text-stone-900 focus:outline-none focus:border-[#930303]"
+                          onChange={setEmailOtpCode}
+                          variant="light"
+                          autoFocus
                         />
 
                         <div className="flex items-center gap-2 pt-1">
@@ -1542,15 +1540,12 @@ export const AdminSettings = () => {
                         Authorization code sent to <strong>{user?.email}</strong>. Enter code below:
                       </p>
 
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          maxLength={6}
-                          required
+                      <div className="space-y-3">
+                        <OtpInput
                           value={passOtpCode}
-                          onChange={(e) => setPassOtpCode(e.target.value.replace(/\D/g, ''))}
-                          placeholder="123456"
-                          className="w-full px-3.5 py-2.5 bg-white border border-[#930303]/40 rounded-xl font-mono text-center text-lg tracking-[.25em] font-bold text-stone-900 focus:outline-none focus:border-[#930303]"
+                          onChange={setPassOtpCode}
+                          variant="light"
+                          autoFocus
                         />
 
                         <div className="flex items-center gap-2 pt-1">

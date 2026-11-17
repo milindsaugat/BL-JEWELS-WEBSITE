@@ -40,6 +40,40 @@ export const useAuthStore = create((set, get) => ({
     try {
       const data = await authService.login({ email, password });
       if (data.success) {
+        if (data.requireOtp) {
+          set({ isLoading: false });
+          return {
+            success: true,
+            requireOtp: true,
+            email: data.email,
+            message: data.message,
+          };
+        }
+
+        localStorage.setItem('bl_access_token', data.accessToken);
+        localStorage.setItem('bl_user', JSON.stringify(data.user));
+        set({
+          user: data.user,
+          token: data.accessToken,
+          isAuthenticated: true,
+          wishlist: data.user.wishlist || get().wishlist,
+          isLoading: false,
+        });
+        return { success: true, requireOtp: false };
+      }
+      set({ isLoading: false });
+      return { success: false, message: data.message };
+    } catch (err) {
+      set({ isLoading: false });
+      return { success: false, message: err.response?.data?.message || err.message };
+    }
+  },
+
+  verifyLoginOtp: async (email, otp) => {
+    set({ isLoading: true });
+    try {
+      const data = await authService.verifyLoginOtp({ email, otp });
+      if (data.success) {
         localStorage.setItem('bl_access_token', data.accessToken);
         localStorage.setItem('bl_user', JSON.stringify(data.user));
         set({
@@ -59,11 +93,74 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
+  initiateRegister: async (userData) => {
+    set({ isLoading: true });
+    try {
+      const data = await authService.initiateRegister(userData);
+      set({ isLoading: false });
+      if (data.success) {
+        return {
+          success: true,
+          requireOtp: true,
+          email: data.email,
+          message: data.message,
+        };
+      }
+      return { success: false, message: data.message };
+    } catch (err) {
+      set({ isLoading: false });
+      return { success: false, message: err.response?.data?.message || err.message };
+    }
+  },
+
+  verifyRegisterOtp: async (email, otp) => {
+    set({ isLoading: true });
+    try {
+      const data = await authService.verifyRegisterOtp({ email, otp });
+      if (data.success) {
+        localStorage.setItem('bl_access_token', data.accessToken);
+        localStorage.setItem('bl_user', JSON.stringify(data.user));
+        set({
+          user: data.user,
+          token: data.accessToken,
+          isAuthenticated: true,
+          wishlist: data.user.wishlist || [],
+          isLoading: false,
+        });
+        return { success: true };
+      }
+      set({ isLoading: false });
+      return { success: false, message: data.message };
+    } catch (err) {
+      set({ isLoading: false });
+      return { success: false, message: err.response?.data?.message || err.message };
+    }
+  },
+
+  resendAuthOtp: async (email, purpose) => {
+    try {
+      const data = await authService.resendAuthOtp({ email, purpose });
+      return data;
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || err.message };
+    }
+  },
+
   register: async (userData) => {
     set({ isLoading: true });
     try {
       const data = await authService.register(userData);
       if (data.success) {
+        if (data.requireOtp) {
+          set({ isLoading: false });
+          return {
+            success: true,
+            requireOtp: true,
+            email: data.email,
+            message: data.message,
+          };
+        }
+
         localStorage.setItem('bl_access_token', data.accessToken);
         localStorage.setItem('bl_user', JSON.stringify(data.user));
         set({

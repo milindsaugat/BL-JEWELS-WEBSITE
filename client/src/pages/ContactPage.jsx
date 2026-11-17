@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Clock, Sparkles, Send, ShieldCheck } from 'lucide-react';
+import { MapPin, Phone, Mail, Sparkles, Send, ExternalLink } from 'lucide-react';
 import { ticketService } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -10,7 +10,6 @@ export const ContactPage = () => {
     name: null,
     phone: null,
     email: null,
-    occasion: 'wedding',
     message: '',
   });
   const [submitting, setSubmitting] = useState(false);
@@ -30,9 +29,9 @@ export const ContactPage = () => {
         name: effectiveName,
         phone: effectivePhone,
         email: effectiveEmail,
-        occasion: formData.occasion,
+        occasion: '',
         message: formData.message,
-        subject: `Showroom Consultation — ${formData.occasion}`,
+        subject: 'Showroom Visit / Customer Inquiry',
       });
       setSubmittedTicket(res.data || { ticketNumber: '' });
       setFormData((prev) => ({ ...prev, message: '' }));
@@ -52,76 +51,99 @@ export const ContactPage = () => {
         {/* Header */}
         <div className="text-center space-y-3 max-w-xl mx-auto">
           <span className="font-accent text-xs font-bold text-gold-700 tracking-[0.2em] uppercase">
-            Showroom Visit & Contact Us
+            Contact & Visit Us
           </span>
           <h1 className="font-display text-4xl sm:text-5xl font-bold text-[#930303]">
-            Connect with BL Jewels
+            Get in Touch with BL Jewels
           </h1>
           <p className="font-body text-xs sm:text-sm text-stone-600">
-            Schedule a private viewing at our flagship showroom or speak directly with our master jewelry specialists.
+            Visit our showroom in Agra or send us your inquiry online. We are here to assist you.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
           {/* Left Info Card */}
-          <div className="lg:col-span-5 bg-white rounded-3xl p-8 border border-gold-300/60 shadow-sm space-y-8">
-            <div>
-              <h3 className="font-display text-xl font-bold text-charcoal">
-                Flagship Showroom
-              </h3>
-              <p className="text-xs text-stone-500 font-body mt-1">
-                Located in the historic heart of India's jewelry capital.
-              </p>
-            </div>
-
-            <div className="space-y-4 font-body text-xs text-stone-700">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block text-stone-900">Showroom Address</strong>
-                  <span>Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002</span>
-                </div>
+          <div className="lg:col-span-5 bg-white rounded-3xl p-8 border border-gold-300/60 shadow-sm flex flex-col justify-between space-y-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-display text-xl font-bold text-charcoal">
+                  Our Showroom
+                </h3>
+                <p className="text-xs text-stone-500 font-body mt-1">
+                  Located at Civil Lines, Agra. We look forward to welcoming you.
+                </p>
               </div>
 
-              <div className="flex items-start gap-3">
-                <Phone className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block text-stone-900">Showroom Contact</strong>
-                  <a href="tel:07454986610" className="hover:text-[#930303] transition-colors">074549 86610</a>
+              <div className="space-y-4 font-body text-xs text-stone-700">
+                <div className="flex items-start gap-3">
+                  <Phone className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block text-stone-900 font-semibold">Phone Number</strong>
+                    <a href="tel:07454986610" className="hover:text-[#930303] transition-colors font-medium">074549 86610</a>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-start gap-3">
-                <Mail className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block text-stone-900">Email Inquiries</strong>
-                  <span>concierge@bljewels.com</span>
+                <div className="flex items-start gap-3">
+                  <Mail className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block text-stone-900 font-semibold">Email Address</strong>
+                    <a href="mailto:concierge@bljewels.com" className="hover:text-[#930303] transition-colors">concierge@bljewels.com</a>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex items-start gap-3">
-                <Clock className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
-                <div>
-                  <strong className="block text-stone-900">Visiting Hours</strong>
-                  <span>Monday to Saturday: 10:30 AM – 8:30 PM (Closed on Sundays)</span>
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-[#930303] shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="block text-stone-900 font-semibold">Showroom Address</strong>
+                    <span className="leading-relaxed text-stone-600 block mt-0.5">
+                      Upper Ground Floor, Shop No.01, Suresh Mall, Mahatma Gandhi Rd, Ramnagar Colony, Civil Lines, Agra, Uttar Pradesh 282002
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-gold-50/80 rounded-2xl border border-gold-300 text-xs font-body text-gold-900">
-              <ShieldCheck className="w-4 h-4 text-gold-700 inline mr-1.5" />
-              <span>Complimentary valet parking & private bridal salon available upon appointment.</span>
+            {/* Embedded Live Google Map */}
+            <div className="pt-5 border-t border-stone-200/70 flex-1 flex flex-col">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
+                  <MapPin size={12} className="text-[#930303]" />
+                  <span>Showroom Location Map</span>
+                </span>
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('B.L. Jewels, Suresh Mall, MG Road, Civil Lines, Agra, Uttar Pradesh 282002')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-semibold text-[#930303] hover:underline inline-flex items-center gap-1"
+                >
+                  <span>Open in Maps</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+              <div className="w-full flex-1 min-h-[220px] rounded-2xl overflow-hidden border border-stone-200 bg-[#FAF7F2] shadow-2xs relative">
+                <iframe
+                  title="BL Jewels Showroom Google Map Location"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent('B.L. Jewels, Suresh Mall, MG Road, Civil Lines, Agra')}&t=&z=16&ie=UTF8&iwloc=&output=embed`}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="w-full h-full min-h-[220px] block border-0"
+                />
+              </div>
             </div>
           </div>
 
           {/* Right Appointment Form */}
           <div className="lg:col-span-7 bg-white rounded-3xl p-8 sm:p-10 border border-gold-300/60 shadow-sm">
             <h2 id="contact-form-title" className="font-display text-2xl font-bold text-charcoal mb-2">
-              Book a Private Styling Appointment
+              Send Us a Message
             </h2>
             <p className="text-xs text-stone-500 font-body mb-6">
-              Our gemologists and stylists will curate customized selections aligned with your wedding dates and purity preferences.
+              Please enter your details below. Our team will get back to you shortly.
             </p>
 
             {error && (
@@ -133,14 +155,14 @@ export const ContactPage = () => {
             {submittedTicket ? (
               <div role="status" className="py-12 px-6 text-center space-y-3 bg-ivory rounded-2xl border border-gold-200">
                 <Sparkles className="w-10 h-10 text-gold-600 mx-auto" />
-                <h3 className="font-display text-xl font-bold text-charcoal">Appointment Request Received</h3>
+                <h3 className="font-display text-xl font-bold text-charcoal">Message Sent Successfully</h3>
                 {submittedTicket.ticketNumber && (
                   <p className="inline-block rounded-full bg-white border border-gold-300 px-3 py-1 text-[11px] font-semibold text-[#930303]">
                     Reference ID: {submittedTicket.ticketNumber}
                   </p>
                 )}
                 <p className="text-xs text-stone-600 font-body max-w-sm mx-auto">
-                  Namaste! Our showroom team has logged your inquiry and will respond shortly.
+                  Thank you for reaching out. Our team will review your inquiry and contact you soon.
                 </p>
                 <div className="pt-2 flex flex-wrap justify-center gap-3 text-xs">
                   <button
@@ -148,7 +170,7 @@ export const ContactPage = () => {
                     onClick={() => setSubmittedTicket(null)}
                     className="px-4 py-2 rounded-xl border border-stone-300 text-stone-700 hover:border-[#930303] hover:text-[#930303] cursor-pointer"
                   >
-                    Send Another Inquiry
+                    Send Another Message
                   </button>
                   {isAuthenticated && (
                     <Link
@@ -176,7 +198,7 @@ export const ContactPage = () => {
                       enterKeyHint="next"
                       value={effectiveName}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g. Radhika Sharma"
+                      placeholder="Enter your full name"
                       className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                     />
                   </div>
@@ -194,7 +216,7 @@ export const ContactPage = () => {
                       enterKeyHint="next"
                       value={effectivePhone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="+91 98200 12345"
+                      placeholder="Enter your contact phone number"
                       className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                     />
                   </div>
@@ -215,39 +237,21 @@ export const ContactPage = () => {
                     enterKeyHint="next"
                     value={effectiveEmail}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="name@example.com"
+                    placeholder="Enter your email address"
                     className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="contact-occasion" className="block text-xs font-semibold text-stone-700 mb-1">
-                    Celebrating Occasion
-                  </label>
-                  <select
-                    id="contact-occasion"
-                    name="occasion"
-                    value={formData.occasion}
-                    onChange={(e) => setFormData({ ...formData, occasion: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
-                  >
-                    <option value="wedding">Bridal & Wedding Trousseau</option>
-                    <option value="engagement">Diamond Solitaire Engagement</option>
-                    <option value="anniversary">Anniversary Celebration</option>
-                    <option value="custom">Bespoke Jewelry Commission</option>
-                  </select>
-                </div>
-
-                <div>
                   <label htmlFor="contact-message" className="block text-xs font-semibold text-stone-700 mb-1">
-                    Special Preferences / Inquiry <span aria-hidden="true">*</span>
+                    Your Message / Inquiry <span aria-hidden="true">*</span>
                   </label>
                   <textarea
                     id="contact-message"
                     name="message"
-                    rows={3}
+                    rows={4}
                     required
-                    placeholder="Tell us about desired karat purity (22K/18K), budget, or specific styles..."
+                    placeholder="How can we help you? Write your message here..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     className="w-full px-3.5 py-2.5 bg-pearl border border-border-light rounded-xl text-base sm:text-xs text-stone-900 focus:outline-none focus:border-gold-400"
@@ -260,7 +264,7 @@ export const ContactPage = () => {
                   className="w-full py-3.5 bg-gradient-to-r from-[#930303] to-[#7A0303] hover:from-[#7A0303] hover:to-[#5C0202] disabled:opacity-60 text-white rounded-xl text-xs font-semibold font-body tracking-wider transition-all shadow-md shadow-[#930303]/25 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{submitting ? 'Sending Request…' : 'Request Private Appointment'}</span>
+                  <span>{submitting ? 'Sending Message…' : 'Send Message'}</span>
                 </button>
               </form>
             )}

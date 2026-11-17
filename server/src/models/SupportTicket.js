@@ -47,6 +47,11 @@ const replySchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    replyType: {
+      type: String,
+      enum: ['message', 'attachment_request'],
+      default: 'message',
+    },
     attachments: {
       type: [attachmentSchema],
       default: [],
@@ -147,6 +152,11 @@ const supportTicketSchema = new mongoose.Schema(
     lastRepliedAt: {
       type: Date,
       default: null,
+    },
+    closedAt: {
+      type: Date,
+      default: null,
+      index: true,
     },
   },
   { timestamps: true }

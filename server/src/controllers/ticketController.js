@@ -1,7 +1,8 @@
 import SupportTicket from '../models/SupportTicket.js';
+import User from '../models/User.js';
 import { getDbStatus } from '../config/db.js';
 import { memoryStore } from '../config/memoryStore.js';
-import { sendTicketReplyEmail, isEmailConfigured } from '../services/emailService.js';
+import { sendTicketReplyEmail, sendTicketCreatedEmail, isEmailConfigured } from '../services/emailService.js';
 
 const VALID_STATUSES = ['open', 'in_progress', 'replied', 'resolved', 'closed'];
 const VALID_PRIORITIES = ['normal', 'high', 'urgent'];
@@ -147,14 +148,18 @@ export const createMyTicket = async (req, res) => {
       });
     }
 
+    const registeredEmail = cleanStr(req.user?.email || req.body.email, 160).toLowerCase();
+    const registeredName = cleanStr(req.user?.name || req.body.name || 'Valued Customer', 120);
+    const registeredPhone = cleanStr(req.user?.phone || req.body.phone || '', 40);
+
     const ticketNumber = generateTicketNumber('ticket');
     const docData = {
       ticketNumber,
       type: 'ticket',
       user: req.user._id,
-      name: cleanStr(req.user.name || req.body.name || 'Valued Customer', 120),
-      email: cleanStr(req.user.email || req.body.email, 160).toLowerCase(),
-      phone: cleanStr(req.body.phone || req.user.phone || '', 40),
+      name: registeredName,
+      email: registeredEmail,
+      phone: registeredPhone,
       occasion: '',
       category,
       orderNumber,
@@ -181,10 +186,35 @@ export const createMyTicket = async (req, res) => {
       ensureMemoryTickets().unshift(created);
     }
 
+    // Send confirmation email notification to user's registered account email
+    let emailSent = false;
+    let emailReason = '';
+    if (registeredEmail) {
+      try {
+        const result = await sendTicketCreatedEmail({
+          to: registeredEmail,
+          ticketNumber,
+          customerName: registeredName,
+          subject,
+          category,
+          orderNumber,
+          message,
+          priority,
+        });
+        emailSent = Boolean(result?.sent);
+        if (!emailSent) emailReason = result?.reason || '';
+      } catch (err) {
+        console.warn('Ticket created email notification error:', err.message);
+        emailReason = err.message;
+      }
+    }
+
     return res.status(201).json({
       success: true,
-      message: `Support ticket ${ticketNumber} created.`,
+      message: `Support ticket ${ticketNumber} created.${emailSent ? ' Confirmation email sent to your registered email.' : ''}`,
       data: created,
+      emailSent,
+      emailReason,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -199,21 +229,40 @@ export const getMyTickets = async (req, res) => {
   try {
     const userId = String(req.user._id);
     const userEmail = String(req.user.email || '').trim().toLowerCase();
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
     let tickets = [];
     if (getDbStatus()) {
       const orConditions = [{ user: req.user._id }];
       if (userEmail) orConditions.push({ email: userEmail });
-      tickets = await SupportTicket.find({ $or: orConditions })
+      tickets = await SupportTicket.find({
+        $and: [
+          { $or: orConditions },
+          {
+            $or: [
+              { status: { $ne: 'closed' } },
+              { closedAt: { $gte: thirtyDaysAgo } },
+              { closedAt: null, updatedAt: { $gte: thirtyDaysAgo } },
+            ],
+          },
+        ],
+      })
         .sort({ updatedAt: -1, createdAt: -1 })
         .lean();
     } else {
       tickets = ensureMemoryTickets()
-        .filter(
-          (t) =>
+        .filter((t) => {
+          const isOwner =
             String(t.user || '') === userId ||
-            (userEmail && String(t.email || '').toLowerCase() === userEmail)
-        )
+            (userEmail && String(t.email || '').toLowerCase() === userEmail);
+          if (!isOwner) return false;
+          // Purge closed tickets older than 30 days
+          if (t.status === 'closed') {
+            const closedDate = new Date(t.closedAt || t.updatedAt || t.createdAt);
+            if (closedDate < thirtyDaysAgo) return false;
+          }
+          return true;
+        })
         .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
     }
 
@@ -251,13 +300,6 @@ export const replyToMyTicket = async (req, res) => {
 
     const userId = String(req.user._id);
     const userEmail = String(req.user.email || '').trim().toLowerCase();
-    const replyEntry = {
-      senderRole: 'customer',
-      senderName: cleanStr(req.user.name || 'Customer', 120),
-      message: message || (attachments.length ? `[Attached ${attachments.length} file(s)]` : ''),
-      attachments,
-      createdAt: new Date(),
-    };
 
     if (getDbStatus()) {
       const ticket = await SupportTicket.findById(req.params.id);
@@ -270,8 +312,25 @@ export const replyToMyTicket = async (req, res) => {
       if (!isOwner) {
         return res.status(403).json({ success: false, message: 'Access denied.' });
       }
+
+      // If ticket is closed, customer cannot send replies
+      if (ticket.status === 'closed') {
+        return res.status(400).json({
+          success: false,
+          message: 'This support ticket is closed. You can no longer send replies to this conversation.',
+        });
+      }
+
+      const replyEntry = {
+        senderRole: 'customer',
+        senderName: cleanStr(req.user.name || 'Customer', 120),
+        message: message || (attachments.length ? `[Attached ${attachments.length} file(s)]` : ''),
+        attachments,
+        createdAt: new Date(),
+      };
+
       ticket.replies.push(replyEntry);
-      if (ticket.status === 'resolved' || ticket.status === 'closed' || ticket.status === 'replied') {
+      if (ticket.status === 'resolved' || ticket.status === 'replied') {
         ticket.status = 'open';
       }
       ticket.lastRepliedAt = new Date();
@@ -291,11 +350,27 @@ export const replyToMyTicket = async (req, res) => {
     if (!isOwner) {
       return res.status(403).json({ success: false, message: 'Access denied.' });
     }
+
+    if (ticket.status === 'closed') {
+      return res.status(400).json({
+        success: false,
+        message: 'This support ticket is closed. You can no longer send replies to this conversation.',
+      });
+    }
+
+    const replyEntry = {
+      senderRole: 'customer',
+      senderName: cleanStr(req.user.name || 'Customer', 120),
+      message: message || (attachments.length ? `[Attached ${attachments.length} file(s)]` : ''),
+      attachments,
+      createdAt: new Date(),
+    };
+
     ticket.replies = [
       ...(ticket.replies || []),
       { _id: `rep_${Date.now()}`, ...replyEntry, createdAt: replyEntry.createdAt.toISOString() },
     ];
-    if (['resolved', 'closed', 'replied'].includes(ticket.status)) {
+    if (['resolved', 'replied'].includes(ticket.status)) {
       ticket.status = 'open';
     }
     ticket.lastRepliedAt = replyEntry.createdAt.toISOString();
@@ -375,10 +450,13 @@ export const replyTicket = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Reply message or attachment is required.' });
     }
 
+    const replyType = req.body.replyType === 'attachment_request' ? 'attachment_request' : 'message';
+
     const replyEntry = {
       senderRole: 'admin',
       senderName: cleanStr(req.user?.name || 'BL Jewels Concierge', 120),
       message: message || (attachments.length ? `[Attached ${attachments.length} file(s)]` : ''),
+      replyType,
       attachments,
       createdAt: new Date(),
     };
@@ -389,8 +467,15 @@ export const replyTicket = async (req, res) => {
       if (!ticket) {
         return res.status(404).json({ success: false, message: 'Ticket not found.' });
       }
+      if (ticket.status === 'closed') {
+        return res.status(400).json({
+          success: false,
+          message: 'This ticket is permanently closed and cannot receive new replies.',
+        });
+      }
       ticket.replies.push(replyEntry);
       ticket.status = nextStatus;
+      ticket.closedAt = nextStatus === 'closed' ? new Date() : null;
       ticket.lastRepliedAt = new Date();
       await ticket.save();
       updatedTicket = ticket.toObject();
@@ -401,24 +486,45 @@ export const replyTicket = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Ticket not found.' });
       }
       const ticket = list[idx];
+      if (ticket.status === 'closed') {
+        return res.status(400).json({
+          success: false,
+          message: 'This ticket is permanently closed and cannot receive new replies.',
+        });
+      }
       ticket.replies = [
         ...(ticket.replies || []),
         { _id: `rep_${Date.now()}`, ...replyEntry, createdAt: replyEntry.createdAt.toISOString() },
       ];
       ticket.status = nextStatus;
+      ticket.closedAt = nextStatus === 'closed' ? new Date().toISOString() : null;
       ticket.lastRepliedAt = replyEntry.createdAt.toISOString();
       ticket.updatedAt = replyEntry.createdAt.toISOString();
       updatedTicket = ticket;
     }
 
+    let recipientEmail = updatedTicket.email;
+    let recipientName = updatedTicket.name;
+
+    // Ensure notification is always sent to the user's registered account email
+    if (updatedTicket.user) {
+      try {
+        const regUser = await User.findById(updatedTicket.user).select('email name');
+        if (regUser?.email) {
+          recipientEmail = regUser.email;
+          if (regUser.name) recipientName = regUser.name;
+        }
+      } catch {}
+    }
+
     let emailSent = false;
     let emailNote = '';
-    if (req.body.sendEmail !== false && updatedTicket.email) {
+    if (req.body.sendEmail !== false && recipientEmail) {
       try {
         const emailResult = await sendTicketReplyEmail({
-          to: updatedTicket.email,
+          to: recipientEmail,
           ticketNumber: updatedTicket.ticketNumber,
-          customerName: updatedTicket.name,
+          customerName: recipientName,
           subject: updatedTicket.subject,
           replyText: message,
         });
@@ -452,6 +558,7 @@ export const updateTicketStatus = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid status value.' });
       }
       updates.status = req.body.status;
+      updates.closedAt = req.body.status === 'closed' ? new Date() : null;
     }
     if (req.body.priority !== undefined) {
       if (!VALID_PRIORITIES.includes(req.body.priority)) {
@@ -461,14 +568,21 @@ export const updateTicketStatus = async (req, res) => {
     }
 
     if (getDbStatus()) {
+      const existing = await SupportTicket.findById(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ success: false, message: 'Ticket not found.' });
+      }
+      if (existing.status === 'closed' && req.body.status && req.body.status !== 'closed') {
+        return res.status(400).json({
+          success: false,
+          message: 'Closed tickets are permanently finalized and cannot be reopened.',
+        });
+      }
       const updated = await SupportTicket.findByIdAndUpdate(
         req.params.id,
         { $set: updates },
         { new: true }
       ).lean();
-      if (!updated) {
-        return res.status(404).json({ success: false, message: 'Ticket not found.' });
-      }
       return res.json({ success: true, data: updated });
     }
 
@@ -476,6 +590,12 @@ export const updateTicketStatus = async (req, res) => {
     const idx = list.findIndex((t) => String(t._id) === String(req.params.id));
     if (idx === -1) {
       return res.status(404).json({ success: false, message: 'Ticket not found.' });
+    }
+    if (list[idx].status === 'closed' && req.body.status && req.body.status !== 'closed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Closed tickets are permanently finalized and cannot be reopened.',
+      });
     }
     list[idx] = { ...list[idx], ...updates, updatedAt: new Date().toISOString() };
     return res.json({ success: true, data: list[idx] });

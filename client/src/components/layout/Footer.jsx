@@ -195,9 +195,9 @@ const FooterShowroom = ({ settings }) => {
   const phone = settings?.contact?.phone || '074549 86610';
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const mapQuery = encodeURIComponent(
-    settings?.contact?.address || 'Suresh Mall, Mahatma Gandhi Road, Civil Lines, Agra, Uttar Pradesh 282002'
+    'B.L. Jewels, Suresh Mall, MG Road, Civil Lines, Agra, Uttar Pradesh 282002'
   );
-  const googleMapsUrl = `https://maps.google.com/?q=${mapQuery}`;
+  const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${mapQuery}`;
 
   return (
     <div className="flex flex-col">

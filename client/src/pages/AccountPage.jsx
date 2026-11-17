@@ -3,11 +3,13 @@ import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import {
   Package, Heart, MapPin, User, LogOut, ArrowUpRight, LifeBuoy, Plus, Send,
   UploadCloud, Camera, Trash2, Loader2, CheckCircle2, Lock, ShieldCheck,
-  FileText, ExternalLink, Eye, AlertCircle, Video, Image as ImageIcon, Paperclip,
-  X, ShieldAlert
+  FileText, ExternalLink, Eye, EyeOff, AlertCircle, Video, Image as ImageIcon, Paperclip,
+  X, ShieldAlert, ChevronDown, ChevronUp, KeyRound
 } from 'lucide-react';
-import { api, orderService, authService, ticketService, uploadService } from '../services/api';
+import { api, orderService, authService, ticketService, uploadService, productService } from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import { ProductCard } from '../components/product/ProductCard';
+import OtpInput from '../components/common/OtpInput';
 
 const emptyAddress = { label: 'Home', name: '', phone: '', line1: '', line2: '', city: '', state: '', pincode: '' };
 const emptyTicket = {
@@ -45,7 +47,7 @@ export const AccountPage = () => {
   const { user, isAuthenticated, logout, updateUser, wishlist } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlTab = searchParams.get('tab');
-  const validTabs = ['orders', 'support', 'addresses', 'profile'];
+  const validTabs = ['orders', 'support', 'addresses', 'profile', 'wishlist'];
 
   const [tab, setTab] = useState(() => {
     if (urlTab && validTabs.includes(urlTab)) return urlTab;
@@ -88,6 +90,7 @@ export const AccountPage = () => {
   const [orders, setOrders] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [showNewTicket, setShowNewTicket] = useState(false);
+  const [showTicketUpload, setShowTicketUpload] = useState(false);
   const [ticketForm, setTicketForm] = useState(emptyTicket);
   const [ticketUploadBusy, setTicketUploadBusy] = useState(false);
   const [ticketUploadError, setTicketUploadError] = useState('');
@@ -96,6 +99,7 @@ export const AccountPage = () => {
   const [replyUploadBusy, setReplyUploadBusy] = useState({});
   const [replyUploadError, setReplyUploadError] = useState({});
   const [showReplyUpload, setShowReplyUpload] = useState({});
+  const [closedChatExpanded, setClosedChatExpanded] = useState({});
   const [lightboxImage, setLightboxImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -117,6 +121,55 @@ export const AccountPage = () => {
   const [addresses, setAddresses] = useState(user?.addresses || []);
   const [address, setAddress] = useState(null);
   const [editIndex, setEditIndex] = useState(-1);
+  const [wishlistProducts, setWishlistProducts] = useState([]);
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
+
+  // Change Password state (OTP Protected)
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [pwdStep, setPwdStep] = useState('initial'); // 'initial' | 'otp'
+  const [pwdNew, setPwdNew] = useState('');
+  const [pwdConfirm, setPwdConfirm] = useState('');
+  const [pwdShow, setPwdShow] = useState(false);
+  const [pwdOtp, setPwdOtp] = useState('');
+  const [pwdLoading, setPwdLoading] = useState(false);
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState('');
+  const [pwdCooldown, setPwdCooldown] = useState(0);
+
+  useEffect(() => {
+    if (pwdCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setPwdCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [pwdCooldown]);
+
+  useEffect(() => {
+    if (tab !== 'wishlist' || !isAuthenticated) return;
+    if (!wishlist || wishlist.length === 0) {
+      setWishlistProducts([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchWishlist = async () => {
+      setLoadingWishlist(true);
+      try {
+        const res = await productService.getProducts({});
+        if (!cancelled && res?.products) {
+          const filtered = res.products.filter((p) => wishlist.includes(p._id));
+          setWishlistProducts(filtered);
+        }
+      } catch (err) {
+        console.error('Failed to load wishlist products:', err);
+      } finally {
+        if (!cancelled) setLoadingWishlist(false);
+      }
+    };
+    fetchWishlist();
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, wishlist, isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -524,6 +577,89 @@ export const AccountPage = () => {
     }
   };
 
+  const handleRequestPasswordOtp = async () => {
+    if (!pwdNew || pwdNew.length < 6) {
+      setPwdError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (pwdNew !== pwdConfirm) {
+      setPwdError('Passwords do not match. Please verify.');
+      return;
+    }
+
+    setPwdLoading(true);
+    setPwdError('');
+    setPwdSuccess('');
+
+    try {
+      const res = await authService.changePasswordOtp();
+      if (res.success) {
+        setPwdStep('otp');
+        setPwdCooldown(60);
+        setPwdSuccess(res.message || `A 6-digit verification code has been dispatched to ${user.email}.`);
+      } else {
+        setPwdError(res.message || 'Failed to dispatch verification code.');
+      }
+    } catch (err) {
+      setPwdError(err.response?.data?.message || err.message || 'Failed to dispatch verification code.');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  const handleConfirmChangePassword = async () => {
+    if (!pwdOtp || pwdOtp.trim().length < 6) {
+      setPwdError('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    setPwdLoading(true);
+    setPwdError('');
+    setPwdSuccess('');
+
+    try {
+      const res = await authService.changePassword(pwdOtp.trim(), pwdNew);
+      if (res.success) {
+        setPwdSuccess(res.message || 'Password updated successfully! You can now use your new password.');
+        setPwdOtp('');
+        setPwdNew('');
+        setPwdConfirm('');
+        setPwdStep('initial');
+        setTimeout(() => {
+          setShowChangePassword(false);
+          setPwdSuccess('');
+        }, 3500);
+      } else {
+        setPwdError(res.message || 'Failed to update password. Please check your verification code.');
+      }
+    } catch (err) {
+      setPwdError(err.response?.data?.message || err.message || 'Failed to update password. Please check your verification code.');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  const handleResendPasswordOtp = async () => {
+    if (pwdCooldown > 0 || pwdLoading) return;
+    setPwdLoading(true);
+    setPwdError('');
+    setPwdSuccess('');
+
+    try {
+      const res = await authService.changePasswordOtp();
+      if (res.success) {
+        setPwdCooldown(60);
+        setPwdSuccess(`A new verification code has been dispatched to ${user.email}.`);
+      } else {
+        setPwdError(res.message || 'Could not resend verification code.');
+      }
+    } catch (err) {
+      setPwdError(err.response?.data?.message || err.message || 'Could not resend verification code.');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
   if (!isAuthenticated) return <Navigate to="/auth" replace />;
 
   const openTicketCount = tickets.filter((t) => !['resolved', 'closed'].includes(t.status)).length;
@@ -532,6 +668,7 @@ export const AccountPage = () => {
     ['support', `Support tickets${openTicketCount ? ` (${openTicketCount})` : ''}`, LifeBuoy],
     ['addresses', 'Address book', MapPin],
     ['profile', 'My profile', User],
+    ['wishlist', `Wishlist${wishlist?.length ? ` (${wishlist.length})` : ''}`, Heart],
   ];
 
   return (
@@ -560,13 +697,18 @@ export const AccountPage = () => {
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-7">
           {[
-            ['Orders', orders.length],
-            ['On the way', orders.filter((o) => ['shipped', 'out_for_delivery'].includes(o.status)).length],
-            ['Support tickets', tickets.length],
-            ['Saved favourites', wishlist.length],
-          ].map(([label, value]) => (
-            <div key={label} className="p-5 bg-white border border-stone-200 rounded-2xl">
-              <p className="text-xs text-stone-500">{label}</p>
+            ['Orders', orders.length, 'orders'],
+            ['On the way', orders.filter((o) => ['shipped', 'out_for_delivery'].includes(o.status)).length, 'orders'],
+            ['Support tickets', tickets.length, 'support'],
+            ['Saved favourites', wishlist.length, 'wishlist'],
+          ].map(([label, value, tabKey]) => (
+            <div
+              key={label}
+              onClick={() => handleTabChange(tabKey)}
+              className="p-5 bg-white border border-stone-200 rounded-2xl cursor-pointer hover:border-[#930303]/40 transition-colors shadow-2xs group"
+              title={`View ${label}`}
+            >
+              <p className="text-xs text-stone-500 group-hover:text-stone-700">{label}</p>
               <p className="text-2xl font-semibold mt-2 text-[#930303]">{loading ? '—' : value}</p>
             </div>
           ))}
@@ -579,21 +721,17 @@ export const AccountPage = () => {
                 type="button"
                 key={id}
                 onClick={() => handleTabChange(id)}
-                className={`flex items-center gap-3 p-3 text-sm rounded-xl text-left cursor-pointer ${
-                  tab === id ? 'bg-[#930303] text-white' : 'hover:bg-stone-50'
+                className={`flex items-center gap-3 p-3 text-sm rounded-xl text-left cursor-pointer transition-colors ${
+                  tab === id ? 'bg-[#930303] text-white shadow-xs' : 'hover:bg-stone-50 text-stone-700'
                 }`}
               >
                 <Icon size={18} />
-                {label}
+                <span>{label}</span>
               </button>
             ))}
-            <Link to="/wishlist" className="flex gap-3 p-3 text-sm hover:bg-stone-50 rounded-xl">
-              <Heart size={18} />
-              Wishlist
-            </Link>
-            <Link to="/contact" className="flex gap-3 p-3 text-sm hover:bg-stone-50 rounded-xl">
+            <Link to="/contact" className="flex gap-3 p-3 text-sm hover:bg-stone-50 rounded-xl text-stone-700 transition-colors">
               <ArrowUpRight size={18} />
-              Showroom inquiry
+              <span>Showroom inquiry</span>
             </Link>
           </nav>
 
@@ -888,8 +1026,32 @@ export const AccountPage = () => {
                           />
                         </div>
 
-                        {/* E-Commerce Media Upload Box (Max 4 Photos + 2 Videos) */}
-                        {(() => {
+                        {/* Optional Attachment Toggle */}
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setShowTicketUpload((v) => !v)}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#930303] hover:underline cursor-pointer"
+                          >
+                            <Paperclip size={14} />
+                            <span>
+                              {showTicketUpload || (ticketForm.attachments || []).length > 0
+                                ? 'Hide photo/video attachment box'
+                                : '+ Attach photos or unboxing video (Optional / वैकल्पिक)'}
+                            </span>
+                            {(ticketForm.attachments || []).length > 0 && (
+                              <span className="px-1.5 py-0.2 rounded-full bg-[#930303] text-white text-[10px]">
+                                {(ticketForm.attachments || []).length}
+                              </span>
+                            )}
+                          </button>
+                          <p className="text-[11px] text-stone-500 mt-0.5">
+                            Photos and unboxing videos can also be uploaded later directly in the chat thread when our concierge requests them.
+                          </p>
+                        </div>
+
+                        {/* Collapsible Media Upload Box */}
+                        {(showTicketUpload || (ticketForm.attachments || []).length > 0) && (() => {
                           const ticketPhotos = (ticketForm.attachments || []).filter((a) => a.fileType === 'image');
                           const ticketVideos = (ticketForm.attachments || []).filter((a) => a.fileType === 'video');
                           return (
@@ -1060,6 +1222,8 @@ export const AccountPage = () => {
                     ) : (
                       <div className="space-y-4">
                         {tickets.map((t) => {
+                          const isClosed = t.status === 'closed';
+                          const isExpanded = isClosed ? Boolean(closedChatExpanded[t._id]) : true;
                           const replyPhotos = (replyAttachments[t._id] || []).filter((a) => a.fileType === 'image');
                           const replyVideos = (replyAttachments[t._id] || []).filter((a) => a.fileType === 'video');
 
@@ -1085,94 +1249,135 @@ export const AccountPage = () => {
                                     {t.category} · {new Date(t.createdAt).toLocaleString('en-IN')}
                                   </p>
                                 </div>
-                                <span
-                                  className={`text-xs capitalize font-medium px-2.5 py-1 rounded-full border ${
-                                    STATUS_BADGE[t.status] || STATUS_BADGE.open
-                                  }`}
-                                >
-                                  {t.status?.replaceAll('_', ' ')}
-                                </span>
-                              </div>
-
-                              {/* Selected Return Reasons Tags */}
-                              {Array.isArray(t.returnReasons) && t.returnReasons.length > 0 && (
-                                <div className="p-3 bg-red-50/60 border border-red-200/80 rounded-xl space-y-1.5">
-                                  <p className="text-[11px] font-bold uppercase tracking-wider text-red-900 flex items-center gap-1.5">
-                                    <ShieldAlert size={13} className="text-[#930303]" />
-                                    <span>Return Issues Reported:</span>
-                                  </p>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {t.returnReasons.map((r, i) => (
-                                      <span
-                                        key={i}
-                                        className="text-[11px] px-2.5 py-0.5 rounded-md bg-white text-red-900 font-medium border border-red-200 shadow-2xs"
-                                      >
-                                        {RETURN_REASONS.find((opt) => opt.id === r)?.label || r}
-                                      </span>
-                                    ))}
-                                  </div>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`text-xs capitalize font-medium px-2.5 py-1 rounded-full border ${
+                                      STATUS_BADGE[t.status] || STATUS_BADGE.open
+                                    }`}
+                                  >
+                                    {t.status?.replaceAll('_', ' ')}
+                                  </span>
+                                  {isClosed && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setClosedChatExpanded((prev) => ({ ...prev, [t._id]: !prev[t._id] }))
+                                      }
+                                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 text-xs font-semibold text-stone-700 cursor-pointer transition-colors"
+                                      title={isExpanded ? 'Hide closed chat history' : 'Click to view closed chat history'}
+                                    >
+                                      <span>{isExpanded ? 'Hide Chat' : 'View Closed Chat'}</span>
+                                      {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                                    </button>
+                                  )}
                                 </div>
-                              )}
-
-                              {/* Initial Customer Message & Attached Proof */}
-                              <div className="rounded-xl bg-[#FAF7F2] border border-[#E9DED2] p-4 text-sm text-stone-800 space-y-3">
-                                <p className="whitespace-pre-line leading-relaxed">{t.message}</p>
-
-                                {Array.isArray(t.attachments) && t.attachments.length > 0 && (
-                                  <div className="pt-2 border-t border-[#E9DED2]/60 space-y-2">
-                                    <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
-                                      Attached Proof ({t.attachments.length} files)
-                                    </p>
-                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                                      {t.attachments.map((att, aIdx) => (
-                                        <div
-                                          key={aIdx}
-                                          className="rounded-xl overflow-hidden border border-stone-200 bg-white shadow-2xs"
-                                        >
-                                          {att.fileType === 'video' ? (
-                                            <div className="space-y-1">
-                                              <video
-                                                src={att.url}
-                                                controls
-                                                className="w-full aspect-video object-cover bg-black"
-                                                preload="metadata"
-                                              />
-                                              <p className="text-[10px] text-stone-600 px-1.5 py-1 truncate">
-                                                {att.originalName || 'Unboxing Video'}
-                                              </p>
-                                            </div>
-                                          ) : (
-                                            <div
-                                              onClick={() => setLightboxImage(att.url)}
-                                              className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden group"
-                                            >
-                                              <img
-                                                src={att.url}
-                                                alt=""
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                              />
-                                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Eye className="w-5 h-5 text-white drop-shadow" />
-                                              </div>
-                                            </div>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
                               </div>
+
+                              {/* Compact preview when closed and collapsed */}
+                              {isClosed && !isExpanded ? (
+                                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500 pt-2 border-t border-stone-100">
+                                  <span className="flex items-center gap-1.5 text-stone-600 font-medium">
+                                    <Lock size={13} className="text-stone-400" />
+                                    <span>Ticket closed · Chat is closed</span>
+                                  </span>
+                                  <span className="text-[11px] text-stone-400">
+                                    Closed chat will be automatically deleted after 30 days
+                                  </span>
+                                </div>
+                              ) : (
+                                <>
+                                  {/* Selected Return Reasons Tags */}
+                                  {Array.isArray(t.returnReasons) && t.returnReasons.length > 0 && (
+                                    <div className="p-3 bg-red-50/60 border border-red-200/80 rounded-xl space-y-1.5">
+                                      <p className="text-[11px] font-bold uppercase tracking-wider text-red-900 flex items-center gap-1.5">
+                                        <ShieldAlert size={13} className="text-[#930303]" />
+                                        <span>Return Issues Reported:</span>
+                                      </p>
+                                      <div className="flex flex-wrap gap-1.5">
+                                        {t.returnReasons.map((r, i) => (
+                                          <span
+                                            key={i}
+                                            className="text-[11px] px-2.5 py-0.5 rounded-md bg-white text-red-900 font-medium border border-red-200 shadow-2xs"
+                                          >
+                                            {RETURN_REASONS.find((opt) => opt.id === r)?.label || r}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Initial Customer Message & Attached Proof */}
+                                  <div className="rounded-xl bg-[#FAF7F2] border border-[#E9DED2] p-4 text-sm text-stone-800 space-y-3">
+                                    <p className="whitespace-pre-line leading-relaxed">{t.message}</p>
+
+                                    {Array.isArray(t.attachments) && t.attachments.length > 0 && (
+                                      <div className="pt-2 border-t border-[#E9DED2]/60 space-y-2">
+                                        <p className="text-[11px] font-bold uppercase tracking-wider text-stone-500">
+                                          Attached Proof ({t.attachments.length} files)
+                                        </p>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                                          {t.attachments.map((att, aIdx) => (
+                                            <div
+                                              key={aIdx}
+                                              className="rounded-xl overflow-hidden border border-stone-200 bg-white shadow-2xs"
+                                            >
+                                              {att.fileType === 'video' ? (
+                                                <div className="space-y-1">
+                                                  <video
+                                                    src={att.url}
+                                                    controls
+                                                    className="w-full aspect-video object-cover bg-black"
+                                                    preload="metadata"
+                                                  />
+                                                  <p className="text-[10px] text-stone-600 px-1.5 py-1 truncate">
+                                                    {att.originalName || 'Unboxing Video'}
+                                                  </p>
+                                                </div>
+                                              ) : (
+                                                <div
+                                                  onClick={() => setLightboxImage(att.url)}
+                                                  className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden group"
+                                                >
+                                                  <img
+                                                    src={att.url}
+                                                    alt=""
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                                  />
+                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Eye className="w-5 h-5 text-white drop-shadow" />
+                                                  </div>
+                                                </div>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
 
                               {/* Conversation History */}
                               {Array.isArray(t.replies) && t.replies.length > 0 && (
                                 <div className="space-y-3 pl-3 border-l-2 border-[#D4AF66]">
-                                  {t.replies.map((rep, idx) => (
+                                  {t.replies.map((rep, idx) => {
+                                    // Check if this is an "attachment_request" from admin — Blinkit/Zomato style upload card
+                                    const isAttachmentRequest = rep.senderRole === 'admin' && rep.replyType === 'attachment_request';
+                                    // Check if customer already responded AFTER this attachment request (any customer reply after this one)
+                                    const hasCustomerRespondedAfter = isAttachmentRequest && t.replies.slice(idx + 1).some(
+                                      r => r.senderRole === 'customer' && (r.attachments?.length > 0 || r.message)
+                                    );
+                                    const reqPhotos = (replyAttachments[`${t._id}_req_${rep._id}`] || []).filter(a => a.fileType === 'image');
+                                    const reqVideos = (replyAttachments[`${t._id}_req_${rep._id}`] || []).filter(a => a.fileType === 'video');
+                                    const reqKey = `${t._id}_req_${rep._id}`;
+
+                                    return (
                                     <div
                                       key={rep._id || idx}
                                       className={`rounded-2xl p-4 text-sm space-y-2 ${
-                                        rep.senderRole === 'admin'
-                                          ? 'bg-[#FFF6F2] border border-[#EADBD4]'
-                                          : 'bg-stone-50 border border-stone-200'
+                                        isAttachmentRequest
+                                          ? 'bg-gradient-to-br from-[#FFF6F2] to-[#FFF0E8] border-2 border-[#C9A44A]/50 shadow-sm'
+                                          : rep.senderRole === 'admin'
+                                            ? 'bg-[#FFF6F2] border border-[#EADBD4]'
+                                            : 'bg-stone-50 border border-stone-200'
                                       }`}
                                     >
                                       <div className="flex flex-wrap justify-between gap-2 text-xs">
@@ -1191,7 +1396,144 @@ export const AccountPage = () => {
                                       </div>
                                       <p className="text-stone-700 whitespace-pre-line leading-relaxed">{rep.message}</p>
 
-                                      {/* Attached media in reply */}
+                                      {/* ===== BLINKIT/ZOMATO STYLE EMBEDDED UPLOAD BOX ===== */}
+                                      {isAttachmentRequest && (
+                                        <div className="mt-3 rounded-2xl border-2 border-dashed border-[#C9A44A]/60 bg-[#FAF7F2] p-4 space-y-3">
+                                          {hasCustomerRespondedAfter ? (
+                                            /* ✅ Already submitted */
+                                            <div className="flex items-center gap-2.5 py-2">
+                                              <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />
+                                              <div>
+                                                <p className="text-sm font-bold text-emerald-800">Proof Submitted ✓</p>
+                                                <p className="text-xs text-stone-500 mt-0.5">
+                                                  Your photos & videos have been sent. Our concierge is reviewing them.
+                                                </p>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            /* 📎 Upload box — active */
+                                            <>
+                                              <div className="flex items-center gap-2">
+                                                <div className="w-8 h-8 rounded-full bg-[#930303]/10 flex items-center justify-center shrink-0">
+                                                  <Camera className="w-4 h-4 text-[#930303]" />
+                                                </div>
+                                                <div>
+                                                  <p className="text-xs font-bold text-stone-900">
+                                                    📎 Upload Your Proof Here (यहाँ अपलोड करें)
+                                                  </p>
+                                                  <p className="text-[11px] text-stone-500">
+                                                    Max 4 Photos (JPG/PNG 10MB) + 2 Videos (MP4/WEBM 50MB)
+                                                  </p>
+                                                </div>
+                                              </div>
+
+                                              <div className="flex items-center gap-2">
+                                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${reqPhotos.length >= 4 ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-stone-700 border-stone-200'}`}>
+                                                  📷 {reqPhotos.length}/4
+                                                </span>
+                                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${reqVideos.length >= 2 ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-white text-stone-700 border-stone-200'}`}>
+                                                  🎥 {reqVideos.length}/2
+                                                </span>
+                                              </div>
+
+                                              <label
+                                                className={`block border-2 border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
+                                                  reqPhotos.length >= 4 && reqVideos.length >= 2
+                                                    ? 'border-stone-200 bg-stone-100 opacity-60 cursor-not-allowed'
+                                                    : 'border-[#C9A44A]/50 hover:border-[#930303] bg-white/80 hover:bg-white'
+                                                }`}
+                                              >
+                                                <input
+                                                  type="file"
+                                                  multiple
+                                                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                                                  disabled={
+                                                    replyUploadBusy[reqKey] || (reqPhotos.length >= 4 && reqVideos.length >= 2)
+                                                  }
+                                                  onChange={(e) => handleReplyFilesSelected(reqKey, e.target.files)}
+                                                  className="hidden"
+                                                />
+                                                {replyUploadBusy[reqKey] ? (
+                                                  <div className="flex items-center justify-center gap-2 text-stone-600 text-xs py-1">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-[#930303]" />
+                                                    <span>Uploading proof to BL Jewels vault...</span>
+                                                  </div>
+                                                ) : (
+                                                  <div className="flex items-center justify-center gap-3 text-xs text-stone-600 py-1">
+                                                    <UploadCloud size={18} className="text-[#930303]" />
+                                                    <span className="font-medium">Click to select photos & unboxing video</span>
+                                                  </div>
+                                                )}
+                                              </label>
+
+                                              {replyUploadError[reqKey] && (
+                                                <p className="text-[11px] text-red-700 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-1.5">
+                                                  <AlertCircle size={13} />
+                                                  <span>{replyUploadError[reqKey]}</span>
+                                                </p>
+                                              )}
+
+                                              {/* Preview uploaded files */}
+                                              {(replyAttachments[reqKey]?.length > 0) && (
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                  {replyAttachments[reqKey].map((att, aIdx) => (
+                                                    <div key={aIdx} className="relative group rounded-lg overflow-hidden border border-stone-200 bg-white shadow-2xs">
+                                                      {att.fileType === 'video' ? (
+                                                        <div className="relative aspect-video bg-black flex items-center justify-center">
+                                                          <video src={att.url} className="w-full h-full object-cover" />
+                                                          <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1 py-0.5 rounded font-mono">VIDEO</span>
+                                                        </div>
+                                                      ) : (
+                                                        <div onClick={() => setLightboxImage(att.url)} className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden">
+                                                          <img src={att.url} alt="" className="w-full h-full object-cover" />
+                                                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                            <Eye className="w-4 h-4 text-white" />
+                                                          </div>
+                                                        </div>
+                                                      )}
+                                                      <div className="p-1.5 flex items-center justify-between text-[10px]">
+                                                        <span className="truncate text-stone-700 font-medium">{att.originalName || 'Proof'}</span>
+                                                        <button type="button" onClick={() => handleRemoveReplyAttachment(reqKey, aIdx)} className="text-stone-400 hover:text-red-700 p-0.5 cursor-pointer">
+                                                          <Trash2 size={12} />
+                                                        </button>
+                                                      </div>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              )}
+
+                                              {/* Submit button for this embedded upload */}
+                                              {(replyAttachments[reqKey]?.length > 0) && (
+                                                <button
+                                                  type="button"
+                                                  disabled={busy || replyUploadBusy[reqKey]}
+                                                  onClick={() => {
+                                                    const atts = replyAttachments[reqKey] || [];
+                                                    if (atts.length === 0) return;
+                                                    run(async () => {
+                                                      const res = await ticketService.replyMyTicket(t._id, {
+                                                        message: `[Proof submitted: ${atts.length} file(s) uploaded]`,
+                                                        attachments: atts,
+                                                      });
+                                                      if (res?.data) {
+                                                        setTickets((prev) => prev.map((tk) => (tk._id === t._id ? res.data : tk)));
+                                                        setReplyAttachments((prev) => ({ ...prev, [reqKey]: [] }));
+                                                        setNotice('✅ Proof submitted successfully! Our concierge team will review your photos & videos.');
+                                                      }
+                                                    });
+                                                  }}
+                                                  className="w-full inline-flex items-center justify-center gap-2 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer shadow-sm transition-colors"
+                                                >
+                                                  <Send size={14} />
+                                                  <span>{busy ? 'Sending…' : `Submit Proof (${(replyAttachments[reqKey] || []).length} files)`}</span>
+                                                </button>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Attached media in reply (normal attachments) */}
                                       {Array.isArray(rep.attachments) && rep.attachments.length > 0 && (
                                         <div className="pt-2 border-t border-stone-200/60 space-y-1.5">
                                           <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
@@ -1231,173 +1573,223 @@ export const AccountPage = () => {
                                         </div>
                                       )}
                                     </div>
-                                  ))}
+                                  );
+                                  })}
                                 </div>
                               )}
 
-                              {/* Follow-up Reply Form with E-Commerce Media Box */}
-                              <div className="pt-2 border-t border-stone-100 space-y-2.5">
-                                <form onSubmit={(e) => handleCustomerReply(e, t._id)} className="space-y-2.5">
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <label htmlFor={`reply-${t._id}`} className="sr-only">
-                                      Follow-up reply
-                                    </label>
-                                    <input
-                                      id={`reply-${t._id}`}
-                                      name="reply"
-                                      type="text"
-                                      value={replyDrafts[t._id] || ''}
-                                      onChange={(e) => setReplyDrafts({ ...replyDrafts, [t._id]: e.target.value })}
-                                      placeholder="Write a follow-up message..."
-                                      className="flex-1 border border-stone-300 rounded-xl px-3.5 py-2 text-base sm:text-sm bg-white"
-                                    />
-                                    <div className="flex items-center gap-2">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          setShowReplyUpload((prev) => ({ ...prev, [t._id]: !prev[t._id] }))
-                                        }
-                                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer transition-colors ${
-                                          (replyAttachments[t._id] || []).length > 0 || showReplyUpload[t._id]
-                                            ? 'bg-[#FFF6F2] border-[#EADBD4] text-[#930303]'
-                                            : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
-                                        }`}
-                                        title="Attach photos and unboxing video"
-                                      >
-                                        <Paperclip size={14} />
-                                        <span>Attach Proof</span>
-                                        {(replyAttachments[t._id] || []).length > 0 && (
-                                          <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#930303] text-white text-[10px]">
-                                            {(replyAttachments[t._id] || []).length}
-                                          </span>
-                                        )}
-                                      </button>
-
-                                      <button
-                                        type="submit"
-                                        disabled={
-                                          busy ||
-                                          (!(replyDrafts[t._id] || '').trim() &&
-                                            !(replyAttachments[t._id]?.length > 0))
-                                        }
-                                        className="inline-flex items-center justify-center gap-1.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
-                                      >
-                                        <Send size={13} />
-                                        <span>Send Reply</span>
-                                      </button>
+                              {/* Follow-up Reply Form OR Closed Ticket Notice */}
+                              {isClosed ? (
+                                <div className="pt-3 border-t border-stone-200">
+                                  <div className="rounded-xl bg-[#FAF7F2] border border-[#E9DED2] p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                                    <div className="flex items-start sm:items-center gap-2.5">
+                                      <div className="w-8 h-8 rounded-full bg-stone-200 text-stone-600 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                                        <Lock size={15} />
+                                      </div>
+                                      <div>
+                                        <p className="text-xs font-bold text-stone-900">
+                                          This support ticket is closed (यह टिकट बंद हो चुका है)
+                                        </p>
+                                        <p className="text-[11px] text-stone-600 mt-0.5 leading-relaxed">
+                                          You cannot send messages to this closed conversation. For data privacy and policy compliance, closed tickets and chat history will be automatically deleted after 30 days.
+                                        </p>
+                                      </div>
                                     </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setTicketForm({
+                                          ...emptyTicket,
+                                          category: t.category || 'General Concierge',
+                                          orderNumber: t.orderNumber || '',
+                                          subject: `Follow-up regarding ${t.ticketNumber}`,
+                                        });
+                                        setShowNewTicket(true);
+                                        window.scrollTo({ top: 250, behavior: 'smooth' });
+                                      }}
+                                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-stone-300 text-stone-800 hover:text-[#930303] hover:border-[#930303] text-xs font-semibold cursor-pointer transition-colors shrink-0 shadow-2xs"
+                                    >
+                                      <Plus size={13} />
+                                      <span>Need help? Raise new ticket</span>
+                                    </button>
                                   </div>
-
-                                  {/* Toggleable / Active Reply Attachment Box (Photos up to 4, Videos up to 2) */}
-                                  {(showReplyUpload[t._id] || (replyAttachments[t._id]?.length > 0)) && (
-                                    <div className="p-3.5 bg-[#FAF7F2] border border-[#E9DED2] rounded-xl space-y-2.5">
-                                      <div className="flex flex-wrap items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
-                                          <Camera size={14} className="text-[#930303]" />
-                                          <span className="text-xs font-bold text-stone-800">
-                                            Attach Proof for Concierge (Photos: {replyPhotos.length}/4 · Videos: {replyVideos.length}/2)
-                                          </span>
-                                        </div>
+                                </div>
+                              ) : (
+                                <div className="pt-2 border-t border-stone-100 space-y-2.5">
+                                  <form onSubmit={(e) => handleCustomerReply(e, t._id)} className="space-y-2.5">
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <label htmlFor={`reply-${t._id}`} className="sr-only">
+                                        Follow-up reply
+                                      </label>
+                                      <input
+                                        id={`reply-${t._id}`}
+                                        name="reply"
+                                        type="text"
+                                        value={replyDrafts[t._id] || ''}
+                                        onChange={(e) => setReplyDrafts({ ...replyDrafts, [t._id]: e.target.value })}
+                                        placeholder="Write a follow-up message..."
+                                        className="flex-1 border border-stone-300 rounded-xl px-3.5 py-2 text-base sm:text-sm bg-white"
+                                      />
+                                      <div className="flex items-center gap-2">
                                         <button
                                           type="button"
                                           onClick={() =>
-                                            setShowReplyUpload((prev) => ({ ...prev, [t._id]: false }))
+                                            setShowReplyUpload((prev) => ({ ...prev, [t._id]: !prev[t._id] }))
                                           }
-                                          className="text-stone-400 hover:text-stone-700 text-xs cursor-pointer"
+                                          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border cursor-pointer transition-colors ${
+                                            (replyAttachments[t._id] || []).length > 0 || showReplyUpload[t._id]
+                                              ? 'bg-[#FFF6F2] border-[#EADBD4] text-[#930303]'
+                                              : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                                          }`}
+                                          title="Attach photos and unboxing video"
                                         >
-                                          <X size={14} />
+                                          <Paperclip size={14} />
+                                          <span>Attach Proof</span>
+                                          {(replyAttachments[t._id] || []).length > 0 && (
+                                            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-[#930303] text-white text-[10px]">
+                                              {(replyAttachments[t._id] || []).length}
+                                            </span>
+                                          )}
+                                        </button>
+
+                                        <button
+                                          type="submit"
+                                          disabled={
+                                            busy ||
+                                            (!(replyDrafts[t._id] || '').trim() &&
+                                              !(replyAttachments[t._id]?.length > 0))
+                                          }
+                                          className="inline-flex items-center justify-center gap-1.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer"
+                                        >
+                                          <Send size={13} />
+                                          <span>Send Reply</span>
                                         </button>
                                       </div>
+                                    </div>
 
-                                      <label
-                                        className={`block border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors ${
-                                          replyPhotos.length >= 4 && replyVideos.length >= 2
-                                            ? 'border-stone-200 bg-stone-100 opacity-60 cursor-not-allowed'
-                                            : 'border-[#C9A44A]/50 hover:border-[#930303] bg-white'
-                                        }`}
-                                      >
-                                        <input
-                                          type="file"
-                                          multiple
-                                          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-                                          disabled={
-                                            replyUploadBusy[t._id] ||
-                                            (replyPhotos.length >= 4 && replyVideos.length >= 2)
-                                          }
-                                          onChange={(e) => handleReplyFilesSelected(t._id, e.target.files)}
-                                          className="hidden"
-                                        />
-                                        {replyUploadBusy[t._id] ? (
-                                          <div className="flex items-center justify-center gap-2 text-stone-600 text-xs py-1">
-                                            <Loader2 className="w-4 h-4 animate-spin text-[#930303]" />
-                                            <span>Uploading proof to BL Jewels vault...</span>
-                                          </div>
-                                        ) : (
-                                          <div className="flex items-center justify-center gap-2 text-xs text-stone-600">
-                                            <UploadCloud size={16} className="text-[#930303]" />
-                                            <span>
-                                              Click to add photos (max 4, 10MB) or unboxing video (max 2, 50MB)
+                                    {/* Toggleable / Active Reply Attachment Box (Photos up to 4, Videos up to 2) */}
+                                    {(showReplyUpload[t._id] || (replyAttachments[t._id]?.length > 0)) && (
+                                      <div className="p-3.5 bg-[#FAF7F2] border border-[#E9DED2] rounded-xl space-y-2.5">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                          <div className="flex items-center gap-2">
+                                            <Camera size={14} className="text-[#930303]" />
+                                            <span className="text-xs font-bold text-stone-800">
+                                              Attach Proof for Concierge (Photos: {replyPhotos.length}/4 · Videos: {replyVideos.length}/2)
                                             </span>
                                           </div>
-                                        )}
-                                      </label>
-
-                                      {replyUploadError[t._id] && (
-                                        <p className="text-[11px] text-red-700 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-1.5">
-                                          <AlertCircle size={13} />
-                                          <span>{replyUploadError[t._id]}</span>
-                                        </p>
-                                      )}
-
-                                      {/* Attached files preview */}
-                                      {replyAttachments[t._id]?.length > 0 && (
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
-                                          {replyAttachments[t._id].map((att, aIdx) => (
-                                            <div
-                                              key={aIdx}
-                                              className="relative group rounded-lg overflow-hidden border border-stone-200 bg-white shadow-2xs"
-                                            >
-                                              {att.fileType === 'video' ? (
-                                                <div className="relative aspect-video bg-black flex items-center justify-center">
-                                                  <video src={att.url} className="w-full h-full object-cover" />
-                                                  <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1 py-0.5 rounded font-mono">
-                                                    VIDEO
-                                                  </span>
-                                                </div>
-                                              ) : (
-                                                <div
-                                                  onClick={() => setLightboxImage(att.url)}
-                                                  className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden"
-                                                >
-                                                  <img src={att.url} alt="" className="w-full h-full object-cover" />
-                                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                                    <Eye className="w-4 h-4 text-white" />
-                                                  </div>
-                                                </div>
-                                              )}
-                                              <div className="p-1.5 flex items-center justify-between text-[10px]">
-                                                <span className="truncate text-stone-700 font-medium">
-                                                  {att.originalName || 'Proof'}
-                                                </span>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleRemoveReplyAttachment(t._id, aIdx)}
-                                                  className="text-stone-400 hover:text-red-700 p-0.5 cursor-pointer"
-                                                >
-                                                  <Trash2 size={12} />
-                                                </button>
-                                              </div>
-                                            </div>
-                                          ))}
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setShowReplyUpload((prev) => ({ ...prev, [t._id]: false }))
+                                            }
+                                            className="text-stone-400 hover:text-stone-700 text-xs cursor-pointer"
+                                          >
+                                            <X size={14} />
+                                          </button>
                                         </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </form>
-                              </div>
+
+                                        <label
+                                          className={`block border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors ${
+                                            replyPhotos.length >= 4 && replyVideos.length >= 2
+                                              ? 'border-stone-200 bg-stone-100 opacity-60 cursor-not-allowed'
+                                              : 'border-[#C9A44A]/50 hover:border-[#930303] bg-white'
+                                          }`}
+                                        >
+                                          <input
+                                            type="file"
+                                            multiple
+                                            accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                                            disabled={
+                                              replyUploadBusy[t._id] ||
+                                              (replyPhotos.length >= 4 && replyVideos.length >= 2)
+                                            }
+                                            onChange={(e) => handleReplyFilesSelected(t._id, e.target.files)}
+                                            className="hidden"
+                                          />
+                                          {replyUploadBusy[t._id] ? (
+                                            <div className="flex items-center justify-center gap-2 text-stone-600 text-xs py-1">
+                                              <Loader2 className="w-4 h-4 animate-spin text-[#930303]" />
+                                              <span>Uploading proof to BL Jewels vault...</span>
+                                            </div>
+                                          ) : (
+                                            <div className="flex items-center justify-center gap-2 text-xs text-stone-600">
+                                              <UploadCloud size={16} className="text-[#930303]" />
+                                              <span>
+                                                Click to add photos (max 4, 10MB) or unboxing video (max 2, 50MB)
+                                              </span>
+                                            </div>
+                                          )}
+                                        </label>
+
+                                        {replyUploadError[t._id] && (
+                                          <p className="text-[11px] text-red-700 bg-red-50 p-2 rounded border border-red-200 flex items-center gap-1.5">
+                                            <AlertCircle size={13} />
+                                            <span>{replyUploadError[t._id]}</span>
+                                          </p>
+                                        )}
+
+                                        {/* Attached files preview */}
+                                        {replyAttachments[t._id]?.length > 0 && (
+                                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                                            {replyAttachments[t._id].map((att, aIdx) => (
+                                              <div
+                                                key={aIdx}
+                                                className="relative group rounded-lg overflow-hidden border border-stone-200 bg-white shadow-2xs"
+                                              >
+                                                {att.fileType === 'video' ? (
+                                                  <div className="relative aspect-video bg-black flex items-center justify-center">
+                                                    <video src={att.url} className="w-full h-full object-cover" />
+                                                    <span className="absolute bottom-1 left-1 bg-black/70 text-white text-[9px] px-1 py-0.5 rounded font-mono">
+                                                      VIDEO
+                                                    </span>
+                                                  </div>
+                                                ) : (
+                                                  <div
+                                                    onClick={() => setLightboxImage(att.url)}
+                                                    className="relative aspect-video bg-stone-100 cursor-pointer overflow-hidden"
+                                                  >
+                                                    <img src={att.url} alt="" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                      <Eye className="w-4 h-4 text-white" />
+                                                    </div>
+                                                  </div>
+                                                )}
+                                                <div className="p-1.5 flex items-center justify-between text-[10px]">
+                                                  <span className="truncate text-stone-700 font-medium">
+                                                    {att.originalName || 'Proof'}
+                                                  </span>
+                                                  <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveReplyAttachment(t._id, aIdx)}
+                                                    className="text-stone-400 hover:text-red-700 p-0.5 cursor-pointer"
+                                                  >
+                                                    <Trash2 size={12} />
+                                                  </button>
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </form>
+                                </div>
+                              )}
+                                </>
+                              )}
                             </article>
                           );
                         })}
+                      </div>
+                    )}
+
+                    {/* Data Retention Notice */}
+                    {tickets.length > 0 && (
+                      <div className="rounded-2xl bg-white border border-stone-200 p-4 text-center text-xs text-stone-500 flex flex-col sm:flex-row items-center justify-center gap-2 shadow-2xs">
+                        <ShieldCheck size={16} className="text-[#C9A44A] shrink-0" />
+                        <span>
+                          <strong>Data Retention Notice:</strong> Closed support tickets and their complete chat history are automatically deleted after 30 days from ticket closure.
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1542,6 +1934,215 @@ export const AccountPage = () => {
                         <div className="w-full border border-stone-200 bg-stone-100/70 rounded-xl px-4 py-2.5 text-sm text-stone-800 font-medium select-text cursor-not-allowed">
                           {user.email}
                         </div>
+                      </div>
+
+                      {/* Security & Password Change Section (OTP Protected) */}
+                      <div className="p-5 sm:p-6 bg-white rounded-2xl border border-stone-200 space-y-4 shadow-xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <KeyRound className="w-5 h-5 text-[#930303]" />
+                              <h3 className="font-display font-bold text-base text-stone-900">
+                                Account Security &amp; Password
+                              </h3>
+                            </div>
+                            <p className="text-xs text-stone-500 mt-0.5">
+                              Change your account login password with 2-factor email OTP verification.
+                            </p>
+                          </div>
+
+                          {!showChangePassword && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowChangePassword(true);
+                                setPwdStep('initial');
+                                setPwdError('');
+                                setPwdSuccess('');
+                                setPwdOtp('');
+                                setPwdNew('');
+                                setPwdConfirm('');
+                              }}
+                              className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-semibold rounded-xl transition-colors cursor-pointer shrink-0"
+                            >
+                              <Lock size={13} className="text-[#930303]" />
+                              <span>Change Password</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {showChangePassword && (
+                          <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+                            {/* Success Notification */}
+                            {pwdSuccess && (
+                              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs flex items-start gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                <span>{pwdSuccess}</span>
+                              </div>
+                            )}
+
+                            {/* Error Notification */}
+                            {pwdError && (
+                              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs flex items-start gap-2">
+                                <span className="font-bold">⚠️</span>
+                                <span>{pwdError}</span>
+                              </div>
+                            )}
+
+                            {pwdStep === 'initial' ? (
+                              /* STEP 1: Enter New Password & Request OTP */
+                              <div className="space-y-3.5">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                  <div>
+                                    <label className="block text-xs font-semibold text-stone-700 mb-1">
+                                      New Password (Min 6 Characters) *
+                                    </label>
+                                    <div className="relative">
+                                      <input
+                                        type={pwdShow ? 'text' : 'password'}
+                                        required
+                                        minLength={6}
+                                        placeholder="••••••••"
+                                        value={pwdNew}
+                                        onChange={(e) => setPwdNew(e.target.value)}
+                                        className="w-full border border-stone-300 rounded-xl pl-3 pr-10 py-2.5 text-xs bg-white text-stone-900 focus:outline-none focus:border-[#930303]"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => setPwdShow(!pwdShow)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5 cursor-pointer"
+                                        tabIndex={-1}
+                                        aria-label={pwdShow ? 'Hide password' : 'Show password'}
+                                      >
+                                        {pwdShow ? <EyeOff size={14} /> : <Eye size={14} />}
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-xs font-semibold text-stone-700 mb-1">
+                                      Confirm New Password *
+                                    </label>
+                                    <input
+                                      type={pwdShow ? 'text' : 'password'}
+                                      required
+                                      minLength={6}
+                                      placeholder="••••••••"
+                                      value={pwdConfirm}
+                                      onChange={(e) => setPwdConfirm(e.target.value)}
+                                      className="w-full border border-stone-300 rounded-xl px-3 py-2.5 text-xs bg-white text-stone-900 focus:outline-none focus:border-[#930303]"
+                                    />
+                                  </div>
+                                </div>
+
+                                <p className="text-[11px] text-stone-500">
+                                  Security note: Clicking below will send a 6-digit confirmation code to your registered email <strong>{user.email}</strong>.
+                                </p>
+
+                                <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                                  <button
+                                    type="button"
+                                    disabled={pwdLoading || !pwdNew || !pwdConfirm}
+                                    onClick={handleRequestPasswordOtp}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-semibold rounded-xl cursor-pointer transition-colors shadow-xs"
+                                  >
+                                    {pwdLoading ? (
+                                      <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span>Sending Code…</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Send size={13} />
+                                        <span>Send Verification Code to Email</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setShowChangePassword(false);
+                                      setPwdError('');
+                                      setPwdSuccess('');
+                                    }}
+                                    className="px-4 py-2.5 border border-stone-200 text-stone-600 hover:bg-stone-50 text-xs font-semibold rounded-xl cursor-pointer"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              /* STEP 2: Verify OTP & Commit Change */
+                              <div className="space-y-3.5 bg-[#FAF7F2] p-4 rounded-xl border border-[#E9DED2]">
+                                <div className="space-y-1">
+                                  <label className="block text-xs font-semibold text-stone-800">
+                                    Enter 6-Digit Email Verification Code *
+                                  </label>
+                                  <p className="text-[11px] text-stone-500">
+                                    Please enter the one-time code sent to <strong>{user.email}</strong> to verify this password change.
+                                  </p>
+                                </div>
+
+                                <div className="max-w-md my-2">
+                                  <OtpInput
+                                    value={pwdOtp}
+                                    onChange={setPwdOtp}
+                                    autoFocus
+                                  />
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-3 pt-1">
+                                  <button
+                                    type="button"
+                                    disabled={pwdLoading || pwdOtp.length < 6}
+                                    onClick={handleConfirmChangePassword}
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#930303] hover:bg-[#7A0303] disabled:opacity-50 text-white text-xs font-semibold rounded-xl cursor-pointer transition-colors shadow-xs"
+                                  >
+                                    {pwdLoading ? (
+                                      <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span>Updating Password…</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <CheckCircle2 size={14} />
+                                        <span>Confirm &amp; Update Password</span>
+                                      </>
+                                    )}
+                                  </button>
+
+                                  {pwdCooldown > 0 ? (
+                                    <span className="text-xs text-stone-400">
+                                      Resend in <strong className="font-mono text-stone-700">{pwdCooldown}s</strong>
+                                    </span>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      disabled={pwdLoading}
+                                      onClick={handleResendPasswordOtp}
+                                      className="text-xs font-semibold text-[#930303] hover:underline cursor-pointer"
+                                    >
+                                      Resend Code
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPwdStep('initial');
+                                      setPwdOtp('');
+                                      setPwdError('');
+                                    }}
+                                    className="text-xs text-stone-500 hover:text-stone-800 ml-auto cursor-pointer"
+                                  >
+                                    Back
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Government PAN Card & KYC Compliance Section */}
@@ -1840,6 +2441,59 @@ export const AccountPage = () => {
                       </form>
                     )}
                   </>
+                )}
+
+                {tab === 'wishlist' && (
+                  <div className="space-y-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-stone-200">
+                      <div>
+                        <h2 className="text-xl font-semibold text-stone-900 font-heading">
+                          My Saved Favourites ({wishlist.length})
+                        </h2>
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          Your saved fine jewellery heirlooms and royal creations.
+                        </p>
+                      </div>
+                      <Link
+                        to="/collections"
+                        className="text-xs font-semibold text-[#930303] hover:underline inline-flex items-center gap-1"
+                      >
+                        <span>Discover More Jewels</span>
+                        <ArrowUpRight size={14} />
+                      </Link>
+                    </div>
+
+                    {loadingWishlist ? (
+                      <div className="bg-white rounded-2xl border border-stone-200 p-12 text-center text-xs text-stone-500 space-y-2">
+                        <Loader2 className="mx-auto animate-spin text-[#930303]" size={24} />
+                        <p>Loading your saved jewellery…</p>
+                      </div>
+                    ) : wishlist.length === 0 || wishlistProducts.length === 0 ? (
+                      <div className="bg-white rounded-2xl border border-stone-200 p-10 text-center space-y-3">
+                        <div className="w-16 h-16 mx-auto rounded-full bg-[#FAF7F2] border border-[#E9DED2] flex items-center justify-center text-[#930303]">
+                          <Heart size={28} />
+                        </div>
+                        <h3 className="text-lg font-medium text-stone-900">Your Wishlist is Empty</h3>
+                        <p className="text-stone-500 text-xs sm:text-sm max-w-md mx-auto leading-relaxed">
+                          Click the heart icon on any royal creation to save your favourite wedding chokers and diamond solitaires here.
+                        </p>
+                        <div className="pt-2">
+                          <Link
+                            to="/collections"
+                            className="inline-block px-6 py-2.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+                          >
+                            Explore Fine Collections
+                          </Link>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {wishlistProducts.map((p) => (
+                          <ProductCard key={p._id} product={p} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}

@@ -83,10 +83,10 @@ const DEFAULT_SEO = {
       metaKeywords: ['BL Jewels Heritage', 'Zaveri Bazaar Jewellers', 'Lifetime Gold Buyback'],
     },
     contact: {
-      metaTitle: 'Contact Flagship Showroom & Bridal Concierge — BL Jewels',
+      metaTitle: 'Contact Us & Showroom Visit — BL Jewels',
       metaDescription:
-        'Reach BL Jewels concierge for bespoke bridal appointments, hallmark verification, insured armored delivery support, and custom orders.',
-      metaKeywords: ['BL Jewels Contact', 'Bridal Jewellery Appointment', 'Zaveri Bazaar Showroom'],
+        'Get in touch with BL Jewels. Visit our showroom in Agra or send us your inquiry for pure gold and certified diamond jewellery.',
+      metaKeywords: ['BL Jewels Contact', 'Jewellery Store Agra', 'BL Jewels Showroom'],
     },
   },
 };
