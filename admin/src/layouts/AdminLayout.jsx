@@ -12,6 +12,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { adminBadgeService } from '../services/api';
 import { ADMIN_NAV_GROUPS, findActiveNavMeta, isNavItemActive } from '../lib/navGroups';
 
 export const AdminLayout = () => {
@@ -29,10 +30,44 @@ export const AdminLayout = () => {
     }
   });
 
+  const [badges, setBadges] = useState({
+    orders: 0,
+    customers: 0,
+    support: 0,
+    subscribers: 0,
+    verificationPending: 0,
+    reviews: 0,
+  });
+
   const { user, logout, isAuthenticated } = useAuthStore();
   const location = useLocation();
   const profileRef = useRef(null);
   const activeMeta = findActiveNavMeta(location.pathname, location.search);
+
+  const fetchBadges = async () => {
+    try {
+      const data = await adminBadgeService.getBadges();
+      if (data && typeof data === 'object') {
+        setBadges((prev) => ({ ...prev, ...data }));
+      }
+    } catch {
+      // Ignore background badge fetch error
+    }
+  };
+
+  useEffect(() => {
+    fetchBadges();
+    const timer = setInterval(fetchBadges, 25000);
+    const onFocus = () => fetchBadges();
+    const onRefresh = () => fetchBadges();
+    window.addEventListener('focus', onFocus);
+    window.addEventListener('bl-badges-refresh', onRefresh);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+      window.removeEventListener('bl-badges-refresh', onRefresh);
+    };
+  }, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -152,16 +187,45 @@ export const AdminLayout = () => {
 
                 {!isGroupClosed && (
                   <div className="space-y-0.5">
-                    {group.items.map(({ label, path, icon: Icon }) => {
+                    {group.items.map(({ label, path, icon: Icon, badgeKey }) => {
                       const active = isNavItemActive(path, location);
+                      const badgeCount = badgeKey ? Number(badges[badgeKey] || 0) : 0;
+
+                      let badgeStyle = 'bg-[#930303] text-white';
+                      if (badgeKey === 'support') {
+                        badgeStyle = active
+                          ? 'bg-amber-200 text-amber-950'
+                          : 'bg-amber-600 text-white animate-pulse shadow-xs';
+                      } else if (badgeKey === 'orders') {
+                        badgeStyle = active
+                          ? 'bg-white text-[#930303]'
+                          : 'bg-[#930303] text-white shadow-xs';
+                      } else if (badgeKey === 'customers') {
+                        badgeStyle = active
+                          ? 'bg-blue-100 text-blue-900'
+                          : 'bg-blue-600 text-white shadow-xs';
+                      } else if (badgeKey === 'subscribers') {
+                        badgeStyle = active
+                          ? 'bg-emerald-100 text-emerald-900'
+                          : 'bg-emerald-600 text-white shadow-xs';
+                      } else if (badgeKey === 'verificationPending') {
+                        badgeStyle = active
+                          ? 'bg-amber-200 text-amber-950'
+                          : 'bg-amber-600 text-white';
+                      } else if (badgeKey === 'products') {
+                        badgeStyle = active
+                          ? 'bg-white/25 text-white'
+                          : 'bg-stone-200 text-stone-700 font-medium';
+                      }
+
                       return (
                         <NavLink
                           key={path}
                           to={path}
-                          title={`${group.title} — ${label}`}
+                          title={`${group.title} — ${label}${badgeCount > 0 ? ` (${badgeCount} active)` : ''}`}
                           onClick={() => setMobile(false)}
                           className={() =>
-                            `flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors ${
+                            `flex items-center gap-3 px-3 py-2 rounded-xl text-[13px] transition-colors relative group/item ${
                               collapsed ? 'lg:justify-center lg:px-2' : ''
                             } ${
                               active
@@ -170,8 +234,31 @@ export const AdminLayout = () => {
                             }`
                           }
                         >
-                          <Icon size={17} strokeWidth={1.75} className="shrink-0" />
+                          <div className="relative shrink-0 flex items-center justify-center">
+                            <Icon size={17} strokeWidth={1.75} />
+                            {/* Dot indicator when sidebar is collapsed on desktop */}
+                            {collapsed && badgeCount > 0 && (
+                              <span
+                                className={`hidden lg:block absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white ${
+                                  badgeKey === 'support' ? 'bg-amber-600 animate-ping' : 'bg-[#930303]'
+                                }`}
+                                title={`${label}: ${badgeCount}`}
+                              />
+                            )}
+                          </div>
+
                           <span className={collapsed ? 'lg:hidden truncate' : 'truncate'}>{label}</span>
+
+                          {/* Full Badge Counter when sidebar is expanded */}
+                          {badgeCount > 0 && (
+                            <span
+                              className={`ml-auto shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full transition-transform group-hover/item:scale-105 ${
+                                collapsed ? 'lg:hidden' : ''
+                              } ${badgeStyle}`}
+                            >
+                              {badgeCount > 99 ? '99+' : badgeCount}
+                            </span>
+                          )}
                         </NavLink>
                       );
                     })}

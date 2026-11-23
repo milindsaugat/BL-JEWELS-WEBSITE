@@ -38,6 +38,8 @@ export const CartDrawer = () => {
     discount,
     applyCoupon,
     removeCoupon,
+    shippingSettings,
+    fetchShippingSettings,
   } = useCartStore();
 
   const [couponInput, setCouponInput] = useState('');
@@ -57,14 +59,29 @@ export const CartDrawer = () => {
   const tax = getTax();
   const total = getTotal();
 
-  const freeShippingThreshold = 5000;
-  const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
+  const rawThreshold = shippingSettings?.freeShippingThreshold;
+  const freeShippingThreshold = (rawThreshold !== null && rawThreshold !== undefined && rawThreshold !== '' && !isNaN(Number(rawThreshold)) && Number(rawThreshold) > 0)
+    ? Number(rawThreshold)
+    : null;
 
-  // Concurrent fetch of public active coupons when drawer opens
+  const rawCharge = shippingSettings?.shippingCharge;
+  const shippingCharge = (rawCharge !== null && rawCharge !== undefined && rawCharge !== '' && !isNaN(Number(rawCharge)))
+    ? Number(rawCharge)
+    : 0;
+
+  // Show offer progress bar ONLY if threshold is defined (>0) AND base shipping charge is > 0
+  const showFreeShippingOffer = freeShippingThreshold !== null && shippingCharge > 0;
+  const progressPercent = freeShippingThreshold ? Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100)) : 0;
+
+  // Concurrent fetch of public active coupons and shipping settings when drawer opens
   useEffect(() => {
     if (!isDrawerOpen) return;
     let isMounted = true;
     setLoadingCoupons(true);
+
+    if (fetchShippingSettings) {
+      fetchShippingSettings().catch(() => {});
+    }
 
     couponService.getPublicCoupons()
       .then((res) => {
@@ -165,28 +182,30 @@ export const CartDrawer = () => {
             </button>
           </div>
 
-          {/* Free Shipping Progress */}
-          <div className="bg-gold-50/80 px-5 py-3 border-b border-gold-200/50">
-            <div className="flex items-center justify-between text-xs font-medium text-stone-700 mb-1.5">
-              <span>
-                {subtotal >= freeShippingThreshold ? (
-                  <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                    ✓ You have qualified for FREE Express Insured Shipping!
-                  </span>
-                ) : (
-                  <span>
-                    Add ₹{formatCurrency(freeShippingThreshold - subtotal)} more for <strong>FREE Insured Shipping</strong>
-                  </span>
-                )}
-              </span>
+          {/* Free Shipping Progress (Rendered only when active) */}
+          {showFreeShippingOffer && (
+            <div className="bg-gold-50/80 px-5 py-3 border-b border-gold-200/50 animate-fadeIn">
+              <div className="flex items-center justify-between text-xs font-medium text-stone-700 mb-1.5">
+                <span>
+                  {subtotal >= freeShippingThreshold ? (
+                    <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                      ✓ You have qualified for FREE Express Insured Shipping!
+                    </span>
+                  ) : (
+                    <span>
+                      Add ₹{formatCurrency(freeShippingThreshold - subtotal)} more for <strong>FREE Insured Shipping</strong>
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-gold-500 to-[#930303] transition-all duration-300 rounded-full"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-gold-500 to-[#930303] transition-all duration-300 rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+          )}
 
           {/* Items List */}
           <div className="flex-1 overflow-y-auto p-4 md:p-5 space-y-4">
@@ -447,14 +466,11 @@ export const CartDrawer = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between">
-                  <span>GST (3% Jewelry)</span>
-                  <span>₹{formatCurrency(tax)}</span>
-                </div>
+
 
                 <div className="flex justify-between">
                   <span>Insured Armored Shipping</span>
-                  <span>{shipping === 0 ? <strong className="text-emerald-700 font-bold">FREE</strong> : `₹${shipping}`}</span>
+                  <span>{shipping === 0 ? <strong className="text-emerald-700 font-bold">FREE</strong> : `₹${formatCurrency(shipping)}`}</span>
                 </div>
 
                 <div className="flex justify-between text-sm font-bold text-stone-900 border-t border-border-light pt-2">

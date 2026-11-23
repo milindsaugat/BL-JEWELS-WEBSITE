@@ -5,7 +5,6 @@ import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { CartDrawer } from '../components/layout/CartDrawer';
 import { AISearchBar } from '../components/ai/AISearchBar';
-import { PriyaChatbot } from '../components/ai/PriyaChatbot';
 import { QuickViewModal } from '../components/product/QuickViewModal';
 import { LiveRateModal } from '../components/common/LiveRateModal';
 import { AuthModal } from '../components/common/AuthModal';
@@ -13,29 +12,30 @@ import { GlobalSeoSync } from '../components/common/SeoHead';
 
 export const CustomerLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col bg-white text-charcoal font-body antialiased">
-      <GlobalSeoSync />
-      {/* Top Announcement Ribbon */}
-      <AnnouncementBar />
+    <div className="min-h-screen flex flex-col bg-white text-charcoal font-body antialiased print:bg-white print:text-black">
+      <div className="print:hidden">
+        <GlobalSeoSync />
+        {/* Top Announcement Ribbon */}
+        <AnnouncementBar />
 
-      {/* Header Navigation */}
-      <Navbar />
+        {/* Header Navigation */}
+        <Navbar />
+      </div>
 
       {/* Main Page Content */}
-      <main className="flex-1">
+      <main className="flex-1 print:m-0 print:p-0">
         <Outlet />
       </main>
 
-      {/* Global Customer Overlays */}
-      <CartDrawer />
-      <AISearchBar />
-      <PriyaChatbot />
-      <QuickViewModal />
-      <LiveRateModal />
-      <AuthModal />
-
-      {/* Luxury Customer Footer */}
-      <Footer />
+      {/* Global Customer Overlays & Footer */}
+      <div className="print:hidden">
+        <CartDrawer />
+        <AISearchBar />
+        <QuickViewModal />
+        <LiveRateModal />
+        <AuthModal />
+        <Footer />
+      </div>
     </div>
   );
 };

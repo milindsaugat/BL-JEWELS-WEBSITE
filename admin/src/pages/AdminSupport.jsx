@@ -114,6 +114,29 @@ const AdminSupport = () => {
     }
   };
 
+  const handleSelectTicket = async (id) => {
+    setSelectedId(id);
+    const target = tickets.find((t) => t._id === id);
+    if (target && target.adminViewed === false) {
+      setTickets((prev) =>
+        prev.map((t) => (t._id === id ? { ...t, adminViewed: true } : t))
+      );
+      ticketService.markViewed(id).catch(() => {});
+      window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+    }
+  };
+
+  const handleMarkAllTicketsViewed = async () => {
+    try {
+      await ticketService.markAllViewed();
+      setTickets((prev) => prev.map((t) => ({ ...t, adminViewed: true })));
+      window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+      showToast('All tickets & inquiries marked as viewed.');
+    } catch (err) {
+      console.warn('Failed to mark all tickets viewed:', err);
+    }
+  };
+
   useEffect(() => {
     fetchTickets(false);
 
@@ -265,6 +288,15 @@ const AdminSupport = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {tickets.some((t) => t.adminViewed === false) && (
+            <button
+              type="button"
+              onClick={handleMarkAllTicketsViewed}
+              className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            >
+              ✓ Mark All Viewed
+            </button>
+          )}
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>Live Chat Active</span>
@@ -704,7 +736,7 @@ const AdminSupport = () => {
                         </div>
                         <div>
                           <h4 className="text-sm font-bold text-stone-900">
-                            Ticket Closed · Chat is Finalized (चैट बंद है)
+                            Ticket Closed · Chat is Finalized
                           </h4>
                           <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
                             This support ticket is permanently closed and cannot be reopened. The full chat conversation is preserved here in the Admin panel as a read-only audit log.
@@ -834,12 +866,19 @@ const AdminSupport = () => {
                   {tickets.map((t) => (
                     <tr
                       key={t._id}
-                      onClick={() => setSelectedId(t._id)}
+                      onClick={() => handleSelectTicket(t._id)}
                       className="hover:bg-stone-50/80 cursor-pointer transition-colors"
                     >
                       <td className="py-3.5 px-4">
-                        <div className="font-mono font-bold text-[#930303] text-xs">
-                          {t.ticketNumber}
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-[#930303] text-xs">
+                            {t.ticketNumber}
+                          </span>
+                          {t.adminViewed === false && (
+                            <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-amber-500 text-stone-950 animate-pulse">
+                              NEW
+                            </span>
+                          )}
                         </div>
                         <div className="text-[10px] text-stone-400 mt-0.5">
                           {new Date(t.createdAt).toLocaleDateString('en-IN')}
@@ -896,7 +935,7 @@ const AdminSupport = () => {
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedId(t._id);
+                            handleSelectTicket(t._id);
                           }}
                           className="px-3.5 py-1.5 bg-[#930303] hover:bg-[#7A0303] text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-2xs"
                         >

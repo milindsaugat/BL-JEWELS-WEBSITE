@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import Coupon from '../models/Coupon.js';
+import Setting from '../models/Setting.js';
 export function orderLines(items) {
   if (!Array.isArray(items) || !items.length || items.length > 100) throw new Error('Add products to your bag first.');
   return items.map(item => {
@@ -79,10 +80,35 @@ export async function createInventoryOrder(user, body) {
         // Atomically increment used count
         await Coupon.updateOne({ _id: coupon._id }, { $inc: { usedCount: 1 } }).session(session);
       }
-      const shipping = subtotal >= 5000 ? 0 : 500;
-      const gst = Math.round(Math.max(0, subtotal - discount) * 0.03);
+
+      // Fetch dynamic shipping rules
+      let shippingCharge = 500;
+      let freeShippingThreshold = 5000;
+      try {
+        const globalSettings = await Setting.findOne({ key: 'global_site_settings' }).session(session);
+        if (globalSettings?.shippingSettings) {
+          const sc = globalSettings.shippingSettings.shippingCharge;
+          shippingCharge = (sc !== undefined && sc !== null && sc !== '' && !isNaN(Number(sc))) ? Number(sc) : 0;
+          const fst = globalSettings.shippingSettings.freeShippingThreshold;
+          freeShippingThreshold = (fst !== undefined && fst !== null && fst !== '' && !isNaN(Number(fst))) ? Number(fst) : null;
+        }
+      } catch (e) {
+        // Fallback to default
+      }
+
+      let shipping = 0;
+      if (shippingCharge > 0) {
+        if (freeShippingThreshold !== null && freeShippingThreshold > 0 && subtotal >= freeShippingThreshold) {
+          shipping = 0;
+        } else {
+          shipping = shippingCharge;
+        }
+      }
+
+      const taxable = Math.max(0, subtotal - discount);
+      const total = taxable + shipping; // Product price already includes GST from product detail breakdown
       [order] = await Order.create([{ user, orderNumber: `BLJ-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`, items, shippingAddress: address,
-        pricing: { subtotal, discount, coupon: body.couponCode || null, shipping, gst, total: subtotal - discount + shipping + gst },
+        pricing: { subtotal, discount, coupon: body.couponCode || null, shipping, gst: 0, total },
         inventoryReserved: true,
         payment: {
           method: body.paymentMethod,
@@ -97,13 +123,14 @@ export async function createInventoryOrder(user, body) {
               ? `Order placed via Bank / QR transfer (Ref: ${bankTransferMeta.transactionId}); awaiting payment verification.`
               : 'Order placed; payment pending.',
         }],
-        isGift: !!body.isGift, giftNote: String(body.giftNote || '').slice(0, 500) }], { session });
+        isGift: !!body.isGift, giftNote: String(body.giftNote || '').slice(0, 500),
+        adminViewed: false }], { session });
     });
     return order;
   } finally { await session.endSession(); }
 }
 
-export async function cancelInventoryOrder(filter, note = 'Order cancelled') {
+export async function cancelInventoryOrder(filter, note = 'Order cancelled', reason = '', comments = '') {
   const session = await mongoose.startSession();
   let order;
   try {
@@ -117,6 +144,9 @@ export async function cancelInventoryOrder(filter, note = 'Order cancelled') {
         order.inventoryReserved = false;
       }
       order.status = 'cancelled';
+      order.cancelledAt = new Date();
+      if (reason) order.cancelReason = reason;
+      if (comments) order.cancelComments = comments;
       order.statusHistory.push({ status: 'cancelled', note, updatedAt: new Date() });
       await order.save({ session });
     });

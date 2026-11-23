@@ -4,7 +4,7 @@ import {
   Package, Heart, MapPin, User, LogOut, ArrowUpRight, LifeBuoy, Plus, Send,
   UploadCloud, Camera, Trash2, Loader2, CheckCircle2, Lock, ShieldCheck,
   FileText, ExternalLink, Eye, EyeOff, AlertCircle, Video, Image as ImageIcon, Paperclip,
-  X, ShieldAlert, ChevronDown, ChevronUp, KeyRound
+  X, ShieldAlert, ChevronDown, ChevronUp, KeyRound, Printer, Truck, Award, Clock, CreditCard
 } from 'lucide-react';
 import { api, orderService, authService, ticketService, uploadService, productService } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -24,6 +24,28 @@ const emptyTicket = {
 };
 const money = (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v || 0);
 
+const numberToWordsIndian = (num) => {
+  if (!num || isNaN(num) || num <= 0) return 'Zero Rupees Only';
+  const a = [
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+    'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+    'Seventeen', 'Eighteen', 'Nineteen'
+  ];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  const inWords = (n) => {
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '');
+    if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
+    if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
+    return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + inWords(n % 10000000) : '');
+  };
+
+  const integerPart = Math.floor(num);
+  return 'INR ' + inWords(integerPart) + ' Only';
+};
+
 const RETURN_REASONS = [
   { id: 'damaged', label: 'Item arrived damaged or broken', hindi: 'टूटा हुआ या क्षतिग्रस्त आभूषण' },
   { id: 'defective', label: 'Defective clasp / loose gemstone or pearl', hindi: 'नगीना ढीला या लॉक खराब' },
@@ -33,6 +55,16 @@ const RETURN_REASONS = [
   { id: 'missing_hallmark', label: 'Missing BIS hallmark certificate or invoice bill', hindi: 'हॉलमार्क सर्टिफिकेट या बिल नहीं मिला' },
   { id: 'tampered_parcel', label: 'Outer parcel packaging was tampered / unsealed', hindi: 'पार्सल की सील टूटी या खुली हुई मिली' },
   { id: 'other', label: 'Other issue', hindi: 'अन्य कारण' },
+];
+
+const CANCEL_REASONS = [
+  { id: 'wrong_address', label: 'Incorrect delivery address or contact number' },
+  { id: 'change_design', label: 'Want to change jewellery piece / ring size / purity variant' },
+  { id: 'placed_by_mistake', label: 'Placed order by mistake or duplicate order' },
+  { id: 'delivery_delay', label: 'Expected faster delivery / change in wedding or occasion date' },
+  { id: 'coupon_pricing', label: 'Forgot to apply auspicious coupon / pricing query' },
+  { id: 'payment_issue', label: 'Payment issue or bank account query' },
+  { id: 'other', label: 'Other personal reason' },
 ];
 
 const STATUS_BADGE = {
@@ -123,6 +155,24 @@ export const AccountPage = () => {
   const [editIndex, setEditIndex] = useState(-1);
   const [wishlistProducts, setWishlistProducts] = useState([]);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
+
+  // Inline Order Expansion & Single-Page Tax Invoice Printing
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [printOrder, setPrintOrder] = useState(null);
+
+  const handlePrintOrder = (orderToPrint) => {
+    setPrintOrder(orderToPrint);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  // Order Cancellation Reason & Confirmation Modal State
+  const [cancelModalOrder, setCancelModalOrder] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelComments, setCancelComments] = useState('');
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [cancelError, setCancelError] = useState('');
 
   // Change Password state (OTP Protected)
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -259,6 +309,32 @@ export const AccountPage = () => {
       setOrders(orders.map((o) => (o._id === id ? data.order : o)));
       setNotice('Request recorded. Contact us for refund or return assistance.');
     });
+
+  const handleConfirmCancel = async () => {
+    if (!cancelModalOrder) return;
+    if (!cancelReason) {
+      setCancelError('Please select a cancellation reason before proceeding.');
+      return;
+    }
+    setCancelSubmitting(true);
+    setCancelError('');
+    try {
+      const { data } = await api.post(`/auth/orders/${cancelModalOrder._id}/action`, {
+        action: 'cancel',
+        reason: cancelReason,
+        comments: cancelComments,
+      });
+      setOrders(orders.map((o) => (o._id === cancelModalOrder._id ? data.order : o)));
+      setNotice(`Order #${cancelModalOrder.orderNumber} has been successfully cancelled. If debited, 100% refund will be processed to your original payment method.`);
+      setCancelModalOrder(null);
+      setCancelReason('');
+      setCancelComments('');
+    } catch (err) {
+      setCancelError(err.response?.data?.message || err.message || 'Unable to cancel this order. Please try again or contact atelier support.');
+    } finally {
+      setCancelSubmitting(false);
+    }
+  };
 
   const uploadMediaFile = async (file) => {
     const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv|avi)$/i.test(file.name);
@@ -672,8 +748,8 @@ export const AccountPage = () => {
   ];
 
   return (
-    <section className="bg-[#FAF7F4] py-8 sm:py-12 min-h-[70vh]">
-      <div className="container-bl">
+    <section className="bg-[#FAF7F4] py-8 sm:py-12 min-h-[70vh] print:p-0 print:bg-white print:min-h-0">
+      <div className="container-bl print:hidden">
         <header className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#FAF7F2] border-2 border-[#C9A44A]/40 overflow-hidden flex items-center justify-center font-display font-bold text-2xl sm:text-3xl text-[#930303] shadow-sm shrink-0">
@@ -763,87 +839,529 @@ export const AccountPage = () => {
                         </Link>
                       </div>
                     )}
-                    {orders.map((o) => (
-                      <article key={o._id} className="bg-white border rounded-2xl p-5 space-y-4">
-                        <div className="flex flex-wrap justify-between gap-3">
-                          <div>
-                            <h3 className="font-semibold">{o.orderNumber}</h3>
-                            <p className="text-xs text-stone-500">{new Date(o.createdAt).toLocaleDateString('en-IN')}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm text-[#930303] capitalize">{o.status?.replaceAll('_', ' ')}</p>
-                            <p className="font-semibold">{money(o.pricing?.total)}</p>
-                          </div>
-                        </div>
-                        {o.items?.map((i, n) => (
-                          <div key={n} className="flex items-center gap-3 text-sm">
-                            {i.snapshot?.image && (
-                              <img src={i.snapshot.image} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                            )}
+                    {orders.map((o) => {
+                      const isExpanded = expandedOrderId === o._id;
+                      const subtotal = o.pricing?.subtotal ?? 0;
+                      const discount = o.pricing?.discount ?? 0;
+                      const shipping = o.pricing?.shipping ?? 0;
+                      const total = o.pricing?.total ?? 0;
+
+                      return (
+                        <article
+                          key={o._id}
+                          className={`bg-white border rounded-2xl p-5 space-y-4 transition-all duration-200 ${
+                            isExpanded
+                              ? 'border-[#930303]/40 shadow-lg ring-1 ring-[#930303]/20 bg-stone-50/20'
+                              : 'hover:border-stone-300'
+                          }`}
+                        >
+                          <div className="flex flex-wrap justify-between items-start gap-3">
                             <div>
-                              <p>{i.snapshot?.name}</p>
-                              <p className="text-stone-500 text-xs">
-                                Quantity {i.quantity} · {money(i.price)}
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-semibold text-stone-900 text-base">{o.orderNumber}</h3>
+                                {isExpanded && (
+                                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                    Expanded View
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-stone-500 mt-0.5">
+                                Placed on {new Date(o.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                               </p>
                             </div>
+                            <div className="text-right">
+                              <p className="text-sm font-bold text-[#930303] capitalize">
+                                {o.status?.replaceAll('_', ' ')}
+                              </p>
+                              <p className="font-bold text-stone-900 text-base">{money(total)}</p>
+                            </div>
                           </div>
-                        ))}
-                        <div className="border-t pt-3 text-xs text-stone-500">
-                          Payment: {o.payment?.status || 'Status unavailable'}
-                          {o.tracking?.trackingId && (
-                            <p className="mt-2">
-                              {o.tracking.carrier} · Tracking: {o.tracking.trackingId}
-                            </p>
+
+                          {/* Quick Previews (Shown when collapsed, or as item list) */}
+                          {!isExpanded && (
+                            <>
+                              {o.items?.map((i, n) => (
+                                <div key={n} className="flex items-center gap-3 text-sm">
+                                  {i.snapshot?.image && (
+                                    <img src={i.snapshot.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-stone-200" />
+                                  )}
+                                  <div>
+                                    <p className="font-medium text-stone-800">{i.snapshot?.name}</p>
+                                    <p className="text-stone-500 text-xs">
+                                      Quantity {i.quantity} · {money(i.price)}
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
+                              <div className="border-t pt-3 text-xs text-stone-500 flex flex-wrap justify-between gap-2">
+                                <span>
+                                  Payment: <strong className="capitalize text-stone-700">{o.payment?.status || 'Pending'}</strong>
+                                </span>
+                                {o.tracking?.trackingId ? (
+                                  <span>
+                                    {o.tracking.carrier || 'Blue Dart Armored'} · Tracking: <strong className="font-mono text-stone-700">{o.tracking.trackingId}</strong>
+                                  </span>
+                                ) : (
+                                  <span className="text-stone-400">Tracking assigned upon armored dispatch</span>
+                                )}
+                              </div>
+                            </>
                           )}
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-[#930303]">
-                          <Link to={`/order/success/${o._id}`}>Order details & receipt</Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setTicketForm({
-                                ...emptyTicket,
-                                category: 'Order & Delivery',
-                                orderNumber: o.orderNumber || '',
-                                subject: `Help with Order ${o.orderNumber}`,
-                              });
-                              setShowNewTicket(true);
-                              handleTabChange('support');
-                            }}
-                            className="cursor-pointer hover:underline"
-                          >
-                            Need help with this order?
-                          </button>
-                          {['placed', 'confirmed'].includes(o.status) && (
-                            <button type="button" disabled={busy} onClick={() => action(o._id, 'cancel')}>
-                              Cancel order
-                            </button>
+
+                          {/* Actions Bar (Collapsed State) */}
+                          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                            <div className="flex flex-wrap items-center gap-4 text-sm">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedOrderId(isExpanded ? null : o._id)}
+                                className="font-bold text-[#930303] hover:text-[#700202] hover:underline flex items-center gap-1.5 cursor-pointer py-1"
+                              >
+                                <span>{isExpanded ? 'Close order details' : 'Order details & receipt'}</span>
+                                <ChevronDown
+                                  className={`w-4 h-4 transition-transform duration-200 ${
+                                    isExpanded ? 'rotate-180 text-[#930303]' : ''
+                                  }`}
+                                />
+                              </button>
+
+                              {!isExpanded && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePrintOrder(o)}
+                                  className="text-stone-600 hover:text-stone-900 hover:underline flex items-center gap-1 cursor-pointer"
+                                  title="Quick print tax invoice"
+                                >
+                                  <Printer size={13} />
+                                  <span>Print receipt</span>
+                                </button>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-[#930303]">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTicketForm({
+                                    ...emptyTicket,
+                                    category: 'Order & Delivery',
+                                    orderNumber: o.orderNumber || '',
+                                    subject: `Help with Order ${o.orderNumber}`,
+                                  });
+                                  setShowNewTicket(true);
+                                  handleTabChange('support');
+                                }}
+                                className="cursor-pointer hover:underline text-stone-600 hover:text-[#930303]"
+                              >
+                                Need help with this order?
+                              </button>
+                              {['placed', 'confirmed'].includes(o.status) && (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    setCancelModalOrder(o);
+                                    setCancelReason('');
+                                    setCancelComments('');
+                                    setCancelError('');
+                                  }}
+                                  className="text-stone-500 hover:text-red-700 cursor-pointer hover:underline"
+                                >
+                                  Cancel order
+                                </button>
+                              )}
+                              {o.status === 'delivered' && (
+                                <button
+                                  type="button"
+                                  disabled={busy}
+                                  onClick={() => {
+                                    setTicketForm({
+                                      ...emptyTicket,
+                                      category: 'Return & Refund',
+                                      orderNumber: o.orderNumber || '',
+                                      subject: `Return & Refund Request for Order ${o.orderNumber}`,
+                                      returnReasons: [],
+                                      attachments: [],
+                                    });
+                                    setShowNewTicket(true);
+                                    handleTabChange('support');
+                                  }}
+                                  className="cursor-pointer hover:underline font-medium text-[#930303]"
+                                >
+                                  Request a return
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* ══════════════════════════════════════════════════════════════════
+                              EXPANDED ORDER DETAILS (Inline inside this exact card)
+                              ══════════════════════════════════════════════════════════════════ */}
+                          {isExpanded && (
+                            <div className="mt-4 pt-4 border-t-2 border-stone-200 space-y-5 animate-in fade-in duration-200">
+                              {/* Order Timeline / Status Tracker */}
+                              <div className="bg-white p-4 rounded-xl border border-stone-200/90 shadow-2xs">
+                                <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-2 border-b border-stone-100">
+                                  <span className="text-xs font-bold uppercase tracking-wider text-stone-700">
+                                    Current Fulfillment Stage: <span className="text-[#930303] font-black">{o.status?.replaceAll('_', ' ').toUpperCase()}</span>
+                                  </span>
+                                  <span className="text-xs text-stone-500 font-mono">
+                                    Order ID: #{o._id}
+                                  </span>
+                                </div>
+
+                                {o.status !== 'cancelled' ? (
+                                  <div className="grid grid-cols-4 gap-2 pt-1 text-center">
+                                    {[
+                                      { label: 'Placed', desc: 'Received & Logged', active: true },
+                                      { label: 'Confirmed', desc: 'BIS 916 Verified', active: ['confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered'].includes(o.status) },
+                                      { label: 'Armored Transit', desc: 'Blue Dart Armored', active: ['shipped', 'out_for_delivery', 'delivered'].includes(o.status) },
+                                      { label: 'Delivered', desc: 'Secure Handover', active: o.status === 'delivered' },
+                                    ].map((st, idx) => (
+                                      <div key={idx} className="flex flex-col items-center">
+                                        <div
+                                          className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold mb-1 shadow-2xs transition-colors ${
+                                            st.active ? 'bg-[#930303] text-white ring-2 ring-[#930303]/30' : 'bg-stone-200 text-stone-500'
+                                          }`}
+                                        >
+                                          {st.active ? '✓' : idx + 1}
+                                        </div>
+                                        <span className={`text-[11px] font-bold ${st.active ? 'text-stone-900' : 'text-stone-400'}`}>
+                                          {st.label}
+                                        </span>
+                                        <span className="text-[10px] text-stone-400 hidden sm:block">
+                                          {st.desc}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="bg-red-50 text-red-900 p-3.5 rounded-xl border border-red-200 text-xs space-y-1.5">
+                                    <div className="flex items-center gap-2 font-bold text-red-800">
+                                      <AlertCircle size={16} className="text-red-700 shrink-0" />
+                                      <span>Order Cancelled</span>
+                                    </div>
+                                    {o.cancelReason && (
+                                      <p className="text-stone-700 pl-6 text-[11px]">
+                                        <strong className="text-stone-900">Reason:</strong> {o.cancelReason}
+                                        {o.cancelComments ? ` (${o.cancelComments})` : ''}
+                                      </p>
+                                    )}
+                                    <p className="text-stone-600 pl-6 text-[11px]">
+                                      Any debited amount is returned to the original payment source within 5-7 banking days.
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Delivery Address & Armored Transit Grid */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                {/* Consignee & Shipping Address */}
+                                <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs space-y-1.5">
+                                  <div className="flex items-center gap-1.5 text-stone-700 font-bold uppercase tracking-wider text-[11px] pb-1.5 border-b border-stone-100">
+                                    <MapPin size={14} className="text-[#930303]" />
+                                    <span>Delivery & Consignee Address</span>
+                                  </div>
+                                  <p className="font-bold text-stone-900 text-sm">
+                                    {o.shippingAddress?.name || user?.name || 'Valued Customer'}
+                                  </p>
+                                  <p className="text-stone-600 font-mono text-[11px]">
+                                    Phone: {o.shippingAddress?.phone || user?.phone || '—'}
+                                  </p>
+                                  <p className="text-stone-600 leading-relaxed pt-0.5">
+                                    {[
+                                      o.shippingAddress?.line1,
+                                      o.shippingAddress?.line2,
+                                      o.shippingAddress?.city,
+                                      o.shippingAddress?.state,
+                                      o.shippingAddress?.pincode,
+                                    ].filter(Boolean).join(', ')}
+                                  </p>
+                                  <p className="text-[11px] text-stone-500 font-medium">
+                                    Country: {o.shippingAddress?.country || 'India'}
+                                  </p>
+                                </div>
+
+                                {/* Armored Transit & Security */}
+                                <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs space-y-2">
+                                  <div className="flex items-center gap-1.5 text-stone-700 font-bold uppercase tracking-wider text-[11px] pb-1.5 border-b border-stone-100">
+                                    <Truck size={14} className="text-emerald-700" />
+                                    <span>Armored Transit & Insurance</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-stone-600">
+                                    <span>Carrier:</span>
+                                    <span className="font-semibold text-stone-900">
+                                      {o.tracking?.carrier || 'Blue Dart Armored / SafeVault'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-stone-600">
+                                    <span>Tracking ID:</span>
+                                    <span className="font-mono font-bold text-stone-800">
+                                      {o.tracking?.trackingId || 'Assigned upon vault dispatch'}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-stone-600">
+                                    <span>Transit Security:</span>
+                                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                                      <ShieldCheck size={13} /> 100% Insured High-Value Cover
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-stone-600">
+                                    <span>Packaging:</span>
+                                    <span className="font-medium text-stone-800">Tamper-evident royal velvet box</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Itemized Jewellery Breakdown */}
+                              <div className="bg-white rounded-xl border border-stone-200 shadow-2xs overflow-hidden">
+                                <div className="p-3 bg-stone-50 border-b border-stone-200 font-bold text-xs uppercase tracking-wider text-stone-700 flex justify-between items-center">
+                                  <span>Itemized Jewellery Breakdown</span>
+                                  <span className="text-stone-500 font-mono text-[11px]">
+                                    {o.items?.length || 0} {o.items?.length === 1 ? 'Piece' : 'Pieces'}
+                                  </span>
+                                </div>
+                                <div className="divide-y divide-stone-100">
+                                  {o.items?.map((item, idx) => {
+                                    const snap = item.snapshot || {};
+                                    const variant = snap.variant || {};
+                                    const metal = snap.metal || {};
+                                    const karat = variant.karat || metal.karat || '22K (916)';
+                                    const weight = variant.weight ? `${variant.weight}g` : null;
+
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className="p-3.5 flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 text-xs hover:bg-stone-50/40"
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          {snap.image ? (
+                                            <img
+                                              src={snap.image}
+                                              alt={snap.name}
+                                              className="w-14 h-14 rounded-lg object-cover border border-stone-200 shrink-0"
+                                            />
+                                          ) : (
+                                            <div className="w-14 h-14 rounded-lg bg-stone-100 border border-stone-200 flex items-center justify-center text-stone-400 shrink-0">
+                                              <Package size={20} />
+                                            </div>
+                                          )}
+                                          <div>
+                                            <h4 className="font-bold text-stone-900 text-sm">
+                                              {snap.name || 'Fine Jewellery Article'}
+                                            </h4>
+                                            <div className="flex flex-wrap gap-2 mt-1 text-[11px] text-stone-600">
+                                              <span className="px-2 py-0.5 bg-stone-100 rounded text-stone-700 font-medium">
+                                                Purity: {karat}
+                                              </span>
+                                              {weight && (
+                                                <span className="px-2 py-0.5 bg-stone-100 rounded text-stone-700 font-medium">
+                                                  Gross Wt: {weight}
+                                                </span>
+                                              )}
+                                              <span className="px-2 py-0.5 bg-amber-50 text-amber-900 rounded font-medium border border-amber-200 flex items-center gap-1">
+                                                <Award size={11} className="text-[#930303]" /> 100% BIS Hallmarked
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <div className="text-right sm:shrink-0 w-full sm:w-auto flex sm:flex-col justify-between items-center sm:items-end border-t sm:border-0 pt-2 sm:pt-0">
+                                          <span className="text-stone-500 text-xs">
+                                            Qty: {item.quantity} × {money(item.price)}
+                                          </span>
+                                          <span className="font-bold text-stone-900 text-sm">
+                                            {money(item.quantity * item.price)}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              {/* Payment & Financial Calculations Summary */}
+                              <div className="bg-white p-4 rounded-xl border border-stone-200 shadow-2xs text-xs">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Left: Payment Info & Words */}
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[11px] text-stone-700">
+                                      <CreditCard size={14} className="text-[#930303]" />
+                                      <span>Payment & Transaction Summary</span>
+                                    </div>
+                                    <div className="space-y-1 text-stone-600">
+                                      <p>
+                                        <strong>Mode:</strong> {o.payment?.method?.toUpperCase() || 'RAZORPAY'}
+                                      </p>
+                                      <p>
+                                        <strong>Status:</strong>{' '}
+                                        <span className="text-emerald-700 font-bold capitalize">
+                                          {o.payment?.status === 'paid' ? 'Paid & Verified' : o.payment?.status || 'Pending'}
+                                        </span>
+                                      </p>
+                                      {o.payment?.transactionId && (
+                                        <p className="font-mono text-[11px]">
+                                          <strong>Txn / UTR Ref:</strong> {o.payment.transactionId}
+                                        </p>
+                                      )}
+                                      {o.payment?.razorpayPaymentId && (
+                                        <p className="font-mono text-[11px]">
+                                          <strong>Payment ID:</strong> {o.payment.razorpayPaymentId}
+                                        </p>
+                                      )}
+                                    </div>
+
+                                    <div className="pt-2 border-t border-stone-100">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                                        Amount in Words:
+                                      </span>
+                                      <p className="font-bold text-stone-800 italic mt-0.5 text-xs">
+                                        {numberToWordsIndian(total)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Right: Calculations */}
+                                  <div className="space-y-1.5 font-mono text-xs md:border-l md:border-stone-200 md:pl-4">
+                                    <div className="flex justify-between text-stone-600">
+                                      <span>Gross Merchandise Value:</span>
+                                      <span>{money(subtotal)}</span>
+                                    </div>
+                                    {discount > 0 && (
+                                      <div className="flex justify-between text-emerald-700 font-semibold">
+                                        <span>Festive Discount {o.pricing?.coupon ? `(${o.pricing.coupon})` : ''}:</span>
+                                        <span>-{money(discount)}</span>
+                                      </div>
+                                    )}
+                                    <div className="flex justify-between text-stone-600">
+                                      <span>Insured Armored Shipping:</span>
+                                      <span className={shipping === 0 ? 'text-emerald-700 font-bold' : ''}>
+                                        {shipping === 0 ? 'FREE' : money(shipping)}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between text-stone-600 text-[11px]">
+                                      <span>Integrated GST (3% Inclusive):</span>
+                                      <span>Included</span>
+                                    </div>
+                                    <div className="border-t-2 border-stone-800 pt-2 flex justify-between text-sm font-bold text-stone-950">
+                                      <span>Total Amount Paid:</span>
+                                      <span className="text-[#930303] text-base">{money(total)}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Quality Guarantees Bar */}
+                              <div className="p-2.5 bg-amber-50/70 border border-amber-200/80 rounded-xl grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[10px] font-semibold text-stone-700">
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <img
+                                    src="/images/bis-bureau-of-indian-standards.png"
+                                    alt="BIS Hallmark"
+                                    className="h-3.5 w-auto object-contain inline-block"
+                                  />
+                                  <span>100% BIS 916 Hallmarked</span>
+                                </div>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Truck size={12} className="text-emerald-700" />
+                                  <span>Armored Blue Dart Cover</span>
+                                </div>
+                                <div className="flex items-center justify-center gap-1">
+                                  <ShieldCheck size={12} className="text-[#930303]" />
+                                  <span>Lifetime Jewellery Buyback</span>
+                                </div>
+                                <div className="flex items-center justify-center gap-1">
+                                  <Clock size={12} className="text-stone-700" />
+                                  <span>15-Day Easy Returns</span>
+                                </div>
+                              </div>
+
+                              {/* Expanded Action Toolbar */}
+                              <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePrintOrder(o)}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#930303] text-white hover:bg-[#720202] rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                  >
+                                    <Printer size={14} />
+                                    <span>Print Tax Invoice</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedOrderId(null)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                                  >
+                                    <ChevronUp size={14} />
+                                    <span>Collapse Details</span>
+                                  </button>
+                                </div>
+
+                                <div className="flex items-center gap-3 text-xs">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setTicketForm({
+                                        ...emptyTicket,
+                                        category: 'Order & Delivery',
+                                        orderNumber: o.orderNumber || '',
+                                        subject: `Help with Order ${o.orderNumber}`,
+                                      });
+                                      setShowNewTicket(true);
+                                      handleTabChange('support');
+                                    }}
+                                    className="text-[#930303] hover:underline cursor-pointer font-medium"
+                                  >
+                                    Need help with this order?
+                                  </button>
+
+                                  {['placed', 'confirmed'].includes(o.status) && (
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => {
+                                        setCancelModalOrder(o);
+                                        setCancelReason('');
+                                        setCancelComments('');
+                                        setCancelError('');
+                                      }}
+                                      className="text-stone-500 hover:text-red-700 hover:underline cursor-pointer"
+                                    >
+                                      Cancel order
+                                    </button>
+                                  )}
+
+                                  {o.status === 'delivered' && (
+                                    <button
+                                      type="button"
+                                      disabled={busy}
+                                      onClick={() => {
+                                        setTicketForm({
+                                          ...emptyTicket,
+                                          category: 'Return & Refund',
+                                          orderNumber: o.orderNumber || '',
+                                          subject: `Return & Refund Request for Order ${o.orderNumber}`,
+                                          returnReasons: [],
+                                          attachments: [],
+                                        });
+                                        setShowNewTicket(true);
+                                        handleTabChange('support');
+                                      }}
+                                      className="cursor-pointer hover:underline font-medium text-[#930303]"
+                                    >
+                                      Request a return
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           )}
-                          {o.status === 'delivered' && (
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => {
-                                setTicketForm({
-                                  ...emptyTicket,
-                                  category: 'Return & Refund',
-                                  orderNumber: o.orderNumber || '',
-                                  subject: `Return & Refund Request for Order ${o.orderNumber}`,
-                                  returnReasons: [],
-                                  attachments: [],
-                                });
-                                setShowNewTicket(true);
-                                handleTabChange('support');
-                              }}
-                              className="cursor-pointer hover:underline font-medium text-[#930303]"
-                            >
-                              Request a return
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-xs text-stone-500">Returns and refunds are subject to store review and policy.</p>
-                      </article>
-                    ))}
+
+                          <p className="text-xs text-stone-500 pt-1">
+                            Returns and refunds are subject to store review and policy.
+                          </p>
+                        </article>
+                      );
+                    })}
                   </>
                 )}
 
@@ -2501,6 +3019,157 @@ export const AccountPage = () => {
         </div>
       </div>
 
+      {/* ══════════════════════════════════════════════════════════════════
+          ORDER CANCELLATION & REASON CONFIRMATION MODAL
+          ══════════════════════════════════════════════════════════════════ */}
+      {cancelModalOrder && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => {
+            if (!cancelSubmitting) setCancelModalOrder(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-lg bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-5 my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-stone-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+                  <AlertCircle size={22} />
+                </div>
+                <div>
+                  <h3 className="font-display text-lg sm:text-xl font-bold text-stone-900">
+                    Cancel Order
+                  </h3>
+                  <p className="text-xs text-stone-500 font-mono">
+                    #{cancelModalOrder.orderNumber}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!cancelSubmitting) setCancelModalOrder(null);
+                }}
+                disabled={cancelSubmitting}
+                className="text-stone-400 hover:text-stone-700 p-1.5 rounded-full hover:bg-stone-100 transition-colors cursor-pointer"
+                aria-label="Close cancel dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Order Highlight Box */}
+            <div className="bg-stone-50 p-3.5 rounded-2xl border border-stone-200/80 flex items-center justify-between text-xs">
+              <div className="space-y-0.5">
+                <span className="text-stone-500">Order Amount:</span>
+                <p className="font-bold text-stone-900 text-sm">{money(cancelModalOrder.pricing?.total)}</p>
+              </div>
+              <div className="text-right space-y-0.5">
+                <span className="text-stone-500">Payment Status:</span>
+                <p className="font-semibold text-emerald-700 capitalize">
+                  {cancelModalOrder.payment?.status === 'paid' ? 'Paid & Verified' : cancelModalOrder.payment?.status || 'Pending'}
+                </p>
+              </div>
+            </div>
+
+            {/* Refund Assurance Note */}
+            <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl text-xs text-amber-900 leading-relaxed">
+              <strong>100% Refund Assurance:</strong> If payment was already completed, the full amount of{' '}
+              <strong>{money(cancelModalOrder.pricing?.total)}</strong> will be automatically credited back to your original payment source (Bank/UPI/Card) within 5-7 working days.
+            </div>
+
+            {/* Cancellation Reason Selection */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">
+                Why do you want to cancel this order? <span className="text-red-600">*</span>
+              </label>
+              <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                {CANCEL_REASONS.map((r) => {
+                  const isSelected = cancelReason === r.label;
+                  return (
+                    <label
+                      key={r.id}
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-xs cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-[#930303] bg-red-50/40 text-stone-900 font-semibold shadow-2xs'
+                          : 'border-stone-200 hover:bg-stone-50 text-stone-700'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="cancelReason"
+                        value={r.label}
+                        checked={isSelected}
+                        onChange={() => {
+                          setCancelReason(r.label);
+                          setCancelError('');
+                        }}
+                        className="mt-0.5 accent-[#930303]"
+                      />
+                      <span>{r.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Additional Comments (Optional) */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold uppercase tracking-wider text-stone-700">
+                Additional Comments <span className="text-stone-400 font-normal lowercase">(optional)</span>
+              </label>
+              <textarea
+                value={cancelComments}
+                onChange={(e) => setCancelComments(e.target.value)}
+                placeholder="Tell us if we can help you with sizing, delivery date, or anything else..."
+                rows={2}
+                className="w-full p-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-800 placeholder-stone-400 focus:outline-none focus:border-[#930303] focus:bg-white resize-none"
+              />
+            </div>
+
+            {/* Error Message */}
+            {cancelError && (
+              <div className="p-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+                {cancelError}
+              </div>
+            )}
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-stone-100">
+              <button
+                type="button"
+                disabled={cancelSubmitting}
+                onClick={() => setCancelModalOrder(null)}
+                className="px-4 py-2.5 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-100 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Keep Order
+              </button>
+
+              <button
+                type="button"
+                disabled={!cancelReason || cancelSubmitting}
+                onClick={handleConfirmCancel}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-stone-300 text-white text-xs font-bold transition-all shadow-sm cursor-pointer disabled:cursor-not-allowed"
+              >
+                {cancelSubmitting ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    <span>Processing Cancellation…</span>
+                  </>
+                ) : (
+                  <span>Confirm & Cancel Order</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Lightbox Modal for Full Resolution Photo Inspection */}
       {lightboxImage && (
         <div
@@ -2551,6 +3220,281 @@ export const AccountPage = () => {
           </div>
         </div>
       )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          OFFICIAL PRINTABLE TAX INVOICE (Hidden on screen, prints on A4)
+          ══════════════════════════════════════════════════════════════════ */}
+      {(printOrder || (expandedOrderId && orders.find((o) => o._id === expandedOrderId)) || orders[0]) && (() => {
+        const po = printOrder || (expandedOrderId && orders.find((o) => o._id === expandedOrderId)) || orders[0];
+        if (!po) return null;
+        const pSubtotal = po.pricing?.subtotal ?? 0;
+        const pDiscount = po.pricing?.discount ?? 0;
+        const pShipping = po.pricing?.shipping ?? 0;
+        const pTotal = po.pricing?.total ?? 0;
+        const pDate = po.createdAt
+          ? new Date(po.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '';
+        const pTime = po.createdAt
+          ? new Date(po.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+          : '';
+        const pMethod = (po.payment?.method || 'RAZORPAY').toUpperCase();
+        const pStatus = (po.payment?.status || 'PAID').toUpperCase();
+
+        return (
+          <div
+            id="print-receipt-container"
+            className="print-receipt-sheet hidden print:block bg-white text-stone-900 border border-stone-800 p-6"
+          >
+            {/* Header Bar */}
+            <div className="flex justify-between items-start gap-4 pb-4 border-b-2 border-stone-800">
+              <div>
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/images/bl-jewels-logo.png"
+                    alt="BL Jewels — Purity with Auspiciousness"
+                    className="h-12 sm:h-14 w-auto object-contain"
+                  />
+                </div>
+                <p className="text-[10px] font-accent tracking-widest uppercase text-stone-600 font-semibold mt-1">
+                  Purity with Auspiciousness · Since 1984
+                </p>
+                <p className="text-[11px] text-stone-700 font-semibold mt-1">
+                  B.L. Jewels (P) Ltd.
+                </p>
+                <p className="text-[10px] text-stone-500 leading-tight">
+                  Shop No. 01, Upper Ground Floor, Suresh Mall, MG Road, Civil Lines, Agra, UP 282002
+                </p>
+                <p className="text-[10px] text-stone-500">
+                  Helpline: 074549 86610 · contact@bljewels.com · www.bljewels.com
+                </p>
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="inline-block bg-stone-900 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded">
+                  TAX INVOICE / CASH MEMO
+                </span>
+                <p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mt-1">
+                  Original for Recipient
+                </p>
+                <div className="text-[10px] text-stone-600 mt-1.5 space-y-0.5 font-mono">
+                  <p><strong>GSTIN:</strong> 09AABCB1234F1Z5</p>
+                  <p><strong>State:</strong> Uttar Pradesh (09)</p>
+                  <p><strong>BIS Hallmark Reg:</strong> HM/C-7591823961</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Meta Grid (Order Info & Consignee) */}
+            <div className="grid grid-cols-2 gap-4 py-3.5 border-b border-stone-300 text-[11px]">
+              {/* Left: Invoice & Payment */}
+              <div className="bg-stone-50/70 p-3 rounded-lg border border-stone-200/80 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-stone-500 font-medium">Invoice / Order No:</span>
+                  <span className="font-mono font-bold text-stone-900">{po.orderNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500 font-medium">Invoice Date & Time:</span>
+                  <span className="font-medium text-stone-800">{pDate} · {pTime}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500 font-medium">Payment Mode:</span>
+                  <span className="font-semibold text-stone-800">{pMethod}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-stone-500 font-medium">Payment Status:</span>
+                  <span className="font-bold text-emerald-700 flex items-center gap-1">
+                    ✓ {pStatus}
+                  </span>
+                </div>
+                {po.payment?.transactionId && (
+                  <div className="flex justify-between">
+                    <span className="text-stone-500 font-medium">Txn / UTR Ref:</span>
+                    <span className="font-mono text-[10px] text-stone-700">{po.payment.transactionId}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-stone-500 font-medium">Transit Insurance:</span>
+                  <span className="text-emerald-800 font-medium">100% Blue Dart Armored Cover</span>
+                </div>
+              </div>
+
+              {/* Right: Billed & Shipped To */}
+              <div className="bg-stone-50/70 p-3 rounded-lg border border-stone-200/80 space-y-0.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-1">
+                  Billed & Delivered To (Consignee)
+                </p>
+                <p className="font-bold text-stone-900 text-xs">
+                  {po.shippingAddress?.name || user?.name || 'Valued Customer'}
+                </p>
+                <p className="text-stone-600 font-mono text-[10px]">
+                  Phone: {po.shippingAddress?.phone || user?.phone}
+                </p>
+                <p className="text-stone-600 leading-snug pt-0.5">
+                  {[
+                    po.shippingAddress?.line1,
+                    po.shippingAddress?.line2,
+                    po.shippingAddress?.city,
+                    po.shippingAddress?.state,
+                    po.shippingAddress?.pincode,
+                  ].filter(Boolean).join(', ')}
+                </p>
+                <p className="text-[10px] text-stone-500 font-medium">
+                  Country: {po.shippingAddress?.country || 'India'} (State Code: 09)
+                </p>
+              </div>
+            </div>
+
+            {/* Itemized Table */}
+            <div className="py-3">
+              <table className="w-full text-left text-[11px] border-collapse">
+                <thead>
+                  <tr className="bg-stone-100 text-stone-800 uppercase text-[10px] font-bold border-y-2 border-stone-800 tracking-wider">
+                    <th className="py-2 px-2 text-center w-8">#</th>
+                    <th className="py-2 px-2">Description of Jewellery</th>
+                    <th className="py-2 px-2 text-center">Purity</th>
+                    <th className="py-2 px-2 text-center">HSN</th>
+                    <th className="py-2 px-2 text-center">Gross Wt.</th>
+                    <th className="py-2 px-2 text-center w-12">Qty</th>
+                    <th className="py-2 px-2 text-right">Unit Rate</th>
+                    <th className="py-2 px-2 text-right">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-200">
+                  {po.items?.map((item, index) => {
+                    const snap = item.snapshot || {};
+                    const variant = snap.variant || {};
+                    const metal = snap.metal || {};
+                    const karat = variant.karat || metal.karat || '22K (916)';
+                    const weight = variant.weight ? `${variant.weight}g` : '—';
+
+                    return (
+                      <tr key={index} className="hover:bg-stone-50/50">
+                        <td className="py-2.5 px-2 text-center font-mono text-stone-500">{index + 1}</td>
+                        <td className="py-2.5 px-2">
+                          <p className="font-bold text-stone-900">{snap.name || 'Fine Jewellery Article'}</p>
+                          <p className="text-[10px] text-stone-500">
+                            {variant.sku ? `SKU: ${variant.sku} · ` : ''}100% BIS Hallmarked Pure Gold
+                          </p>
+                        </td>
+                        <td className="py-2.5 px-2 text-center font-semibold text-stone-800">{karat}</td>
+                        <td className="py-2.5 px-2 text-center font-mono text-[10px] text-stone-600">711319</td>
+                        <td className="py-2.5 px-2 text-center font-mono text-stone-700">{weight}</td>
+                        <td className="py-2.5 px-2 text-center font-semibold text-stone-800">{item.quantity}</td>
+                        <td className="py-2.5 px-2 text-right font-mono text-stone-700">{money(item.price)}</td>
+                        <td className="py-2.5 px-2 text-right font-mono font-bold text-stone-900">
+                          {money(item.quantity * item.price)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Financial Calculation & Summary */}
+            <div className="pt-2 border-t-2 border-stone-800 grid grid-cols-12 gap-4 text-[11px]">
+              {/* Left: Amount in Words & Notes */}
+              <div className="col-span-7 flex flex-col justify-between space-y-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                    Amount Chargeable (in words)
+                  </p>
+                  <p className="font-bold text-stone-900 italic mt-0.5 text-xs">
+                    {numberToWordsIndian(pTotal)}
+                  </p>
+                </div>
+
+                <div className="p-2.5 bg-stone-50 rounded-lg border border-stone-200/90 text-[10px] text-stone-600 space-y-0.5">
+                  <p className="font-bold text-stone-800 uppercase tracking-wider text-[9px]">
+                    Tax & Composition Scheme Declaration:
+                  </p>
+                  <p>
+                    * GST (3% Composite Scheme) is inclusive in all product rates as per Section 10 of the CGST Act 2017.
+                  </p>
+                  <p>
+                    * Certified by BIS Hallmarking Centre under Bureau of Indian Standards Regulations.
+                  </p>
+                </div>
+              </div>
+
+              {/* Right: Totals Breakdown Box */}
+              <div className="col-span-5 bg-stone-50/80 p-3 rounded-lg border border-stone-200/90 space-y-1.5 font-mono text-xs">
+                <div className="flex justify-between text-stone-600">
+                  <span>Gross Merchandise Value:</span>
+                  <span>{money(pSubtotal)}</span>
+                </div>
+
+                {pDiscount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>Festive Discount {po.pricing?.coupon ? `(${po.pricing.coupon})` : ''}:</span>
+                    <span>-{money(pDiscount)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-stone-600">
+                  <span>Insured Armored Shipping:</span>
+                  <span className={pShipping === 0 ? 'text-emerald-700 font-bold' : ''}>
+                    {pShipping === 0 ? 'FREE' : money(pShipping)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between text-stone-600 text-[10px]">
+                  <span>Integrated GST (3% Inclusive):</span>
+                  <span>Included</span>
+                </div>
+
+                <div className="border-t-2 border-stone-800 pt-2 flex justify-between text-sm font-bold text-stone-950">
+                  <span>Grand Total Paid:</span>
+                  <span className="text-[#930303] text-base">{money(pTotal)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quality Guarantees Bar */}
+            <div className="my-3 py-2 bg-amber-50/70 border border-amber-200/80 rounded-lg grid grid-cols-4 gap-2 text-center text-[9px] font-semibold text-stone-700">
+              <div className="flex items-center justify-center gap-1.5">
+                <img
+                  src="/images/bis-bureau-of-indian-standards.png"
+                  alt="BIS Hallmark"
+                  className="h-3.5 w-auto object-contain inline-block"
+                />
+                <span>100% BIS 916 Hallmarked</span>
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                <Truck size={12} className="text-emerald-700" />
+                <span>Insured Armored Dispatch</span>
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                <ShieldCheck size={12} className="text-[#930303]" />
+                <span>Lifetime Jewellery Buyback</span>
+              </div>
+              <div className="flex items-center justify-center gap-1">
+                <Clock size={12} className="text-stone-700" />
+                <span>15-Day Easy Returns</span>
+              </div>
+            </div>
+
+            {/* Signatures & Bottom Signoff */}
+            <div className="pt-4 border-t border-stone-300 grid grid-cols-2 items-end text-[10px]">
+              <div>
+                <p className="text-stone-500 font-medium">Customer Acceptance Signature:</p>
+                <div className="h-10 border-b border-stone-400 border-dashed w-48 mt-2"></div>
+                <p className="text-[9px] text-stone-400 mt-1 italic">Received in sealed tamper-evident armored packaging</p>
+              </div>
+              <div className="text-right space-y-1">
+                <p className="font-bold text-stone-900 uppercase tracking-wider text-[10px]">
+                  For B.L. JEWELS (P) LTD.
+                </p>
+                <div className="font-serif italic text-stone-400 py-1 text-xs">
+                  [BIS 916 CERTIFIED · DISPATCH AUTHORIZED]
+                </div>
+                <p className="font-bold text-stone-800 text-[10px]">Authorised Signatory</p>
+                <p className="text-[9px] text-stone-400">Subject to Agra, UP Jurisdiction</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </section>
   );
 };

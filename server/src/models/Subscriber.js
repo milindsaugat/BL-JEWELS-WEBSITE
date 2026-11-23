@@ -23,6 +23,11 @@ const subscriberSchema = new mongoose.Schema(
       type: Date,
       default: () => new Date(),
     },
+    adminViewed: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   { timestamps: true }
 );

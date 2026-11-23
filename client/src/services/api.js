@@ -82,6 +82,8 @@ export const orderService = {
   getOrderById: (id) => api.get(`/orders/${id}`).then(res => res.data),
   getAllOrders: () => api.get('/orders').then(res => res.data),
   updateStatus: (id, statusData) => api.patch(`/orders/${id}/status`, statusData).then(res => res.data),
+  markViewed: (id) => api.patch(`/orders/${id}/view`).then(res => res.data),
+  markAllViewed: () => api.post('/orders/mark-all-viewed').then(res => res.data),
 };
 
 export const couponService = {
@@ -156,6 +158,8 @@ export const userService = {
   updateStatus: (id, isActive) => api.patch(`/users/${id}/status`, { isActive }).then(res => res.data),
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }).then(res => res.data),
   deleteUser: (id) => api.delete(`/users/${id}`).then(res => res.data),
+  markViewed: (id) => api.patch(`/users/${id}/view`).then(res => res.data),
+  markAllViewed: () => api.post('/users/mark-all-viewed').then(res => res.data),
 };
 
 export const uploadService = {

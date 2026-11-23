@@ -109,3 +109,51 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   HIGH-PRECISION PRINT STYLES (Single Page Luxury Tax Invoice)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #1c1917 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Strictly hide all storefront navigation, ribbons, overlays and footers */
+  nav,
+  header,
+  footer,
+  aside,
+  .print\:hidden,
+  [data-print-hidden="true"] {
+    display: none !important;
+  }
+
+  .print-receipt-sheet {
+    box-shadow: none !important;
+    border: 1.5px solid #1c1917 !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 16px 20px !important;
+    page-break-inside: avoid !important;
+    page-break-after: avoid !important;
+    background: #ffffff !important;
+  }
+
+  .print-receipt-sheet table {
+    page-break-inside: avoid !important;
+  }
+}

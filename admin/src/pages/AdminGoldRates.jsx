@@ -220,7 +220,7 @@ export const AdminGoldRates = () => {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-emerald-950">
-                        Aapki API Key Database Mein Saved Aur Active Hai!
+                        Your API Key is securely saved and active in the database!
                       </span>
                       <span className="text-[10px] bg-emerald-700 text-white font-bold px-2 py-0.5 rounded-full font-mono">
                         LIVE CONNECTED
@@ -275,7 +275,7 @@ export const AdminGoldRates = () => {
               />
 
               <p className="text-xs text-stone-500">
-                🔒 Security Note: Security ke liye raw private key text box mein plain text nahi dikhayi jaati, balki encrypted rehti hai. Aapki active key upar green box mein live connected hai.
+                🔒 Security Note: For your security, raw API keys are never displayed in plain text and remain encrypted. Your active key is live and connected in the status box above.
               </p>
             </div>
 

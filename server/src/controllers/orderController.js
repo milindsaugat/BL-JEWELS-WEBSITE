@@ -141,3 +141,37 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+export const markOrderViewed = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (getDbStatus()) {
+      await Order.findOneAndUpdate(
+        { $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { orderNumber: id }] },
+        { $set: { adminViewed: true } }
+      );
+    } else {
+      const o = (memoryStore.orders || []).find((ord) => ord._id === id || ord.orderNumber === id);
+      if (o) o.adminViewed = true;
+    }
+    return res.json({ success: true, message: 'Order marked as viewed.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const markAllOrdersViewed = async (req, res) => {
+  try {
+    if (getDbStatus()) {
+      await Order.updateMany({ adminViewed: { $ne: true } }, { $set: { adminViewed: true } });
+    } else {
+      (memoryStore.orders || []).forEach((o) => {
+        o.adminViewed = true;
+      });
+    }
+    return res.json({ success: true, message: 'All orders marked as viewed.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+

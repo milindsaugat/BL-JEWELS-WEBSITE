@@ -84,6 +84,8 @@ export const orderService = {
   getAllOrders: () => api.get('/orders').then(res => res.data),
   getOrderById: (id) => api.get(`/orders/${id}`).then(res => res.data),
   updateStatus: (id, statusData) => api.patch(`/orders/${id}/status`, statusData).then(res => res.data),
+  markViewed: (id) => api.patch(`/orders/${id}/view`).then(res => res.data),
+  markAllViewed: () => api.post('/orders/mark-all-viewed').then(res => res.data),
 };
 
 export const couponService = {
@@ -140,12 +142,16 @@ export const userService = {
   updateStatus: (id, isActive) => api.patch(`/users/${id}/status`, { isActive }).then(res => res.data),
   updateRole: (id, role) => api.patch(`/users/${id}/role`, { role }).then(res => res.data),
   deleteUser: (id) => api.delete(`/users/${id}`).then(res => res.data),
+  markViewed: (id) => api.patch(`/users/${id}/view`).then(res => res.data),
+  markAllViewed: () => api.post('/users/mark-all-viewed').then(res => res.data),
 };
 
 export const subscriberService = {
   getSubscribers: (params) => api.get('/subscribers', { params }).then(res => res.data),
   addSubscriber: (data) => api.post('/subscribers', data).then(res => res.data),
   deleteSubscriber: (id) => api.delete(`/subscribers/${id}`).then(res => res.data),
+  markViewed: (id) => api.patch(`/subscribers/${id}/view`).then(res => res.data),
+  markAllViewed: () => api.post('/subscribers/mark-all-viewed').then(res => res.data),
 };
 
 export const blogService = {
@@ -160,6 +166,8 @@ export const ticketService = {
   reply: (id, data) => api.post(`/tickets/${id}/reply`, data).then(res => res.data),
   updateStatus: (id, data) => api.patch(`/tickets/${id}/status`, data).then(res => res.data),
   remove: (id) => api.delete(`/tickets/${id}`).then(res => res.data),
+  markViewed: (id) => api.patch(`/tickets/${id}/view`).then(res => res.data),
+  markAllViewed: () => api.post('/tickets/mark-all-viewed').then(res => res.data),
 };
 
 export const uploadService = {
@@ -180,4 +188,8 @@ export const uploadService = {
     }).then(res => res.data);
   },
   deleteAsset: (publicId, url) => api.delete('/upload/asset', { data: { publicId, url } }).then(res => res.data),
+};
+
+export const adminBadgeService = {
+  getBadges: () => api.get('/auth/admin/sidebar-badges').then((res) => res.data?.badges || {}),
 };

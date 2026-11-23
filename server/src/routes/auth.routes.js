@@ -17,6 +17,7 @@ import {
   resetPassword,
   requestAdminCredentialOtp,
   updateAdminCredentials,
+  getAdminSidebarBadges,
 } from '../controllers/authController.js';
 import { protect, optionalAuth, adminOnly } from '../middleware/auth.js';
 
@@ -52,6 +53,7 @@ router.get('/me', protect, getMe);
 router.post('/wishlist/toggle', protect, toggleWishlist);
 router.post('/admin/request-credential-otp', protect, adminOnly, requestAdminCredentialOtp);
 router.post('/admin/update-credentials', protect, adminOnly, updateAdminCredentials);
+router.get('/admin/sidebar-badges', protect, adminOnly, getAdminSidebarBadges);
 
 export default router;
 

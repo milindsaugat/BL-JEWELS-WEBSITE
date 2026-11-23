@@ -94,10 +94,12 @@ const productSchema = new mongoose.Schema({
     salesAmount: { type: Number, default: 0 },
     otherCharges: { type: Number, default: 0 },
   },
+  gstPercent: { type: Number, default: 3 },
   priceBreakup: {
     metalAmount: { type: Number, default: 0 },
     otherCharge: { type: Number, default: 0 },
     makingCharge: { type: Number, default: 0 },
+    gstPercent: { type: Number, default: 3 },
     gstAmount: { type: Number, default: 0 },
     grandTotal: { type: Number, default: 0 },
   },
@@ -148,6 +150,7 @@ const productSchema = new mongoose.Schema({
     metaTitle: String,
     metaDescription: String,
     keywords: [String],
+    metaKeywords: [String],
   },
 }, { timestamps: true });
 

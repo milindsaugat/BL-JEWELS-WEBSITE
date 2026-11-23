@@ -57,6 +57,11 @@ export const AdminSubscribers = () => {
       const res = await subscriberService.getSubscribers();
       setSubscribers(res.subscribers || []);
       if (res.stats) setStats(res.stats);
+
+      if (res.subscribers?.some((s) => s.adminViewed === false)) {
+        subscriberService.markAllViewed().catch(() => {});
+        window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+      }
     } catch (err) {
       toast.error('Failed to load subscribers: ' + (err.response?.data?.message || err.message));
     } finally {
@@ -334,6 +339,11 @@ export const AdminSubscribers = () => {
                         <div className="flex items-center gap-2">
                           <Mail className="w-3.5 h-3.5 text-[#C9A44A] shrink-0" />
                           <span>{sub.email}</span>
+                          {sub.adminViewed === false && (
+                            <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-emerald-600 text-white animate-pulse">
+                              NEW
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 px-4">

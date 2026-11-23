@@ -39,6 +39,11 @@ const DEFAULT_ANNOUNCEMENT_BAR = {
   marqueeSpeed: 35,
 };
 
+const DEFAULT_SHIPPING_SETTINGS = {
+  shippingCharge: 500,
+  freeShippingThreshold: 5000,
+};
+
 const DEFAULT_SEO = {
   defaultMetaTitle: 'BL Jewels | Purity with Auspiciousness — 22K BIS 916 Fine Jewellery',
   defaultMetaDescription:
@@ -168,6 +173,10 @@ export const getSettings = async (req, res) => {
           settings.festiveSaleBanner = DEFAULT_FESTIVE_BANNER;
           changed = true;
         }
+        if (!settings.shippingSettings) {
+          settings.shippingSettings = DEFAULT_SHIPPING_SETTINGS;
+          changed = true;
+        }
         if (!settings.seo || !settings.seo.pages?.home?.metaTitle || !settings.seo.defaultMetaKeywords?.length) {
           const curSeo = settings.seo?.toObject?.() || {};
           settings.seo = mergeSeoDefaults(curSeo);
@@ -239,6 +248,21 @@ export const updateSettings = async (req, res) => {
       }
 
       updates.announcementBar = bar;
+    }
+
+    if (updates.shippingSettings) {
+      const s = updates.shippingSettings;
+      const chargeVal = s.shippingCharge === '' || s.shippingCharge === null || s.shippingCharge === undefined || isNaN(Number(s.shippingCharge))
+        ? null
+        : Math.max(0, Number(s.shippingCharge));
+      const thresholdVal = s.freeShippingThreshold === '' || s.freeShippingThreshold === null || s.freeShippingThreshold === undefined || isNaN(Number(s.freeShippingThreshold))
+        ? null
+        : Math.max(0, Number(s.freeShippingThreshold));
+
+      updates.shippingSettings = {
+        shippingCharge: chargeVal,
+        freeShippingThreshold: thresholdVal,
+      };
     }
 
     if (getDbStatus()) {

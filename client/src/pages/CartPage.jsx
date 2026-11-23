@@ -240,13 +240,10 @@ export const CartPage = () => {
                     <span>-₹{formatCurrency(discount)}</span>
                   </div>
                 )}
+
                 <div className="flex justify-between">
-                  <span>GST (3% Indian Jewelry)</span>
-                  <span>₹{formatCurrency(tax)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Insured Express Shipping</span>
-                  <span>{shipping === 0 ? <strong className="text-emerald-700">FREE</strong> : `₹${shipping}`}</span>
+                  <span>Insured Armored Shipping</span>
+                  <span>{shipping === 0 ? <strong className="text-emerald-700">FREE</strong> : `₹${formatCurrency(shipping)}`}</span>
                 </div>
                 <div className="flex justify-between text-base font-bold text-charcoal border-t border-border-light pt-3">
                   <span>Total Payable</span>

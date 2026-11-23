@@ -86,6 +86,7 @@ export const submitContactInquiry = async (req, res) => {
       message,
       status: 'open',
       priority: 'normal',
+      adminViewed: false,
       replies: [],
       lastRepliedAt: null,
     };
@@ -168,6 +169,7 @@ export const createMyTicket = async (req, res) => {
       status: 'open',
       priority,
       returnReasons,
+      adminViewed: false,
       attachments,
       replies: [],
       lastRepliedAt: null,
@@ -334,6 +336,7 @@ export const replyToMyTicket = async (req, res) => {
         ticket.status = 'open';
       }
       ticket.lastRepliedAt = new Date();
+      ticket.adminViewed = false;
       await ticket.save();
       return res.json({ success: true, data: ticket });
     }
@@ -373,6 +376,7 @@ export const replyToMyTicket = async (req, res) => {
     if (['resolved', 'replied'].includes(ticket.status)) {
       ticket.status = 'open';
     }
+    ticket.adminViewed = false;
     ticket.lastRepliedAt = replyEntry.createdAt.toISOString();
     ticket.updatedAt = replyEntry.createdAt.toISOString();
     return res.json({ success: true, data: ticket });
@@ -477,6 +481,7 @@ export const replyTicket = async (req, res) => {
       ticket.status = nextStatus;
       ticket.closedAt = nextStatus === 'closed' ? new Date() : null;
       ticket.lastRepliedAt = new Date();
+      ticket.adminViewed = true;
       await ticket.save();
       updatedTicket = ticket.toObject();
     } else {
@@ -500,6 +505,7 @@ export const replyTicket = async (req, res) => {
       ticket.closedAt = nextStatus === 'closed' ? new Date().toISOString() : null;
       ticket.lastRepliedAt = replyEntry.createdAt.toISOString();
       ticket.updatedAt = replyEntry.createdAt.toISOString();
+      ticket.adminViewed = true;
       updatedTicket = ticket;
     }
 
@@ -629,4 +635,35 @@ export const deleteTicket = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const markTicketViewed = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (getDbStatus()) {
+      await SupportTicket.findByIdAndUpdate(id, { $set: { adminViewed: true } });
+    } else {
+      const t = (memoryStore.tickets || []).find((tkt) => String(tkt._id) === String(id));
+      if (t) t.adminViewed = true;
+    }
+    return res.json({ success: true, message: 'Ticket marked as viewed.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const markAllTicketsViewed = async (req, res) => {
+  try {
+    if (getDbStatus()) {
+      await SupportTicket.updateMany({ adminViewed: { $ne: true } }, { $set: { adminViewed: true } });
+    } else {
+      (memoryStore.tickets || []).forEach((t) => {
+        t.adminViewed = true;
+      });
+    }
+    return res.json({ success: true, message: 'All tickets marked as viewed.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 

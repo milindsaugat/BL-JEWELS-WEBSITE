@@ -103,6 +103,10 @@ const orderSchema = new mongoose.Schema({
   notes: String,
   isGift: { type: Boolean, default: false },
   giftNote: String,
+  adminViewed: { type: Boolean, default: false, index: true },
+  cancelReason: String,
+  cancelComments: String,
+  cancelledAt: Date,
 }, { timestamps: true });
 
 orderSchema.pre('save', function(next) {

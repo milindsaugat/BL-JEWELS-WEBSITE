@@ -214,6 +214,8 @@ export const getUserById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User account not found.' });
     }
 
+    User.findByIdAndUpdate(id, { $set: { adminViewed: true } }).catch(() => {});
+
     res.json({
       success: true,
       user,
@@ -392,4 +394,38 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to delete user account.' });
   }
 };
+
+export const markUserViewed = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isMongoConnected()) {
+      await User.findByIdAndUpdate(id, { $set: { adminViewed: true } });
+    } else {
+      const u = (memoryStore.users || []).find((usr) => usr._id === id);
+      if (u) u.adminViewed = true;
+    }
+    return res.json({ success: true, message: 'User marked as viewed.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const markAllUsersViewed = async (req, res) => {
+  try {
+    if (isMongoConnected()) {
+      await User.updateMany(
+        { role: { $ne: 'admin' }, adminViewed: { $ne: true } },
+        { $set: { adminViewed: true } }
+      );
+    } else {
+      (memoryStore.users || []).forEach((u) => {
+        if (u.role !== 'admin') u.adminViewed = true;
+      });
+    }
+    return res.json({ success: true, message: 'All users marked as viewed.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 

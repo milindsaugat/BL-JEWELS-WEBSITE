@@ -1068,7 +1068,7 @@ export const AdminCoupons = () => {
                       className="w-full px-3 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-800 focus:outline-none focus:border-[#930303]"
                     />
                     <span className="text-[10px] text-stone-400 block mt-0.5">
-                      Khali chhodne par bina kisi limit ke pure {couponForm.value || 'X'}% discount milega.
+                      Leave blank for an unlimited {couponForm.value || 'X'}% percentage discount.
                     </span>
                   </div>
                 ) : (
@@ -1077,7 +1077,7 @@ export const AdminCoupons = () => {
                       <Check className="w-3.5 h-3.5 text-emerald-600" /> Flat Cash Discount
                     </span>
                     <span className="text-emerald-700 mt-0.5">
-                      Cart value par seedha flat ₹{Number(couponForm.value || 0).toLocaleString('en-IN')} instant discount milega (No cap required).
+                      Applies an instant flat discount of ₹{Number(couponForm.value || 0).toLocaleString('en-IN')} directly to the cart subtotal (No cap required).
                     </span>
                   </div>
                 )}

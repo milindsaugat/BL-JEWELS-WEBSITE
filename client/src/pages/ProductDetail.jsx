@@ -25,6 +25,7 @@ import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
 import { ProductSlider } from '../components/product/ProductSlider';
+import { SeoHead } from '../components/common/SeoHead';
 import { readRecent, rememberProduct, recentKey } from '../lib/recentProducts';
 
 const money = (n) =>
@@ -247,20 +248,47 @@ export const ProductDetail = () => {
   const jewelType = product.jewelType || 'FLAT SET';
   const categoryName = product.categoryName || product.category?.name || 'Set';
 
-  // Studded Details
-  const studdedStyleName = product.studdedDetails?.styleName || 'Other Charges [H]';
-  const studSalesAmount = product.studdedDetails?.studSalesAmount ?? 300.0;
-  const salesAmount = product.studdedDetails?.salesAmount ?? 300.0;
+  // Studded Details & Price Breakup Values (Fully Aligned & Mathematically Coherent)
+  const currentPrice = price || selectedVariant?.discountPrice || selectedVariant?.price || 0;
+  const gstPercent = product.gstPercent ?? product.priceBreakup?.gstPercent ?? 3;
+  const gstFactor = gstPercent / 100;
+  
+  const gstAmount = product.priceBreakup?.gstAmount && product.priceBreakup?.grandTotal === currentPrice
+    ? product.priceBreakup.gstAmount
+    : Math.round(currentPrice - (currentPrice / (1 + gstFactor)));
 
-  // Price Breakup Values
-  const metalAmount = product.priceBreakup?.metalAmount || Math.round((price || 0) * 0.92);
-  const otherCharge = product.priceBreakup?.otherCharge ?? 300.0;
-  const makingCharge = product.priceBreakup?.makingCharge || Math.round((price || 0) * 0.05);
-  const gstAmount = product.priceBreakup?.gstAmount || Math.round((price || 0) * 0.03);
-  const grandTotal = product.priceBreakup?.grandTotal || price || (metalAmount + otherCharge + makingCharge + gstAmount);
+  const preTax = Math.max(0, currentPrice - gstAmount);
+
+  const otherCharge = product.priceBreakup?.otherCharge && product.priceBreakup?.grandTotal === currentPrice
+    ? product.priceBreakup.otherCharge
+    : (product.studdedDetails?.salesAmount && product.studdedDetails?.salesAmount < preTax
+        ? product.studdedDetails.salesAmount
+        : Math.round(preTax * 0.12));
+
+  const makingCharge = product.priceBreakup?.makingCharge && product.priceBreakup?.grandTotal === currentPrice
+    ? product.priceBreakup.makingCharge
+    : Math.round(preTax * 0.08);
+
+  const metalAmount = product.priceBreakup?.metalAmount && product.priceBreakup?.grandTotal === currentPrice
+    ? product.priceBreakup.metalAmount
+    : Math.max(0, preTax - otherCharge - makingCharge);
+
+  const grandTotal = metalAmount + otherCharge + makingCharge + gstAmount;
+
+  // Studded Details (strictly matches Other Charge)
+  const studdedStyleName = product.studdedDetails?.styleName || 'Other Charges [H]';
+  const studSalesAmount = otherCharge;
+  const salesAmount = otherCharge;
 
   return (
     <main className="bg-[#FFFEFC]">
+      <SeoHead
+        title={product.seo?.metaTitle || `${product.name} | BL Jewels Agra`}
+        description={product.seo?.metaDescription || product.shortDescription || product.description?.slice(0, 160)}
+        keywords={product.seo?.metaKeywords?.length ? product.seo.metaKeywords : (product.seo?.keywords?.length ? product.seo.keywords : product.tags)}
+        ogImage={product.images?.[0]?.url}
+        canonicalUrl={`/products/${product.slug || product._id}`}
+      />
       <div className="container-bl py-5 sm:py-8">
         
         {/* ── Breadcrumb Navigation ── */}
@@ -626,7 +654,7 @@ export const ProductDetail = () => {
             <section className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-8 shadow-xs space-y-4">
               <div className="inline-flex items-center gap-2 text-xs font-semibold text-[#930303] uppercase tracking-wider font-accent">
                 <Sparkles size={15} className="text-[#C9A13B]" />
-                <span>Archival Atelier Heritage</span>
+                <span>Archival Heritage</span>
               </div>
               <h2 className="font-display text-2xl sm:text-3xl text-stone-900 leading-tight">
                 About this piece
@@ -816,7 +844,7 @@ export const ProductDetail = () => {
                         <p className="text-sm font-bold text-stone-900 mt-1">{moneyPrecise(makingCharge)}</p>
                       </div>
                       <div className="p-3 bg-[#FAF8F5] rounded-xl border border-stone-100">
-                        <p className="text-stone-500 text-[11px]">GST Amt (aprx.)</p>
+                        <p className="text-stone-500 text-[11px]">GST Amt ({gstPercent}% aprx.)</p>
                         <p className="text-sm font-bold text-stone-900 mt-1">{moneyPrecise(gstAmount)}</p>
                       </div>
                     </div>

@@ -33,7 +33,7 @@ import {
   Boxes
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { api, productService, categoryService, uploadService } from '../services/api';
+import { api, productService, categoryService, uploadService, settingService } from '../services/api';
 
 const newVariant = () => ({
   label: '',
@@ -81,7 +81,7 @@ const defaultBlankProduct = () => ({
   isActive: true,
   isFeatured: false,
   isNewArrival: false,
-  seo: { metaTitle: '', metaDescription: '' },
+  seo: { metaTitle: '', metaDescription: '', metaKeywords: '', keywords: [] },
 
   // Luxury Jewellery Specs - Defaulted to Agra as requested
   labelName: 'Set 18Kt',
@@ -108,10 +108,12 @@ const defaultBlankProduct = () => ({
   },
 
   // Price Breakup
+  gstPercent: 3.0,
   priceBreakup: {
     metalAmount: 187545.66,
     otherCharge: 300.0,
     makingCharge: 9377.28,
+    gstPercent: 3.0,
     gstAmount: 5917.0,
     grandTotal: 203140.0,
   },
@@ -138,6 +140,13 @@ export const AdminProducts = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkBusy, setBulkBusy] = useState(false);
 
+  // Global Shipping Rules State (Storewide)
+  const [shippingSettings, setShippingSettings] = useState({
+    shippingCharge: 500,
+    freeShippingThreshold: 5000,
+  });
+  const [savingShipping, setSavingShipping] = useState(false);
+
   // Editor State
   const [form, setForm] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -157,17 +166,44 @@ export const AdminProducts = () => {
     setLoading(true);
     setError('');
     try {
-      const [pRes, cRes] = await Promise.all([
+      const [pRes, cRes, sRes] = await Promise.all([
         api.get('/products/admin/all').catch(() => api.get('/products?limit=100')),
         categoryService.getCategories(),
+        settingService.getSettings().catch(() => null),
       ]);
       setProducts(pRes.data.products || []);
       setCategories(cRes.categories || []);
+      if (sRes?.settings?.shippingSettings) {
+        setShippingSettings({
+          shippingCharge: sRes.settings.shippingSettings.shippingCharge ?? '',
+          freeShippingThreshold: sRes.settings.shippingSettings.freeShippingThreshold ?? '',
+        });
+      }
     } catch (e) {
       setError(e.response?.data?.message || 'Could not load products catalogue.');
       toast.error('Unable to fetch products catalogue.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveShipping = async () => {
+    setSavingShipping(true);
+    try {
+      const payload = {
+        shippingCharge: (shippingSettings.shippingCharge === '' || shippingSettings.shippingCharge === null || isNaN(Number(shippingSettings.shippingCharge)))
+          ? null
+          : Math.max(0, Number(shippingSettings.shippingCharge)),
+        freeShippingThreshold: (shippingSettings.freeShippingThreshold === '' || shippingSettings.freeShippingThreshold === null || isNaN(Number(shippingSettings.freeShippingThreshold)))
+          ? null
+          : Math.max(0, Number(shippingSettings.freeShippingThreshold)),
+      };
+      await settingService.updateSettings({ shippingSettings: payload });
+      toast.success('Storewide shipping & delivery rules saved successfully!');
+    } catch {
+      toast.error('Failed to save shipping settings.');
+    } finally {
+      setSavingShipping(false);
     }
   };
 
@@ -195,7 +231,13 @@ export const AdminProducts = () => {
         branchLocation: prod.branchLocation || 'Agra, Uttar Pradesh',
         metal: { ...blank.metal, ...prod.metal },
         stone: { ...blank.stone, ...prod.stone },
-        seo: prod.seo || {},
+        seo: {
+          metaTitle: prod.seo?.metaTitle || '',
+          metaDescription: prod.seo?.metaDescription || '',
+          metaKeywords: Array.isArray(prod.seo?.metaKeywords)
+            ? prod.seo.metaKeywords.join(', ')
+            : (Array.isArray(prod.seo?.keywords) ? prod.seo.keywords.join(', ') : (prod.seo?.metaKeywords || prod.seo?.keywords || '')),
+        },
         variants: (prod.variants || []).map((v) => ({
           ...v,
           discountPrice: v.discountPrice ?? '',
@@ -450,21 +492,24 @@ export const AdminProducts = () => {
 
     const other = Number(form.studdedDetails?.salesAmount) || Number(form.priceBreakup?.otherCharge) || 0;
     const subtotal = metalAmt + makingAmt + other;
-    const gst = Math.round(subtotal * 0.03 * 100) / 100;
+    const gstPct = Number(form.gstPercent ?? form.priceBreakup?.gstPercent ?? 3);
+    const gst = Math.round(subtotal * (gstPct / 100) * 100) / 100;
     const grand = Math.round((subtotal + gst) * 100) / 100;
 
     setForm((f) => ({
       ...f,
+      gstPercent: gstPct,
       priceBreakup: {
         metalAmount: metalAmt,
         makingCharge: makingAmt,
         otherCharge: other,
+        gstPercent: gstPct,
         gstAmount: gst,
         grandTotal: grand,
       },
       variants: f.variants.map((v, i) => (i === 0 ? { ...v, price: Math.round(grand) } : v)),
     }));
-    toast.success('Price breakup computed at 3% GST!');
+    toast.success(`Price breakup computed at ${gstPct}% GST!`);
   };
 
   // Save product
@@ -479,8 +524,14 @@ export const AdminProducts = () => {
       .filter((p) => /^[0-9]{6}$/.test(p));
 
     try {
+      const gstPct = Number(form.gstPercent ?? form.priceBreakup?.gstPercent ?? 3);
       const payload = {
         ...form,
+        gstPercent: gstPct,
+        priceBreakup: {
+          ...form.priceBreakup,
+          gstPercent: gstPct,
+        },
         branchLocation: form.branchLocation || 'Agra, Uttar Pradesh',
         serviceablePincodes: pincodesList,
         netWeight: Number(form.netWeight) || 0,
@@ -505,6 +556,18 @@ export const AdminProducts = () => {
           form.productType === 'combo'
             ? form.comboItems.map((c) => ({ ...c, quantity: Number(c.quantity) }))
             : [],
+      };
+
+      const rawKeywords = form.seo?.metaKeywords || form.seo?.keywords || '';
+      const parsedKeywords = typeof rawKeywords === 'string'
+        ? rawKeywords.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean)
+        : Array.isArray(rawKeywords) ? rawKeywords : [];
+
+      payload.seo = {
+        metaTitle: form.seo?.metaTitle || '',
+        metaDescription: form.seo?.metaDescription || '',
+        keywords: parsedKeywords,
+        metaKeywords: parsedKeywords,
       };
 
       if (!payload.slug) delete payload.slug;
@@ -602,7 +665,7 @@ export const AdminProducts = () => {
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-xs tracking-widest uppercase font-accent text-[#930303] font-bold">
-              Agra Heritage Atelier · Port 5174
+              BL Jewels Executive Studio · Port 5174
             </p>
             <h1 className="text-2xl sm:text-3xl font-display font-bold text-stone-900 mt-1">
               Products & Jewellery Management
@@ -663,6 +726,109 @@ export const AdminProducts = () => {
               ₹{(totalVaultValue / 100000).toFixed(1)} Lakh
             </p>
             <p className="text-[11px] text-stone-400 mt-0.5">Estimated gross stock</p>
+          </div>
+        </div>
+
+        {/* ── Global Store Shipping & Delivery Rules (Configured Once for Entire Catalog) ── */}
+        <div className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#930303] shrink-0">
+                <Truck size={20} />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm font-bold font-display text-stone-900 tracking-wide">
+                    Storewide Insured Armored Shipping & Free Delivery Rules
+                  </h2>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
+                    One-time Global Rule
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  This setting applies storewide across all products — no need to configure each product individually.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleSaveShipping}
+              disabled={savingShipping}
+              className="self-start sm:self-auto flex items-center gap-2 bg-[#930303] hover:bg-[#7a0303] text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-xs hover:shadow transition-all disabled:opacity-50 cursor-pointer"
+            >
+              <Check size={15} />
+              <span>{savingShipping ? 'Saving...' : 'Save Shipping Rules'}</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+            {/* Shipping Charge Input */}
+            <div className="bg-stone-50/80 p-4 rounded-xl border border-stone-200/80">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-[#930303]" />
+                  <span>Insured Armored Shipping Charge (₹)</span>
+                </label>
+                {(!shippingSettings.shippingCharge || Number(shippingSettings.shippingCharge) === 0) ? (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    FREE (No charge)
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-[#930303] bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    ₹{shippingSettings.shippingCharge} per order
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 font-bold">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={shippingSettings.shippingCharge ?? ''}
+                  onChange={(e) => setShippingSettings((prev) => ({ ...prev, shippingCharge: e.target.value }))}
+                  placeholder="Empty = 0 (Free shipping on all items)"
+                  className="w-full pl-7 pr-3 py-2 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-900 focus:outline-none focus:border-[#930303]"
+                />
+              </div>
+              <p className="text-[11px] text-stone-500 mt-1.5 leading-relaxed">
+                Standard shipping fee. <strong>Leave empty or set to 0 to offer free shipping on all orders (FREE).</strong>
+              </p>
+            </div>
+
+            {/* Free Shipping Threshold Input */}
+            <div className="bg-stone-50/80 p-4 rounded-xl border border-stone-200/80">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
+                  <Sparkles size={14} className="text-[#C9A13B]" />
+                  <span>FREE Insured Shipping Min Order (₹)</span>
+                </label>
+                {(!shippingSettings.freeShippingThreshold || Number(shippingSettings.freeShippingThreshold) === 0) ? (
+                  <span className="text-[10px] font-bold text-stone-600 bg-stone-200/70 px-2 py-0.5 rounded-full">
+                    Offer Disabled
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Free above ₹{shippingSettings.freeShippingThreshold}
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 font-bold">₹</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={shippingSettings.freeShippingThreshold ?? ''}
+                  onChange={(e) => setShippingSettings((prev) => ({ ...prev, freeShippingThreshold: e.target.value }))}
+                  placeholder="Empty = Offer disabled (No progress bar in cart)"
+                  className="w-full pl-7 pr-3 py-2 bg-white border border-stone-200 rounded-lg text-xs font-medium text-stone-900 focus:outline-none focus:border-[#930303]"
+                />
+              </div>
+              <p className="text-[11px] text-stone-500 mt-1.5 leading-relaxed">
+                Free shipping qualifying amount. <strong>Leave empty or set to 0 to disable the free shipping progress bar offer in the cart.</strong>
+              </p>
+            </div>
           </div>
         </div>
 
@@ -988,7 +1154,7 @@ export const AdminProducts = () => {
               {editingId ? `Edit Product: ${form.name || 'Untitled'}` : 'New Jewelry Creation'}
             </h1>
             <p className="text-xs text-stone-500 font-body">
-              Agra Atelier Studio · Direct Full-Page Management
+              BL Jewels Studio · Direct Full-Page Management
             </p>
           </div>
         </div>
@@ -1379,7 +1545,7 @@ export const AdminProducts = () => {
         </div>
       )}
 
-      {/* ─── TAB 3: JEWELRY SPECS (AGRA ATELIER ENGINE) ─── */}
+      {/* ─── TAB 3: JEWELRY SPECS (BL JEWELS ENGINE) ─── */}
       {activeTab === 'specs' && (
         <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex items-center justify-between border-b pb-3">
@@ -1408,7 +1574,7 @@ export const AdminProducts = () => {
 
             <div>
               <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-1.5">
-                Branch Location (Agra Atelier)
+                Branch Location
               </label>
               <input
                 value={form.branchLocation || 'Agra, Uttar Pradesh'}
@@ -1569,19 +1735,13 @@ export const AdminProducts = () => {
       {/* ─── TAB 4: PRICING & BREAKUP ENGINE ─── */}
       {activeTab === 'pricing' && (
         <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl">
-            <div>
-              <p className="text-xs font-bold text-emerald-900">Right Gold Price Breakup Engine</p>
-              <p className="text-[11px] text-emerald-700">
-                Calculates Metal Amount = Net Weight × Today's Rate + Making Charge + Other Charges + 3% GST.
-              </p>
-            </div>
+          <div className="flex justify-end">
             <button
               type="button"
               onClick={handleAutoCalculateBreakup}
-              className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
+              className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer shadow-xs transition-colors"
             >
-              <Calculator size={14} />
+              <Calculator size={15} />
               <span>Auto-Compute Breakup</span>
             </button>
           </div>
@@ -1634,7 +1794,7 @@ export const AdminProducts = () => {
             <h3 className="text-xs font-bold text-stone-800 uppercase tracking-wider">
               Storefront Price Breakup Accordion Fields
             </h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-[11px] text-stone-500 mb-1">Metal Amount (₹)</label>
                 <input
@@ -1684,7 +1844,41 @@ export const AdminProducts = () => {
               </div>
 
               <div>
-                <label className="block text-[11px] text-stone-500 mb-1">GST Amount (₹ aprx.)</label>
+                <label className="block text-[11px] text-stone-500 mb-1">GST Rate (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                  placeholder="3"
+                  value={form.gstPercent ?? form.priceBreakup?.gstPercent ?? 3}
+                  onChange={(e) => {
+                    const pct = Number(e.target.value);
+                    const metal = Number(form.priceBreakup?.metalAmount) || 0;
+                    const making = Number(form.priceBreakup?.makingCharge) || 0;
+                    const other = Number(form.priceBreakup?.otherCharge) || 0;
+                    const subtotal = metal + making + other;
+                    const newGst = Math.round(subtotal * (pct / 100) * 100) / 100;
+                    const newGrand = Math.round((subtotal + newGst) * 100) / 100;
+                    setForm((prev) => ({
+                      ...prev,
+                      gstPercent: pct,
+                      priceBreakup: {
+                        ...prev.priceBreakup,
+                        gstPercent: pct,
+                        gstAmount: newGst,
+                        grandTotal: newGrand,
+                      },
+                    }));
+                  }}
+                  className="w-full p-2.5 bg-white border border-stone-300 rounded-xl text-xs font-semibold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] text-stone-500 mb-1">
+                  GST Amount (₹ aprx. {form.gstPercent ?? form.priceBreakup?.gstPercent ?? 3}%)
+                </label>
                 <input
                   type="number"
                   step="0.01"
@@ -2203,6 +2397,21 @@ export const AdminProducts = () => {
                 placeholder="Discover BIS hallmarked 18K/22K gold jewellery handcrafted with auspicious purity in Agra..."
                 className="w-full p-2.5 bg-white border border-stone-200 rounded-xl text-xs"
               />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] text-stone-500">SEO Meta Keywords</label>
+                <span className="text-[10px] text-stone-400">Comma-separated</span>
+              </div>
+              <input
+                value={form.seo?.metaKeywords ?? (Array.isArray(form.seo?.keywords) ? form.seo.keywords.join(', ') : (form.seo?.keywords || ''))}
+                onChange={(e) => updateForm('seo', { ...form.seo, metaKeywords: e.target.value, keywords: e.target.value })}
+                placeholder="e.g. 22K gold necklace, bridal jewellery, BIS 916 gold, agra jewellers, pure gold choker"
+                className="w-full p-2.5 bg-white border border-stone-200 rounded-xl text-xs"
+              />
+              <p className="text-[10px] text-stone-400 mt-1">
+                Enter target search keywords separated by commas for Google indexing and search ranking.
+              </p>
             </div>
           </div>
         </div>

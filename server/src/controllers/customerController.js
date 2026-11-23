@@ -127,16 +127,39 @@ export const saveAddresses = async (req, res) => {
   } catch { res.status(503).json({ message: 'Could not save addresses.' }); }
 };
 export const orderAction = async (req, res) => {
-  const action = req.body.action;
+  const { action, reason, comments } = req.body;
   const allowed = action === 'cancel' ? ['placed','confirmed'] : action === 'return' ? ['delivered'] : [];
   try {
     if (action === 'cancel') {
-      const order = await cancelInventoryOrder({ _id: req.params.id, user: req.user._id, status: { $in: ['placed','confirmed'] } }, 'Cancelled by customer; refund subject to review.');
+      const selectedReason = (reason && String(reason).trim()) || 'Cancelled by customer';
+      const cleanComments = (comments && String(comments).trim()) || '';
+      const note = `Cancelled by customer. Reason: ${selectedReason}${cleanComments ? ` (${cleanComments})` : ''}; refund subject to review.`;
+      const order = await cancelInventoryOrder(
+        { _id: req.params.id, user: req.user._id, status: { $in: ['placed','confirmed'] } },
+        note,
+        selectedReason,
+        cleanComments
+      );
       return res.json({ success: true, order });
     }
     const status = 'return_requested';
-    const order = await Order.findOneAndUpdate({ _id: req.params.id, user: req.user._id, status: { $in: allowed } }, { $set: { status }, $push: { statusHistory: { status, note: 'Requested by customer; refund/return subject to review.', updatedAt: new Date() } } }, { new: true });
+    const order = await Order.findOneAndUpdate(
+      { _id: req.params.id, user: req.user._id, status: { $in: allowed } },
+      {
+        $set: { status },
+        $push: {
+          statusHistory: {
+            status,
+            note: `Requested by customer; Reason: ${reason || 'Customer request'}; refund/return subject to review.`,
+            updatedAt: new Date(),
+          },
+        },
+      },
+      { new: true }
+    );
     if (!order) return res.status(400).json({ message: 'This action is not available for this order.' });
     res.json({ success: true, order });
-  } catch { res.status(400).json({ message: 'Unable to update this order.' }); }
+  } catch (error) {
+    res.status(400).json({ message: error.message || 'Unable to update this order.' });
+  }
 };

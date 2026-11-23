@@ -77,6 +77,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  adminViewed: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {

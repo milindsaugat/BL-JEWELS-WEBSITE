@@ -221,6 +221,16 @@ const settingSchema = new mongoose.Schema({
       },
     },
   },
+  shippingSettings: {
+    shippingCharge: {
+      type: Number,
+      default: 500,
+    },
+    freeShippingThreshold: {
+      type: Number,
+      default: 5000,
+    },
+  },
 }, { timestamps: true });
 
 const Setting = mongoose.model('Setting', settingSchema);

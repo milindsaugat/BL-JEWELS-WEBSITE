@@ -13,19 +13,40 @@ import {
   Menu,
   X,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  LifeBuoy
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { api } from '../services/api';
 
 export const AdminLayout = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [badges, setBadges] = useState({ orders: 0, customers: 0, support: 0, subscribers: 0 });
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, [location.pathname]);
+
+  useEffect(() => {
+    const fetchBadges = () => {
+      api.get('/auth/admin/sidebar-badges')
+        .then((res) => {
+          if (res.data?.badges) setBadges(res.data.badges);
+        })
+        .catch(() => {});
+    };
+    fetchBadges();
+    const interval = setInterval(fetchBadges, 25000);
+    const onRefresh = () => fetchBadges();
+    window.addEventListener('bl-badges-refresh', onRefresh);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('bl-badges-refresh', onRefresh);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -36,8 +57,9 @@ export const AdminLayout = () => {
     { label: 'Executive Dashboard', path: '/admin', icon: LayoutDashboard, exact: true },
     { label: 'Hero Banners & CMS', path: '/admin/banners', icon: BannerIcon },
     { label: 'Jewelry Products', path: '/admin/products', icon: ShoppingBag },
-    { label: 'Orders & Dispatch', path: '/admin/orders', icon: Package },
-    { label: 'Customers & Users', path: '/admin/users', icon: Users },
+    { label: 'Orders & Dispatch', path: '/admin/orders', icon: Package, badgeKey: 'orders' },
+    { label: 'Customers & Users', path: '/admin/users', icon: Users, badgeKey: 'customers' },
+    { label: 'Support & Inquiries', path: '/admin/support', icon: LifeBuoy, badgeKey: 'support' },
     { label: 'Coupons & Offers', path: '/admin/coupons', icon: Tag },
   ];
 
@@ -95,8 +117,19 @@ export const AdminLayout = () => {
                       : 'text-stone-300 hover:bg-white/10 hover:text-white'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-gold-300' : 'text-stone-400'}`} />
-                  <span>{item.label}</span>
+                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-gold-300' : 'text-stone-400'}`} />
+                  <span className="truncate">{item.label}</span>
+                  {item.badgeKey && Number(badges[item.badgeKey] || 0) > 0 && (
+                    <span
+                      className={`ml-auto shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full ${
+                        item.badgeKey === 'support'
+                          ? 'bg-amber-500 text-stone-950 font-black animate-pulse'
+                          : 'bg-red-600 text-white font-bold'
+                      }`}
+                    >
+                      {badges[item.badgeKey] > 99 ? '99+' : badges[item.badgeKey]}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -196,8 +229,19 @@ export const AdminLayout = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-stone-200 hover:bg-white/10"
               >
-                <item.icon className="w-4 h-4 text-gold-400" />
-                <span>{item.label}</span>
+                <item.icon className="w-4 h-4 text-gold-400 shrink-0" />
+                <span className="truncate">{item.label}</span>
+                {item.badgeKey && Number(badges[item.badgeKey] || 0) > 0 && (
+                  <span
+                    className={`ml-auto shrink-0 inline-flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-[10px] font-bold rounded-full ${
+                      item.badgeKey === 'support'
+                        ? 'bg-amber-500 text-stone-950 font-black animate-pulse'
+                        : 'bg-red-600 text-white'
+                    }`}
+                  >
+                    {badges[item.badgeKey]}
+                  </span>
+                )}
               </Link>
             ))}
             <Link

@@ -7,6 +7,8 @@ import {
   updateUserRole,
   updateUserDetails,
   deleteUser,
+  markUserViewed,
+  markAllUsersViewed,
 } from '../controllers/userController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -16,7 +18,9 @@ const router = express.Router();
 router.use(protect, adminOnly);
 
 router.get('/stats', getUserStats);
+router.post('/mark-all-viewed', markAllUsersViewed);
 router.get('/', getUsers);
+router.patch('/:id/view', markUserViewed);
 router.get('/:id', getUserById);
 router.put('/:id', updateUserDetails);
 router.patch('/:id/status', updateUserStatus);

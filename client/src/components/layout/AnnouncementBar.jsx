@@ -90,7 +90,7 @@ export const AnnouncementBar = () => {
   const seamlessItems = [...marqueeList, ...marqueeList];
 
   return (
-    <div className="bg-[#930303] text-[#F3E5AB] text-[11px] md:text-xs font-body border-b border-[#C9A44A]/40 relative z-50 overflow-hidden shadow-xs">
+    <div className="bg-[#930303] text-[#F3E5AB] text-[11px] md:text-xs font-body border-b border-[#C9A44A]/40 relative z-50 overflow-hidden shadow-xs print:hidden">
       
       {/* ────────────────────────────────────────────────────────────
           MODE 1: CONTINUOUS INFINITE MARQUEE (Storewide Ticker)

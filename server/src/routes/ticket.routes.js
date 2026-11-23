@@ -9,6 +9,8 @@ import {
   replyTicket,
   updateTicketStatus,
   deleteTicket,
+  markTicketViewed,
+  markAllTicketsViewed,
 } from '../controllers/ticketController.js';
 import { protect, adminOnly, optionalAuth } from '../middleware/auth.js';
 
@@ -32,6 +34,8 @@ router.post('/my/:id/reply', protect, replyToMyTicket);
 
 // Admin unified support & contact inquiry management
 router.get('/', protect, adminOnly, getAllTickets);
+router.post('/mark-all-viewed', protect, adminOnly, markAllTicketsViewed);
+router.patch('/:id/view', protect, adminOnly, markTicketViewed);
 router.post('/:id/reply', protect, adminOnly, replyTicket);
 router.patch('/:id/status', protect, adminOnly, updateTicketStatus);
 router.delete('/:id', protect, adminOnly, deleteTicket);

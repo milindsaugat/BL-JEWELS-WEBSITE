@@ -158,6 +158,11 @@ const supportTicketSchema = new mongoose.Schema(
       default: null,
       index: true,
     },
+    adminViewed: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   { timestamps: true }
 );

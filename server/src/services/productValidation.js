@@ -4,7 +4,7 @@ const allowed = [
   'isFeatured','isNewArrival','isActive','seo','productType','comboItems',
   'labelName','branchLocation','groupName','varietyName','netWeight','grossWeight',
   'pieces','labourRate','labourPercent','todaysRate','jewelType','categoryName',
-  'serviceablePincodes','studdedDetails','priceBreakup'
+  'serviceablePincodes','studdedDetails','priceBreakup','gstPercent'
 ];
 export function productInput(body, partial = false) {
   const data = Object.fromEntries(allowed.filter(key => Object.hasOwn(body, key)).map(key => [key, body[key]]));
@@ -31,6 +31,22 @@ export function productInput(body, partial = false) {
   if (data.labourRate !== undefined) data.labourRate = Number(data.labourRate) || 0;
   if (data.labourPercent !== undefined) data.labourPercent = Number(data.labourPercent) || 0;
   if (data.todaysRate !== undefined) data.todaysRate = Number(data.todaysRate) || 0;
+
+  if (data.seo && typeof data.seo === 'object') {
+    const rawKw = data.seo.metaKeywords || data.seo.keywords;
+    let kwList = [];
+    if (typeof rawKw === 'string') {
+      kwList = rawKw.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean);
+    } else if (Array.isArray(rawKw)) {
+      kwList = rawKw.map(s => String(s).trim()).filter(Boolean);
+    }
+    data.seo = {
+      metaTitle: typeof data.seo.metaTitle === 'string' ? data.seo.metaTitle.trim() : '',
+      metaDescription: typeof data.seo.metaDescription === 'string' ? data.seo.metaDescription.trim() : '',
+      keywords: kwList,
+      metaKeywords: kwList,
+    };
+  }
 
   for (const key of ['name','description','category']) {
     if ((!partial || key in data) && (typeof data[key] !== 'string' || !data[key].trim())) fail(`${key} is required.`);

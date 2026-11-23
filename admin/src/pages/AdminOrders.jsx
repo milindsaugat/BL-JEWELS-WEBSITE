@@ -26,6 +26,34 @@ export const AdminOrders = () => {
   const [newStatus, setNewStatus] = useState('');
   const [trackingId, setTrackingId] = useState('');
 
+  const handleOpenOrder = async (order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status || order.orderStatus || 'confirmed');
+    setTrackingId(order.tracking?.trackingId || order.trackingNumber || '');
+
+    if (order.adminViewed === false) {
+      try {
+        await orderService.markViewed(order._id);
+        setOrders((prev) =>
+          prev.map((o) => (o._id === order._id ? { ...o, adminViewed: true } : o))
+        );
+        window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+      } catch (err) {
+        console.warn('Failed to mark order viewed:', err);
+      }
+    }
+  };
+
+  const handleMarkAllOrdersViewed = async () => {
+    try {
+      await orderService.markAllViewed();
+      setOrders((prev) => prev.map((o) => ({ ...o, adminViewed: true })));
+      window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+    } catch (err) {
+      console.warn('Failed to mark all orders viewed:', err);
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       const res = await orderService.getAllOrders();
@@ -167,6 +195,15 @@ export const AdminOrders = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          {orders.some((o) => o.adminViewed === false) && (
+            <button
+              type="button"
+              onClick={handleMarkAllOrdersViewed}
+              className="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-[#930303] border border-red-200 rounded-xl text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <span>✓ Mark All Viewed</span>
+            </button>
+          )}
           <div className="px-4 py-2 bg-white rounded-xl border border-stone-200 shadow-sm text-xs font-semibold text-stone-700">
             Total Orders: <span className="text-[#930303] font-bold">{orders.length}</span>
           </div>
@@ -233,8 +270,15 @@ export const AdminOrders = () => {
                 {filteredOrders.map((order) => (
                   <tr key={order._id} className="hover:bg-stone-50/80 transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-stone-900 font-mono text-[11px]">
-                        #{order._id?.slice(-8).toUpperCase()}
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-stone-900 font-mono text-[11px]">
+                          #{order._id?.slice(-8).toUpperCase()}
+                        </span>
+                        {order.adminViewed === false && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-red-600 text-white animate-pulse">
+                            NEW
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px] text-stone-400 mt-0.5">
                         {new Date(order.createdAt || Date.now()).toLocaleDateString('en-IN', {
@@ -302,11 +346,7 @@ export const AdminOrders = () => {
                     <td className="py-3.5 px-4 text-right">
                       <button
                         type="button"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setNewStatus(order.status || order.orderStatus || 'confirmed');
-                          setTrackingId(order.tracking?.trackingId || order.trackingNumber || '');
-                        }}
+                        onClick={() => handleOpenOrder(order)}
                         className="px-3 py-1.5 bg-stone-100 hover:bg-gold-50 hover:text-gold-900 text-stone-700 rounded-lg font-medium transition-colors border border-stone-200 inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
@@ -437,6 +477,29 @@ export const AdminOrders = () => {
                       )}
                     </div>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Cancelled Details (if applicable) */}
+            {selectedOrder.status === 'cancelled' && (
+              <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-rose-800">
+                  <AlertCircle className="w-4 h-4 text-rose-700" />
+                  <span>Order Cancelled</span>
+                </div>
+                <p className="text-stone-700">
+                  <strong>Reason:</strong> {selectedOrder.cancelReason || selectedOrder.statusHistory?.find((s) => s.status === 'cancelled')?.note || 'Customer requested cancellation'}
+                </p>
+                {selectedOrder.cancelComments && (
+                  <p className="text-stone-600 italic">
+                    <strong>Customer Comments:</strong> "{selectedOrder.cancelComments}"
+                  </p>
+                )}
+                {selectedOrder.cancelledAt && (
+                  <p className="text-stone-400 text-[10px]">
+                    Cancelled on: {new Date(selectedOrder.cancelledAt).toLocaleString('en-IN')}
+                  </p>
                 )}
               </div>
             )}

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { settingService } from '../services/api';
 
 const loadCartFromStorage = () => {
   try {
@@ -36,11 +37,42 @@ const initialItems = loadCartFromStorage();
 const initialCoupon = loadCouponFromStorage();
 const initialDiscount = calculateDiscount(initialItems, initialCoupon);
 
+const loadShippingFromStorage = () => {
+  try {
+    const saved = localStorage.getItem('bl_shipping_settings');
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+};
+
 export const useCartStore = create((set, get) => ({
   items: initialItems,
   isDrawerOpen: false,
   coupon: initialCoupon,
   discount: initialDiscount,
+  shippingSettings: loadShippingFromStorage() || {
+    shippingCharge: 500,
+    freeShippingThreshold: 5000,
+  },
+
+  setShippingSettings: (settings) => {
+    try {
+      localStorage.setItem('bl_shipping_settings', JSON.stringify(settings));
+    } catch {}
+    set({ shippingSettings: settings });
+  },
+
+  fetchShippingSettings: async () => {
+    try {
+      const res = await settingService.getSettings();
+      if (res?.settings?.shippingSettings) {
+        get().setShippingSettings(res.settings.shippingSettings);
+      }
+    } catch {
+      // ignore
+    }
+  },
 
   openDrawer: () => set({ isDrawerOpen: true }),
   closeDrawer: () => set({ isDrawerOpen: false }),
@@ -141,22 +173,34 @@ export const useCartStore = create((set, get) => ({
   getShipping: () => {
     const subtotal = get().getSubtotal();
     if (subtotal === 0) return 0;
-    return subtotal >= 5000 ? 0 : 500;
+    const settings = get().shippingSettings;
+    const rawCharge = settings?.shippingCharge;
+    const charge = (rawCharge !== null && rawCharge !== undefined && rawCharge !== '' && !isNaN(Number(rawCharge)))
+      ? Number(rawCharge)
+      : 0;
+
+    // If shipping charge is empty or 0, shipping is free!
+    if (charge <= 0) return 0;
+
+    const rawThreshold = settings?.freeShippingThreshold;
+    const threshold = (rawThreshold !== null && rawThreshold !== undefined && rawThreshold !== '' && !isNaN(Number(rawThreshold)))
+      ? Number(rawThreshold)
+      : null;
+
+    if (threshold !== null && threshold > 0 && subtotal >= threshold) {
+      return 0;
+    }
+
+    return charge;
   },
 
-  getTax: () => {
-    const subtotal = get().getSubtotal();
-    const discount = get().discount;
-    const taxable = Math.max(0, subtotal - discount);
-    return Math.round(taxable * 0.03); // 3% GST on jewelry
-  },
+  getTax: () => 0,
 
   getTotal: () => {
     const subtotal = get().getSubtotal();
     const discount = get().discount;
     const shipping = get().getShipping();
-    const tax = get().getTax();
-    return Math.max(0, subtotal - discount) + shipping + tax;
+    return Math.max(0, subtotal - discount) + shipping;
   },
 
   getItemCount: () => {
@@ -164,3 +208,10 @@ export const useCartStore = create((set, get) => ({
     return items.reduce((acc, item) => acc + item.quantity, 0);
   },
 }));
+
+// Silently preload live shipping settings
+if (typeof window !== 'undefined') {
+  setTimeout(() => {
+    useCartStore.getState().fetchShippingSettings();
+  }, 100);
+}

@@ -460,7 +460,7 @@ export const Footer = () => {
   ];
 
   return (
-    <footer className="bg-[#FFFCF8] text-[#292321] border-t border-[#E9DED2] font-body">
+    <footer className="bg-[#FFFCF8] text-[#292321] border-t border-[#E9DED2] font-body print:hidden">
 
       {/* 1. Trust Strip */}
       <FooterTrustStrip />

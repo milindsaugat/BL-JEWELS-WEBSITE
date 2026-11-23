@@ -20,7 +20,7 @@ import {
 import { useCartStore } from '../store/cartStore';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
-import { orderService, settingService, checkoutUploadService } from '../services/api';
+import { orderService, settingService, checkoutUploadService, paymentService } from '../services/api';
 import { formatCurrency } from '../lib/utils';
 
 export const CheckoutPage = () => {
@@ -74,6 +74,9 @@ export const CheckoutPage = () => {
       .getSettings()
       .then((res) => {
         if (!active) return;
+        if (res?.settings?.shippingSettings) {
+          useCartStore.getState().setShippingSettings(res.settings.shippingSettings);
+        }
         const list = (res?.settings?.bankAccounts || []).filter((b) => b.isActive !== false);
         setBankAccounts(list);
       })
@@ -133,6 +136,28 @@ export const CheckoutPage = () => {
       setUploadingProof(false);
       e.target.value = '';
     }
+  };
+
+  const loadRazorpaySdk = () => {
+    return new Promise((resolve) => {
+      if (typeof window !== 'undefined' && window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const existing = document.getElementById('razorpay-checkout-js');
+      if (existing) {
+        existing.onload = () => resolve(true);
+        existing.onerror = () => resolve(false);
+        return;
+      }
+      const script = document.createElement('script');
+      script.id = 'razorpay-checkout-js';
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
   };
 
   const handlePlaceOrder = async (e) => {
@@ -195,19 +220,120 @@ export const CheckoutPage = () => {
 
       const res = await orderService.createOrder(orderPayload);
       if (res.success && res.order) {
-        clearCart();
-        navigate(`/order/success/${res.order._id || res.order.orderNumber}`);
+        const placedOrder = res.order;
+
+        if (paymentMethod === 'razorpay') {
+          try {
+            await loadRazorpaySdk();
+
+            if (typeof window.Razorpay !== 'function') {
+              throw new Error('Razorpay SDK failed to load. Please check your internet connection.');
+            }
+
+            const razorpayData = await paymentService.createRazorpayOrder({
+              amount: placedOrder.pricing?.total || total,
+              currency: 'INR',
+              receipt: placedOrder.orderNumber,
+              orderId: placedOrder._id,
+            });
+
+            if (!razorpayData.success || !razorpayData.order) {
+              throw new Error(razorpayData.message || 'Unable to generate Razorpay payment order.');
+            }
+
+            const rzpKey = razorpayData.key || import.meta.env.VITE_RAZORPAY_KEY_ID;
+
+            const options = {
+              key: rzpKey,
+              amount: razorpayData.order.amount,
+              currency: razorpayData.order.currency || 'INR',
+              name: 'BL Jewels',
+              description: `Order #${placedOrder.orderNumber} · Fine Jewellery`,
+              image: '/favicon.png',
+              order_id: razorpayData.order.id,
+              prefill: {
+                name: address.name || user?.name || '',
+                email: user?.email || '',
+                contact: address.phone || user?.phone || '',
+              },
+              notes: {
+                orderNumber: placedOrder.orderNumber,
+                orderId: String(placedOrder._id),
+              },
+              theme: {
+                color: '#930303',
+              },
+              handler: async function (response) {
+                try {
+                  setIsSubmitting(true);
+                  const verifyRes = await paymentService.verifyPayment({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    orderId: placedOrder._id,
+                  });
+
+                  if (verifyRes.success) {
+                    clearCart();
+                    navigate(`/order/success/${placedOrder._id || placedOrder.orderNumber}`);
+                  } else {
+                    setSubmitError(
+                      verifyRes.message || 'Payment verification failed. Please contact showroom concierge.'
+                    );
+                  }
+                } catch (verifyErr) {
+                  setSubmitError(
+                    verifyErr.response?.data?.message ||
+                      verifyErr.message ||
+                      'Payment verification error. Please contact BL Jewels support.'
+                  );
+                } finally {
+                  setIsSubmitting(false);
+                }
+              },
+              modal: {
+                ondismiss: function () {
+                  setIsSubmitting(false);
+                  setSubmitError(
+                    'Razorpay payment was dismissed. You can retry payment or choose another payment method.'
+                  );
+                },
+              },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (resp) {
+              setIsSubmitting(false);
+              setSubmitError(
+                `Payment failed: ${resp.error?.description || resp.error?.reason || 'Transaction could not be completed.'}`
+              );
+            });
+            rzp.open();
+          } catch (rzpErr) {
+            setIsSubmitting(false);
+            setSubmitError(
+              rzpErr.response?.data?.message ||
+                rzpErr.message ||
+                'Could not initialize Razorpay checkout. Please try again.'
+            );
+          }
+        } else {
+          // Bank transfer or Pay on Delivery
+          clearCart();
+          navigate(`/order/success/${placedOrder._id || placedOrder.orderNumber}`);
+          setIsSubmitting(false);
+        }
       } else {
         setSubmitError(res.message || 'Unable to place order. Please try again.');
+        setIsSubmitting(false);
       }
     } catch (err) {
+      setIsSubmitting(false);
       setSubmitError(
         err.response?.data?.message ||
           err.message ||
           'Unable to authorize your order. Please verify your details and try again.'
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -869,10 +995,7 @@ export const CheckoutPage = () => {
                     <span>-₹{formatCurrency(discount)}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span>GST (3% Bullion & Jewelry)</span>
-                  <span>₹{formatCurrency(tax)}</span>
-                </div>
+
                 <div className="flex justify-between">
                   <span>Transit Insurance & Express Shipping</span>
                   <span className="text-emerald-700 font-semibold">

@@ -54,7 +54,7 @@ export const subscribeEmail = async (req, res) => {
         if (existing.status === 'unsubscribed') {
           await Subscriber.updateOne(
             { _id: existing._id },
-            { $set: { status: 'subscribed', consentAt: new Date() } }
+            { $set: { status: 'subscribed', consentAt: new Date(), adminViewed: false } }
           );
         }
         return res.json({
@@ -70,6 +70,7 @@ export const subscribeEmail = async (req, res) => {
         source,
         status: 'subscribed',
         consentAt: new Date(),
+        adminViewed: source === 'admin',
       });
       return res.status(201).json({
         success: true,
@@ -96,6 +97,7 @@ export const subscribeEmail = async (req, res) => {
       source,
       status: 'subscribed',
       consentAt: new Date().toISOString(),
+      adminViewed: source === 'admin',
       createdAt: new Date().toISOString(),
     };
     list.unshift(record);
@@ -181,4 +183,35 @@ export const deleteSubscriber = async (req, res) => {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+
+export const markSubscriberViewed = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (getDbStatus()) {
+      await Subscriber.findByIdAndUpdate(id, { $set: { adminViewed: true } });
+    } else {
+      const s = (memoryStore.subscribers || []).find((sub) => String(sub._id) === String(id));
+      if (s) s.adminViewed = true;
+    }
+    return res.json({ success: true, message: 'Subscriber marked as viewed.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const markAllSubscribersViewed = async (req, res) => {
+  try {
+    if (getDbStatus()) {
+      await Subscriber.updateMany({ adminViewed: { $ne: true } }, { $set: { adminViewed: true } });
+    } else {
+      (memoryStore.subscribers || []).forEach((s) => {
+        s.adminViewed = true;
+      });
+    }
+    return res.json({ success: true, message: 'All subscribers marked as viewed.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 

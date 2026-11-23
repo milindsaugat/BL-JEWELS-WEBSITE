@@ -781,7 +781,7 @@ export const AdminCategories = () => {
                       Show Navbar Dropdown (Articles Preview on Hover)
                     </span>
                     <span className="text-[11px] text-stone-600 block mt-0.5 leading-relaxed">
-                      Checked: Website navbar hover karne par is category ke articles/products ka dropdown khulega. Unchecked: Direct link ban jayega bina dropdown ke.
+                      Enabled: Hovering over this category in the navbar opens a dropdown preview of its products. Disabled: Navigates directly to the category page.
                     </span>
                   </div>
                 </label>

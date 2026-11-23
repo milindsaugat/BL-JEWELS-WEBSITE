@@ -181,6 +181,7 @@ export const verifyRegisterOtp = async (req, res) => {
         email,
         password,
         phone,
+        adminViewed: false,
       });
 
       const { accessToken, refreshToken } = generateTokens(user._id, user.role);
@@ -207,6 +208,7 @@ export const verifyRegisterOtp = async (req, res) => {
         role: 'customer',
         addresses: [],
         wishlist: [],
+        adminViewed: false,
         createdAt: new Date().toISOString(),
       };
       if (!Array.isArray(memoryStore.users)) memoryStore.users = [];
@@ -896,6 +898,87 @@ export const updateAdminCredentials = async (req, res) => {
   } catch (error) {
     console.error('updateAdminCredentials error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to update credentials.' });
+  }
+};
+
+export const getAdminSidebarBadges = async (req, res) => {
+  try {
+    let unviewedOrders = 0;
+    let unviewedCustomers = 0;
+    let unviewedSupport = 0;
+    let unviewedSubscribers = 0;
+    let pendingVerification = 0;
+    let pendingReviews = 0;
+
+    if (getDbStatus()) {
+      const Order = (await import('../models/Order.js')).default;
+      const SupportTicket = (await import('../models/SupportTicket.js')).default;
+      const User = (await import('../models/User.js')).default;
+      const Subscriber = (await import('../models/Subscriber.js')).default;
+      const Review = (await import('../models/Review.js')).default;
+
+      const [ordersPending, customersNew, ticketsUnviewed, subsUnviewed, verifications, unapprovedReviews] =
+        await Promise.all([
+          Order.countDocuments({
+            adminViewed: false,
+          }),
+          User.countDocuments({
+            role: { $ne: 'admin' },
+            adminViewed: false,
+          }),
+          SupportTicket.countDocuments({
+            adminViewed: false,
+            status: { $ne: 'closed' },
+          }),
+          Subscriber.countDocuments({
+            status: 'subscribed',
+            adminViewed: false,
+          }),
+          Order.countDocuments({
+            'payment.status': 'verification_pending',
+          }),
+          Review.countDocuments({
+            isApproved: false,
+          }).catch(() => 0),
+        ]);
+
+      unviewedOrders = ordersPending;
+      unviewedCustomers = customersNew;
+      unviewedSupport = ticketsUnviewed;
+      unviewedSubscribers = subsUnviewed;
+      pendingVerification = verifications;
+      pendingReviews = unapprovedReviews;
+    } else {
+      unviewedOrders = (memoryStore.orders || []).filter((o) => o.adminViewed === false).length;
+      unviewedCustomers = (memoryStore.users || []).filter(
+        (u) => u.role !== 'admin' && u.adminViewed === false
+      ).length;
+      unviewedSupport = (memoryStore.tickets || []).filter(
+        (t) => t.adminViewed === false && t.status !== 'closed'
+      ).length;
+      unviewedSubscribers = (memoryStore.subscribers || []).filter(
+        (s) => s.status === 'subscribed' && s.adminViewed === false
+      ).length;
+      pendingVerification = (memoryStore.orders || []).filter(
+        (o) => o.payment?.status === 'verification_pending'
+      ).length;
+      pendingReviews = 0;
+    }
+
+    return res.json({
+      success: true,
+      badges: {
+        orders: unviewedOrders,
+        customers: unviewedCustomers,
+        support: unviewedSupport,
+        subscribers: unviewedSubscribers,
+        verificationPending: pendingVerification,
+        reviews: pendingReviews,
+      },
+    });
+  } catch (error) {
+    console.error('getAdminSidebarBadges error:', error);
+    return res.status(500).json({ success: false, message: error.message || 'Failed to fetch badges.' });
   }
 };
 

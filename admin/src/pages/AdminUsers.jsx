@@ -186,6 +186,15 @@ export const AdminUsers = () => {
     setSelectedUserId(id);
     setSelectedUserDetails(null);
     setModalLoading(true);
+
+    if (users.some((u) => u._id === id && u.adminViewed === false)) {
+      setUsers((prev) =>
+        prev.map((u) => (u._id === id ? { ...u, adminViewed: true } : u))
+      );
+      userService.markViewed(id).catch(() => {});
+      window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+    }
+
     try {
       const res = await userService.getUserById(id);
       if (res?.success) {
@@ -197,6 +206,17 @@ export const AdminUsers = () => {
       toast.error('Error loading user profile.');
     } finally {
       setModalLoading(false);
+    }
+  };
+
+  const handleMarkAllUsersViewed = async () => {
+    try {
+      await userService.markAllViewed();
+      setUsers((prev) => prev.map((u) => ({ ...u, adminViewed: true })));
+      window.dispatchEvent(new CustomEvent('bl-badges-refresh'));
+      toast.success('All customers marked as viewed.');
+    } catch (err) {
+      console.warn('Failed to mark all users viewed:', err);
     }
   };
 
@@ -269,14 +289,24 @@ export const AdminUsers = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => loadData(pagination.page)}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white border border-stone-200 hover:border-gold-400 rounded-xl text-xs font-semibold text-stone-700 hover:text-[#930303] shadow-xs transition-all cursor-pointer disabled:opacity-50"
-        >
-          <RefreshCw size={14} className={loading ? 'animate-spin text-[#930303]' : ''} />
-          <span>Sync Directory</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {users.some((u) => u.adminViewed === false) && (
+            <button
+              onClick={handleMarkAllUsersViewed}
+              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-xl text-xs font-semibold text-blue-800 shadow-xs transition-all cursor-pointer"
+            >
+              <span>✓ Mark All Viewed</span>
+            </button>
+          )}
+          <button
+            onClick={() => loadData(pagination.page)}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-stone-200 hover:border-gold-400 rounded-xl text-xs font-semibold text-stone-700 hover:text-[#930303] shadow-xs transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={loading ? 'animate-spin text-[#930303]' : ''} />
+            <span>Sync Directory</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Metric Cards Grid (Concurrent Stats) ── */}
@@ -437,9 +467,16 @@ export const AdminUsers = () => {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-stone-900 truncate">
-                              {u.name || 'Anonymous User'}
-                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold text-stone-900 truncate">
+                                {u.name || 'Anonymous User'}
+                              </p>
+                              {u.adminViewed === false && (
+                                <span className="px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider rounded bg-blue-600 text-white animate-pulse">
+                                  NEW
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-stone-400 font-mono">
                               ID: {String(u._id).slice(-6)}
                             </p>
