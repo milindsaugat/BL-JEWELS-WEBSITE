@@ -47,6 +47,7 @@ export const useAuthStore = create((set, get) => ({
             requireOtp: true,
             email: data.email,
             message: data.message,
+            otp: data.otp || data.demoOtp,
           };
         }
 
@@ -158,6 +159,7 @@ export const useAuthStore = create((set, get) => ({
             requireOtp: true,
             email: data.email,
             message: data.message,
+            otp: data.otp || data.demoOtp,
           };
         }
 

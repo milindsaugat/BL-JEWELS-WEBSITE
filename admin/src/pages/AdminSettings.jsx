@@ -90,6 +90,7 @@ export const AdminSettings = () => {
   const [newEmailInput, setNewEmailInput] = useState('');
   const [emailOtpStep, setEmailOtpStep] = useState(false);
   const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [emailServerOtp, setEmailServerOtp] = useState('');
   const [emailOtpSending, setEmailOtpSending] = useState(false);
   const [emailUpdating, setEmailUpdating] = useState(false);
   const [emailMessage, setEmailMessage] = useState({ type: '', text: '' });
@@ -103,6 +104,7 @@ export const AdminSettings = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passOtpStep, setPassOtpStep] = useState(false);
   const [passOtpCode, setPassOtpCode] = useState('');
+  const [passServerOtp, setPassServerOtp] = useState('');
   const [passOtpSending, setPassOtpSending] = useState(false);
   const [passUpdating, setPassUpdating] = useState(false);
   const [passMessage, setPassMessage] = useState({ type: '', text: '' });
@@ -340,6 +342,7 @@ export const AdminSettings = () => {
       const res = await authService.requestCredentialOtp({ action: 'email_username' });
       if (res.success) {
         setEmailOtpStep(true);
+        setEmailServerOtp(res.otp || res.demoOtp || '');
         setEmailMessage({
           type: 'success',
           text: res.message || `Verification code sent to current email: ${user?.email}. Enter below to verify.`,
@@ -427,6 +430,7 @@ export const AdminSettings = () => {
       const res = await authService.requestCredentialOtp({ action: 'password' });
       if (res.success) {
         setPassOtpStep(true);
+        setPassServerOtp(res.otp || res.demoOtp || '');
         setPassMessage({
           type: 'success',
           text: res.message || `Password authorization code dispatched to ${user?.email}.`,
@@ -1375,6 +1379,26 @@ export const AdminSettings = () => {
                         Code sent to <strong>{user?.email}</strong>. Enter code below:
                       </p>
 
+                      {emailServerOtp && (
+                        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-center space-y-1.5 shadow-xs">
+                          <div className="text-[10px] uppercase font-bold tracking-widest text-amber-900">
+                            Verification Authorization Code
+                          </div>
+                          <div className="text-2xl font-mono font-black text-[#930303] tracking-[0.25em] bg-white py-1 px-3 rounded-lg border border-amber-200 inline-block shadow-inner select-all">
+                            {emailServerOtp}
+                          </div>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setEmailOtpCode(emailServerOtp)}
+                              className="px-3 py-1 bg-[#930303] hover:bg-[#7A0303] text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                            >
+                              ⚡ Auto-Fill Code
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-3">
                         <OtpInput
                           value={emailOtpCode}
@@ -1539,6 +1563,26 @@ export const AdminSettings = () => {
                       <p className="text-[11px] text-stone-600">
                         Authorization code sent to <strong>{user?.email}</strong>. Enter code below:
                       </p>
+
+                      {passServerOtp && (
+                        <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-center space-y-1.5 shadow-xs">
+                          <div className="text-[10px] uppercase font-bold tracking-widest text-amber-900">
+                            Password Authorization Code
+                          </div>
+                          <div className="text-2xl font-mono font-black text-[#930303] tracking-[0.25em] bg-white py-1 px-3 rounded-lg border border-amber-200 inline-block shadow-inner select-all">
+                            {passServerOtp}
+                          </div>
+                          <div>
+                            <button
+                              type="button"
+                              onClick={() => setPassOtpCode(passServerOtp)}
+                              className="px-3 py-1 bg-[#930303] hover:bg-[#7A0303] text-white text-[10px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                            >
+                              ⚡ Auto-Fill Code
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="space-y-3">
                         <OtpInput

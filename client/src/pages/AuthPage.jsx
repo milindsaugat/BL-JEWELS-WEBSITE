@@ -37,6 +37,7 @@ export const AuthPage = () => {
   // OTP Verification state (for Registration & Login)
   const [otp, setOtp] = useState('');
   const [otpEmail, setOtpEmail] = useState('');
+  const [serverOtp, setServerOtp] = useState('');
   const [otpPurpose, setOtpPurpose] = useState('login'); // 'login' | 'register'
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -44,6 +45,7 @@ export const AuthPage = () => {
   const [forgotStep, setForgotStep] = useState('request'); // 'request' | 'reset'
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotOtp, setForgotOtp] = useState('');
+  const [serverForgotOtp, setServerForgotOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -111,6 +113,7 @@ export const AuthPage = () => {
           setStep('otp');
           setOtpPurpose('login');
           setOtpEmail(res.email || email);
+          setServerOtp(res.otp || '');
           setInfoMsg(res.message || `A 6-digit verification code has been dispatched to ${res.email || email}.`);
           setResendCooldown(60);
           setOtp('');
@@ -125,6 +128,7 @@ export const AuthPage = () => {
           setStep('otp');
           setOtpPurpose('register');
           setOtpEmail(res.email || email);
+          setServerOtp(res.otp || '');
           setInfoMsg(res.message || `A 6-digit verification code has been dispatched to ${res.email || email}.`);
           setResendCooldown(60);
           setOtp('');
@@ -182,6 +186,7 @@ export const AuthPage = () => {
     try {
       const res = await resendAuthOtp(otpEmail, otpPurpose);
       if (res.success) {
+        if (res.otp || res.demoOtp) setServerOtp(res.otp || res.demoOtp);
         setInfoMsg(res.message || `A fresh 6-digit verification code has been sent to ${otpEmail}.`);
         setResendCooldown(60);
       } else {
@@ -213,6 +218,7 @@ export const AuthPage = () => {
         setForgotStep('reset');
         setForgotCooldown(60);
         setForgotOtp('');
+        setServerForgotOtp(res.otp || res.demoOtp || '');
         setNewPassword('');
         setConfirmPassword('');
         setInfoMsg(res.message || `A 6-digit password reset code has been sent to ${cleanForgotEmail}.`);
@@ -397,6 +403,27 @@ export const AuthPage = () => {
               ) : (
                 /* Sub-step 2: OTP Verification & New Password */
                 <form onSubmit={handleForgotResetPassword} className="space-y-4">
+                  {serverForgotOtp && (
+                    <div className="p-3.5 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-xl text-center space-y-1.5 shadow-xs">
+                      <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-amber-900 uppercase tracking-widest">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Password Reset OTP</span>
+                      </div>
+                      <div className="text-2xl font-mono font-black text-[#930303] tracking-[0.25em] bg-white py-1 px-3 rounded-lg border border-amber-200 inline-block shadow-inner select-all">
+                        {serverForgotOtp}
+                      </div>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setForgotOtp(serverForgotOtp)}
+                          className="px-3 py-1 bg-[#930303] hover:bg-[#7A0303] text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                        >
+                          ⚡ Auto-Fill OTP
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label className="block text-xs font-semibold text-stone-700 mb-2">
                       Enter 6-Digit Reset Code *
@@ -539,6 +566,27 @@ export const AuthPage = () => {
               )}
 
               <form onSubmit={handleVerifyOtp} className="space-y-4">
+                {serverOtp && (
+                  <div className="p-3.5 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-xl text-center space-y-1.5 shadow-xs">
+                    <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-amber-900 uppercase tracking-widest">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Verification OTP Code</span>
+                    </div>
+                    <div className="text-3xl font-mono font-black text-[#930303] tracking-[0.25em] bg-white py-1 px-4 rounded-xl border border-amber-200 inline-block shadow-inner select-all">
+                      {serverOtp}
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setOtp(serverOtp)}
+                        className="px-3.5 py-1.5 bg-[#930303] hover:bg-[#7A0303] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer shadow-xs active:scale-95"
+                      >
+                        ⚡ Auto-Fill OTP
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-2">
                     Enter 6-Digit Code

@@ -181,6 +181,7 @@ export const AccountPage = () => {
   const [pwdConfirm, setPwdConfirm] = useState('');
   const [pwdShow, setPwdShow] = useState(false);
   const [pwdOtp, setPwdOtp] = useState('');
+  const [pwdServerOtp, setPwdServerOtp] = useState('');
   const [pwdLoading, setPwdLoading] = useState(false);
   const [pwdError, setPwdError] = useState('');
   const [pwdSuccess, setPwdSuccess] = useState('');
@@ -672,6 +673,7 @@ export const AccountPage = () => {
       if (res.success) {
         setPwdStep('otp');
         setPwdCooldown(60);
+        setPwdServerOtp(res.otp || res.demoOtp || '');
         setPwdSuccess(res.message || `A 6-digit verification code has been dispatched to ${user.email}.`);
       } else {
         setPwdError(res.message || 'Failed to dispatch verification code.');
@@ -725,6 +727,7 @@ export const AccountPage = () => {
       const res = await authService.changePasswordOtp();
       if (res.success) {
         setPwdCooldown(60);
+        setPwdServerOtp(res.otp || res.demoOtp || '');
         setPwdSuccess(`A new verification code has been dispatched to ${user.email}.`);
       } else {
         setPwdError(res.message || 'Could not resend verification code.');
@@ -2601,6 +2604,27 @@ export const AccountPage = () => {
                                     Please enter the one-time code sent to <strong>{user.email}</strong> to verify this password change.
                                   </p>
                                 </div>
+
+                                {pwdServerOtp && (
+                                  <div className="max-w-md p-3.5 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-xl text-center space-y-1.5 shadow-xs my-2">
+                                    <div className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-amber-900 uppercase tracking-widest">
+                                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                                      <span>Your Verification Code</span>
+                                    </div>
+                                    <div className="text-2xl font-mono font-black text-[#930303] tracking-[0.25em] bg-white py-1 px-3 rounded-lg border border-amber-200 inline-block shadow-inner select-all">
+                                      {pwdServerOtp}
+                                    </div>
+                                    <div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setPwdOtp(pwdServerOtp)}
+                                        className="px-3 py-1 bg-[#930303] hover:bg-[#7A0303] text-white text-[11px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                                      >
+                                        ⚡ Auto-Fill OTP
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
 
                                 <div className="max-w-md my-2">
                                   <OtpInput

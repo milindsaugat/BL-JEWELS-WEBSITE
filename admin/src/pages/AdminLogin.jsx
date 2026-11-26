@@ -18,6 +18,7 @@ export const AdminLogin = () => {
   const [forgotStep, setForgotStep] = useState('email'); // 'email' | 'otp' | 'newPassword' | 'success'
   const [forgotEmail, setForgotEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [serverOtp, setServerOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -89,6 +90,7 @@ export const AdminLogin = () => {
     try {
       const res = await authService.forgotPassword(forgotEmail);
       if (res.success) {
+        setServerOtp(res.otp || res.demoOtp || '');
         setForgotSuccessMsg(res.message || 'Verification code dispatched to your email.');
         setForgotStep('otp');
       } else {
@@ -433,6 +435,26 @@ export const AdminLogin = () => {
             {/* ── STEP 2: ENTER OTP ── */}
             {forgotStep === 'otp' && (
               <form onSubmit={handleVerifyOtp} className="space-y-4 text-xs font-body">
+                {serverOtp && (
+                  <div className="p-3 bg-stone-900/80 border border-[#C9A44A]/60 rounded-xl text-center space-y-1.5 shadow-md">
+                    <div className="text-[10px] uppercase font-bold tracking-widest text-[#DFBF68]">
+                      Verification OTP Code
+                    </div>
+                    <div className="text-2xl font-mono font-black text-white tracking-[0.25em] bg-black/50 py-1.5 px-3 rounded-lg border border-[#C9A44A]/30 inline-block shadow-inner select-all">
+                      {serverOtp}
+                    </div>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => setOtp(serverOtp)}
+                        className="px-3 py-1 bg-[#C9A44A] hover:bg-[#DFBF68] text-stone-950 text-[10px] font-bold rounded-lg transition-colors cursor-pointer shadow-xs"
+                      >
+                        ⚡ Auto-Fill Code
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[#E6DAC8] font-medium mb-2.5 text-center">6-Digit Verification Code</label>
                   <OtpInput

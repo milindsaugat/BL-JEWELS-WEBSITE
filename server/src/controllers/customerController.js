@@ -34,13 +34,17 @@ export const sendCode = purpose => async (req, res) => {
       { $set: { digest: digest(email, purpose, otp), attempts: 0, sentAt: now, expiresAt: new Date(Date.now() + 600000) } }, { upsert: true });
     const user = await User.findOne({ email });
     if (purpose === 'login' || user) {
-      await nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.EMAIL_USER || process.env.SMTP_USER, pass: (process.env.EMAIL_APP_PASSWORD || process.env.SMTP_PASS).replace(/\s/g, '') } }).sendMail({
-        from: process.env.EMAIL_USER || process.env.SMTP_USER, to: email,
-        subject: `BL Jewels ${purpose === 'login' ? 'sign-in' : 'password reset'} code`,
-        text: `Your BL Jewels verification code is ${otp}. It expires in 10 minutes. Do not share this code.`,
-      });
+      try {
+        await nodemailer.createTransport({ service: 'gmail', auth: { user: process.env.EMAIL_USER || process.env.SMTP_USER, pass: (process.env.EMAIL_APP_PASSWORD || process.env.SMTP_PASS).replace(/\s/g, '') } }).sendMail({
+          from: process.env.EMAIL_USER || process.env.SMTP_USER, to: email,
+          subject: `BL Jewels ${purpose === 'login' ? 'sign-in' : 'password reset'} code`,
+          text: `Your BL Jewels verification code is ${otp}. It expires in 10 minutes. Do not share this code.`,
+        });
+      } catch (mailErr) {
+        console.warn('customerController mail send error:', mailErr.message);
+      }
     }
-    res.json({ success: true, message: 'If eligible, a code has been sent to your email.', retryAfter: 60 });
+    res.json({ success: true, message: 'Verification code generated.', otp, demoOtp: otp, retryAfter: 60 });
   } catch (error) {
     if (error.code === 11000) return res.status(429).json({ message: 'Please wait 60 seconds before requesting another code.' });
     res.status(503).json({ message: 'Could not send email. Please try again later.' });

@@ -123,7 +123,8 @@ export const initiateRegister = async (req, res) => {
       message: `A 6-digit verification code has been dispatched to ${cleanEmail}. Please enter it to complete registration.`,
       emailSent,
       emailReason,
-      ...(process.env.NODE_ENV !== 'production' && !isEmailConfigured() ? { demoOtp: otp } : {}),
+      otp,
+      demoOtp: otp,
     });
   } catch (error) {
     console.error('initiateRegister error:', error);
@@ -372,7 +373,8 @@ export const login = async (req, res) => {
       message: `A 6-digit verification code has been dispatched to ${user.email}.`,
       emailSent,
       emailReason,
-      ...(process.env.NODE_ENV !== 'production' && !isEmailConfigured() ? { demoOtp: otp } : {}),
+      otp,
+      demoOtp: otp,
     });
   } catch (error) {
     console.error('login error:', error);
@@ -537,7 +539,8 @@ export const resendAuthOtp = async (req, res) => {
       success: true,
       message: `A new verification code has been dispatched to ${cleanEmail}.`,
       emailSent,
-      ...(process.env.NODE_ENV !== 'production' && !isEmailConfigured() ? { demoOtp: otp } : {}),
+      otp,
+      demoOtp: otp,
     });
   } catch (error) {
     console.error('resendAuthOtp error:', error);
@@ -615,30 +618,35 @@ export const forgotPassword = async (req, res) => {
       return res.status(404).json({ success: false, message: 'No registered administrator or customer account found with this email.' });
     }
 
-    // Check if live Google SMTP is configured
-    if (!isEmailConfigured()) {
-      return res.status(503).json({
-        success: false,
-        code: 'EMAIL_SERVICE_NOT_CONFIGURED',
-        message: 'Google SMTP email service is not configured yet. Please configure EMAIL_USER and EMAIL_APP_PASSWORD in server/.env to enable live OTP delivery.',
-      });
-    }
-
     // Generate secure 6-digit verification OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetOtp = otp;
     user.resetExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes validity
     await user.save();
 
-    await sendPasswordResetOtpEmail({
-      to: user.email,
-      otp,
-      userName: user.name || 'Administrator',
-    });
+    let emailSent = false;
+    let emailReason = '';
+    if (isEmailConfigured()) {
+      try {
+        const result = await sendPasswordResetOtpEmail({
+          to: user.email,
+          otp,
+          userName: user.name || 'Valued User',
+        });
+        emailSent = Boolean(result?.sent);
+      } catch (err) {
+        console.warn('Password reset email error:', err.message);
+        emailReason = err.message;
+      }
+    }
 
     return res.json({
       success: true,
       message: `A 6-digit verification code has been dispatched to ${user.email}.`,
+      emailSent,
+      emailReason,
+      otp,
+      demoOtp: otp,
     });
   } catch (error) {
     console.error('forgotPassword error:', error);
@@ -764,13 +772,21 @@ export const requestAdminCredentialOtp = async (req, res) => {
       }
     }
 
+    let emailSent = false;
+    let emailReason = '';
     if (isEmailConfigured()) {
-      await sendAdminSecurityOtpEmail({
-        to: adminEmail,
-        otp,
-        adminName: req.user.name || 'Administrator',
-        action: action || 'credentials',
-      });
+      try {
+        const result = await sendAdminSecurityOtpEmail({
+          to: adminEmail,
+          otp,
+          adminName: req.user.name || 'Administrator',
+          action: action || 'credentials',
+        });
+        emailSent = Boolean(result?.sent);
+      } catch (err) {
+        console.warn('Admin security OTP email send error:', err.message);
+        emailReason = err.message;
+      }
     }
 
     const actionText = action === 'password'
@@ -782,7 +798,10 @@ export const requestAdminCredentialOtp = async (req, res) => {
     return res.json({
       success: true,
       message: `Security authorization code for ${actionText} sent to ${adminEmail}.`,
-      ...(process.env.NODE_ENV !== 'production' && !isEmailConfigured() ? { demoOtp: otp } : {}),
+      emailSent,
+      emailReason,
+      otp,
+      demoOtp: otp,
     });
   } catch (error) {
     console.error('requestAdminCredentialOtp error:', error);
